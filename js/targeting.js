@@ -1,62 +1,57 @@
 // targeting.js - arrow-key snap targeting
+// Tracks by object reference so array re-ordering / filtering never causes silent switches.
 
 const Targeting = (() => {
-  let currentIndex = -1;
+  let current = null; // direct reference to the targeted object
 
-  function reset() { currentIndex = -1; }
+  function reset() { current = null; }
 
-  function getIndex() { return currentIndex; }
+  function getTarget() { return current; }
 
-  function getTarget(objects) {
-    if (currentIndex < 0 || currentIndex >= objects.length) return null;
-    return objects[currentIndex];
-  }
-
+  // Call every frame to keep isTargeted flags correct.
+  // Only auto-picks a new target when there is genuinely no valid one.
   function syncTarget(objects) {
-    // If current target is dead/destroyed pick a new one
-    if (currentIndex < 0 || currentIndex >= objects.length ||
-        objects[currentIndex].dead || objects[currentIndex].dying || objects[currentIndex].destroyed) {
-      autoTarget(objects);
+    const stillValid = current &&
+      objects.includes(current) &&
+      !current.dead && !current.dying && !current.destroyed;
+
+    if (!stillValid) {
+      // Current target is gone — pick a new one automatically
+      _autoTarget(objects);
     }
-    // Keep isTargeted flag synced
-    objects.forEach((o, i) => {
-      o.isTargeted = (i === currentIndex);
-    });
+
+    objects.forEach(o => { o.isTargeted = (o === current); });
   }
 
-  function autoTarget(objects) {
-    const alive = objects
-      .map((o, i) => ({ o, i }))
-      .filter(({ o }) => !o.dead && !o.dying && !o.destroyed);
-    if (alive.length === 0) { currentIndex = -1; return; }
-    // Pick the one lowest on screen (highest y) as default
-    alive.sort((a, b) => b.o.y - a.o.y);
-    currentIndex = alive[0].i;
+  function _autoTarget(objects) {
+    const alive = objects.filter(o => !o.dead && !o.dying && !o.destroyed);
+    if (alive.length === 0) { current = null; return; }
+    // Default to the object furthest down the screen (most urgent)
+    alive.sort((a, b) => b.y - a.y);
+    current = alive[0];
   }
 
   function moveLeft(objects) {
-    const current = objects[currentIndex];
-    if (!current) { autoTarget(objects); return; }
+    if (!current) { _autoTarget(objects); return; }
     const cx = current.x + current.wobbleX;
-    const candidates = objects
-      .map((o, i) => ({ o, i }))
-      .filter(({ o, i }) => i !== currentIndex && !o.dead && !o.dying && !o.destroyed && (o.x + o.wobbleX) < cx);
+    const candidates = objects.filter(
+      o => o !== current && !o.dead && !o.dying && !o.destroyed && (o.x + o.wobbleX) < cx
+    );
     if (candidates.length === 0) return;
-    candidates.sort((a, b) => (b.o.x + b.o.wobbleX) - (a.o.x + a.o.wobbleX));
-    currentIndex = candidates[0].i;
+    candidates.sort((a, b) => (b.x + b.wobbleX) - (a.x + a.wobbleX));
+    current = candidates[0];
   }
 
   function moveRight(objects) {
-    const current = objects[currentIndex];
-    if (!current) { autoTarget(objects); return; }
+    if (!current) { _autoTarget(objects); return; }
     const cx = current.x + current.wobbleX;
-    const candidates = objects
-      .map((o, i) => ({ o, i }))
-      .filter(({ o, i }) => i !== currentIndex && !o.dead && !o.dying && !o.destroyed && (o.x + o.wobbleX) > cx);
+    const candidates = objects.filter(
+      o => o !== current && !o.dead && !o.dying && !o.destroyed && (o.x + o.wobbleX) > cx
+    );
     if (candidates.length === 0) return;
-    candidates.sort((a, b) => (a.o.x + a.o.wobbleX) - (b.o.x + b.o.wobbleX));
-    currentIndex = candidates[0].i;
+    candidates.sort((a, b) => (a.x + a.wobbleX) - (b.x + b.wobbleX));
+    current = candidates[0];
   }
 
-  return { reset, getIndex, getTarget, syncTarget, autoTarget, moveLeft, moveRight };
+  return { reset, getTarget, syncTarget, moveLeft, moveRight };
 })();

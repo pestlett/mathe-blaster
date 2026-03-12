@@ -152,7 +152,7 @@ function render(ctx, w, h, t) {
   }
 
   // Draw weapon aimed at target
-  const target = Targeting.getTarget(state.objects);
+  const target = Targeting.getTarget();
   const tx = target ? target.x + target.wobbleX : w / 2;
   const ty = target ? target.y : h / 2;
   Themes.drawWeapon(ctx, w, h, state.theme, tx, ty);
@@ -165,7 +165,7 @@ function submitAnswer() {
   const val = parseInt(input.value.trim());
   if (isNaN(val)) { input.focus(); return; }
 
-  const target = Targeting.getTarget(state.objects);
+  const target = Targeting.getTarget();
   if (!target) { input.value = ''; input.focus(); return; }
 
   const elapsed = Date.now() - state.answerStartTime;
