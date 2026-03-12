@@ -165,5 +165,5 @@ const UI = (() => {
     showScreen('leaderboard');
   }
 
-  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, initThemeSwitcher, showGameOver, showLeaderboard };
+  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showGameOver, showLeaderboard };
 })();
