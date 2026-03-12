@@ -28,6 +28,7 @@ let state = {
   streak: 0,
   objects: [],
   missedList: [],
+  wrongQueue: [],   // questions answered incorrectly this session
   answerStartTime: 0,
 };
 
@@ -77,6 +78,7 @@ function startGame(settings) {
   state.streak = 0;
   state.objects = [];
   state.missedList = [];
+  state.wrongQueue = [];
   state.answerStartTime = Date.now();
   state.phase = 'PLAYING';
 
@@ -128,7 +130,7 @@ function update(dt) {
   if (aliveCount < maxObj) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-    const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers);
+    const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
     const idx = state.objects.filter(o => !o.dead).length;
     state.objects.push(Objects.create(q, window.innerWidth, window.innerHeight, speed, idx));
   }
@@ -179,6 +181,9 @@ function submitAnswer() {
 
     Progress.recordAttempt(target.key, true, elapsed);
 
+    // Graduate out of wrong queue if it was there
+    state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
+
     // Scoring
     let pts = 10;
     if (elapsed < 3000) pts += 10;
@@ -199,6 +204,7 @@ function submitAnswer() {
       state.level++;
       state.correctThisLevel = 0;
       Audio.play('levelUp');
+      UI.showLevelUp(state.level);
     }
 
     input.value = '';
@@ -206,10 +212,13 @@ function submitAnswer() {
     Targeting.syncTarget(state.objects);
 
   } else {
-    // Wrong
+    // Wrong — add to this session's wrong queue if not already there
     state.streak = 0;
     UI.showCombo(0);
     Progress.recordAttempt(target.key, false, elapsed);
+    if (!state.wrongQueue.find(q => q.key === target.key)) {
+      state.wrongQueue.push({ key: target.key, display: target.question, answer: target.answer });
+    }
     Audio.play('wrong');
     UI.shakeInput();
     UI.showTryAgain();

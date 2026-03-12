@@ -299,6 +299,33 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 1.5rem;
 }
 
+/* Level-up banner */
+#level-up-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(247,201,72,0.9), 0 0 80px rgba(247,201,72,0.5);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 30;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+#level-up-banner.show {
+  animation: levelUpPop 1.6s ease forwards;
+}
+@keyframes levelUpPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  40%  { transform: translate(-50%, -50%) scale(1); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
+}
+
 /* Answer area */
 #answer-area {
   position: absolute;

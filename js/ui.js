@@ -120,6 +120,18 @@ const UI = (() => {
     setTimeout(() => inp.classList.remove('shake'), 500);
   }
 
+  // ---- Level Up ----
+  let levelUpTimer = null;
+  function showLevelUp(level) {
+    const el = document.getElementById('level-up-banner');
+    el.textContent = `Level ${level}!`;
+    el.classList.remove('show');
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add('show');
+    if (levelUpTimer) clearTimeout(levelUpTimer);
+    levelUpTimer = setTimeout(() => el.classList.remove('show'), 1700);
+  }
+
 // ---- Game Over ----
   function showGameOver(session, missedList, onPlayAgain, onLeaderboard) {
     document.getElementById('gameover-stats').innerHTML = `
@@ -165,5 +177,5 @@ const UI = (() => {
     showScreen('leaderboard');
   }
 
-  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showGameOver, showLeaderboard };
+  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showLevelUp, showGameOver, showLeaderboard };
 })();
