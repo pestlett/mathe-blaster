@@ -82,10 +82,6 @@ function startGame(settings) {
 
   Targeting.reset();
   Themes.init(state.theme, window.innerWidth, window.innerHeight);
-  if (!window._themeSwitcherInited) {
-    UI.initThemeSwitcher(switchTheme);
-    window._themeSwitcherInited = true;
-  }
   Audio.setTheme(state.theme);
   Audio.playMusic(state.theme);
 
@@ -95,13 +91,6 @@ function startGame(settings) {
   Engine.start();
 }
 
-function switchTheme(theme) {
-  state.theme = theme;
-  Themes.init(theme, window.innerWidth, window.innerHeight);
-  Audio.setTheme(theme);
-  Audio.stopMusic();
-  Audio.playMusic(theme);
-}
 
 // ---- UPDATE ----
 function update(dt) {

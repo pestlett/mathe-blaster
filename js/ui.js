@@ -120,19 +120,7 @@ const UI = (() => {
     setTimeout(() => inp.classList.remove('shake'), 500);
   }
 
-  // ---- Theme switcher ----
-  function initThemeSwitcher(onSwitch) {
-    document.getElementById('theme-switcher').classList.add('visible');
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        onSwitch(btn.dataset.theme);
-      });
-    });
-  }
-
-  // ---- Game Over ----
+// ---- Game Over ----
   function showGameOver(session, missedList, onPlayAgain, onLeaderboard) {
     document.getElementById('gameover-stats').innerHTML = `
       <div>Score: <strong>${session.score}</strong></div>
