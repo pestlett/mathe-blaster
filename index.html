@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplication Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Onboarding Screen -->
+  <div id="screen-onboarding" class="screen active">
+    <div class="onboarding-card">
+      <h1 class="game-title">Multiplication<br><span class="title-accent">Blaster!</span></h1>
+      <div class="form-group">
+        <label for="input-name">Your Name</label>
+        <input type="text" id="input-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="input-age">Your Age</label>
+        <input type="number" id="input-age" placeholder="Age" min="4" max="18" style="width:100px">
+      </div>
+      <div class="form-group">
+        <label>Choose Your Theme</label>
+        <div class="theme-cards">
+          <div class="theme-card active" data-theme="space">
+            <div class="theme-preview space-preview"></div>
+            <span>Space</span>
+          </div>
+          <div class="theme-card" data-theme="ocean">
+            <div class="theme-preview ocean-preview"></div>
+            <span>Ocean</span>
+          </div>
+          <div class="theme-card" data-theme="sky">
+            <div class="theme-preview sky-preview"></div>
+            <span>Sky</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tables Range: <span id="range-display">1 – 10</span></label>
+        <div class="range-container">
+          <input type="range" id="range-min" min="1" max="12" value="1" class="range-slider">
+          <input type="range" id="range-max" min="1" max="12" value="10" class="range-slider">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Difficulty</label>
+        <div class="difficulty-btns">
+          <button class="diff-btn" data-diff="easy">Easy</button>
+          <button class="diff-btn active" data-diff="medium">Medium</button>
+          <button class="diff-btn" data-diff="hard">Hard</button>
+        </div>
+      </div>
+      <button id="btn-start" class="btn-primary">Let's Go!</button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="screen-game" class="screen">
+    <canvas id="game-canvas"></canvas>
+    <div id="hud-overlay">
+      <div id="hud-left">
+        <div id="hud-name"></div>
+        <div id="hud-score">Score: <span id="score-val">0</span></div>
+      </div>
+      <div id="hud-center">
+        <div id="hud-level">Level <span id="level-val">1</span></div>
+        <div id="hud-tables"></div>
+      </div>
+      <div id="hud-right">
+        <div id="hud-lives"></div>
+      </div>
+    </div>
+    <div id="answer-area">
+      <div id="combo-display"></div>
+      <div id="input-wrapper">
+        <input type="number" id="answer-input" placeholder="Answer..." autocomplete="off" inputmode="numeric">
+        <button id="btn-fire">Fire!</button>
+      </div>
+      <div id="try-again-msg"></div>
+    </div>
+    <div id="theme-switcher">
+      <button class="theme-btn active" data-theme="space">Space</button>
+      <button class="theme-btn" data-theme="ocean">Ocean</button>
+      <button class="theme-btn" data-theme="sky">Sky</button>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="screen-gameover" class="screen">
+    <div class="overlay-card">
+      <h2>Game Over!</h2>
+      <div id="gameover-stats"></div>
+      <div id="gameover-missed"></div>
+      <div class="overlay-btns">
+        <button id="btn-play-again" class="btn-primary">Play Again</button>
+        <button id="btn-leaderboard" class="btn-secondary">Leaderboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Screen -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="overlay-card wide">
+      <h2>Leaderboard</h2>
+      <div id="leaderboard-badge"></div>
+      <div id="leaderboard-table-wrap">
+        <table id="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Score</th>
+              <th>Level</th>
+              <th>Accuracy</th>
+              <th>Theme</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+      <div class="overlay-btns">
+        <button id="btn-play-again-lb" class="btn-primary">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/progress.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/objects.js"></script>
+  <script src="js/targeting.js"></script>
+  <script src="js/themes.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
