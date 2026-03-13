@@ -3,6 +3,7 @@
 const UPGRADES = [
   {
     id: 'chain',
+    icon: '⛓',
     tier: 'start',
     names: { space: 'Gravity Well', ocean: 'Riptide', sky: 'Lightning Strike' },
     desc: {
@@ -14,6 +15,7 @@ const UPGRADES = [
   },
   {
     id: 'streakBoost',
+    icon: '✴',
     tier: 'start',
     names: { space: 'Solar Flare', ocean: 'Tidal Surge', sky: 'Jet Stream' },
     desc: {
@@ -25,6 +27,7 @@ const UPGRADES = [
   },
   {
     id: 'shield',
+    icon: '🛡',
     tier: 'start',
     names: { space: 'Shield Array', ocean: 'Coral Armor', sky: 'Gust Guard' },
     desc: {
@@ -36,6 +39,7 @@ const UPGRADES = [
   },
   {
     id: 'slowAll',
+    icon: '🌀',
     tier: 'start',
     names: { space: 'Warp Drag', ocean: 'Undertow', sky: 'Headwind' },
     desc: {
@@ -47,6 +51,7 @@ const UPGRADES = [
   },
   {
     id: 'bomb',
+    icon: '💣',
     tier: 'start',
     names: { space: 'Nova Burst', ocean: 'Depth Charge', sky: 'Thunderbolt' },
     desc: {
@@ -58,6 +63,7 @@ const UPGRADES = [
   },
   {
     id: 'hotZoneBoost',
+    icon: '🔥',
     tier: 'start',
     names: { space: 'Event Horizon', ocean: 'Whirlpool', sky: 'Thermal Lift' },
     desc: {
@@ -69,6 +75,7 @@ const UPGRADES = [
   },
   {
     id: 'luckyBonus',
+    icon: '🍀',
     tier: 'start',
     names: { space: 'Nebula Luck', ocean: 'Treasure Drift', sky: 'Lucky Wind' },
     desc: {
@@ -80,6 +87,7 @@ const UPGRADES = [
   },
   {
     id: 'quickBonus',
+    icon: '⚡',
     tier: 'start',
     names: { space: 'Warp Strike', ocean: 'Flash Current', sky: 'Tailwind' },
     desc: {
@@ -91,6 +99,7 @@ const UPGRADES = [
   },
   {
     id: 'commutative',
+    icon: '🔁',
     tier: 'unlock',
     names: { space: 'Twin Stars', ocean: 'Echo Wave', sky: 'Harmonic' },
     desc: {
@@ -102,6 +111,7 @@ const UPGRADES = [
   },
   {
     id: 'streakSlow',
+    icon: '❄',
     tier: 'unlock',
     names: { space: 'Dark Matter', ocean: 'Abyss Pull', sky: 'Storm Front' },
     desc: {
@@ -113,6 +123,7 @@ const UPGRADES = [
   },
   {
     id: 'reveal',
+    icon: '👁',
     tier: 'unlock',
     names: { space: 'Pulsar', ocean: 'Sonar Ping', sky: 'Radar Sweep' },
     desc: {
@@ -124,6 +135,7 @@ const UPGRADES = [
   },
   {
     id: 'lastChance',
+    icon: '💫',
     tier: 'unlock',
     names: { space: 'Supernova', ocean: 'Tsunami', sky: 'Cyclone' },
     desc: {

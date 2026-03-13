@@ -604,6 +604,101 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 1.5rem;
 }
 
+/* Run-mode ante chip in HUD center */
+.run-ante-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a29bfe;
+  background: rgba(162,155,254,0.18);
+  border: 1px solid rgba(162,155,254,0.45);
+  border-radius: 20px;
+  padding: 2px 10px;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+.run-ante-chip.hidden { display: none; }
+
+/* Active upgrades bar — left side of game screen */
+#active-upgrades-bar {
+  position: absolute;
+  left: 8px;
+  top: 80px;          /* clears the HUD overlay */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 10;
+  pointer-events: none;
+  max-height: calc(100vh - 200px);
+  overflow: hidden;   /* don't spill into input area */
+}
+#active-upgrades-bar.hidden { display: none; }
+
+/* Individual upgrade pill */
+.upg-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 10px;
+  padding: 5px 6px 4px;
+  min-width: 54px;
+  max-width: 60px;
+  text-align: center;
+  transition: border-color 0.3s, background 0.3s, opacity 0.3s;
+}
+.upg-pill.upg-spent {
+  opacity: 0.35;
+  border-color: rgba(255,255,255,0.15);
+}
+.upg-pill.upg-ready {
+  border-color: #f7c948;
+  background: rgba(247,201,72,0.1);
+}
+.upg-pill.upg-active {
+  border-color: #74b9ff;
+  background: rgba(116,185,255,0.15);
+  animation: upg-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes upg-pulse {
+  from { box-shadow: 0 0 4px rgba(116,185,255,0.3); }
+  to   { box-shadow: 0 0 10px rgba(116,185,255,0.7); }
+}
+.upg-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.upg-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.1;
+  word-break: break-word;
+  max-width: 54px;
+}
+.upg-count {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #f7c948;
+  line-height: 1;
+}
+/* Shrinking timer bar inside the streakSlow pill */
+.upg-timer-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin-top: 2px;
+  overflow: hidden;
+}
+.upg-timer-fill {
+  height: 100%;
+  background: #74b9ff;
+  border-radius: 2px;
+  transition: width 0.25s linear;
+}
+
 /* Level-up banner */
 #level-up-banner {
   position: absolute;

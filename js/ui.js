@@ -350,15 +350,70 @@ const UI = (() => {
     const tableLabel = state.minTable === state.maxTable
       ? I18n.t('tablesFocus', { table: state.minTable })
       : I18n.t('tablesRange', { min: state.minTable, max: state.maxTable });
-    let hudTables = tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
+    document.getElementById('hud-tables').textContent =
+      tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
+
+    // Run-mode ante chip
+    const anteChip = document.getElementById('run-ante-chip');
     if (state.runMode) {
-      const badges = [];
-      if (state.shieldCharges > 0) badges.push(`🛡×${state.shieldCharges}`);
-      if (state.bombCharges > 0)   badges.push(`💣×${state.bombCharges}`);
-      hudTables += ` | Ante ${state.currentAnte}` + (badges.length ? ' ' + badges.join(' ') : '');
+      anteChip.textContent = `⚔ Ante ${state.currentAnte}`;
+      anteChip.classList.remove('hidden');
+    } else {
+      anteChip.classList.add('hidden');
     }
-    document.getElementById('hud-tables').textContent = hudTables;
+
+    // Run-mode active upgrades bar
+    _updateUpgradesBar(state);
+
     renderLives(state.lives, state.maxLives, state.theme);
+  }
+
+  function _updateUpgradesBar(state) {
+    const bar = document.getElementById('active-upgrades-bar');
+    if (!state.runMode || !state.activeUpgrades || state.activeUpgrades.length === 0) {
+      bar.classList.add('hidden');
+      return;
+    }
+    bar.classList.remove('hidden');
+
+    // Build one pill per acquired upgrade
+    bar.innerHTML = state.activeUpgrades.map(upg => {
+      const name = upgradeNameForTheme(upg, state.theme);
+      const icon = upg.icon || '★';
+
+      // Count badge for consumables
+      let countBadge = '';
+      let modClass = '';
+      if (upg.id === 'shield') {
+        const n = state.shieldCharges || 0;
+        countBadge = `<span class="upg-count">${n}</span>`;
+        if (n === 0) modClass = 'upg-spent';
+      } else if (upg.id === 'bomb') {
+        const n = state.bombCharges || 0;
+        countBadge = `<span class="upg-count">${n}</span>`;
+        if (n === 0) modClass = 'upg-spent';
+      } else if (upg.id === 'lastChance') {
+        modClass = state.lastChanceUsed ? 'upg-spent' : 'upg-ready';
+        countBadge = state.lastChanceUsed
+          ? '<span class="upg-count">✗</span>'
+          : '<span class="upg-count">✓</span>';
+      }
+
+      // Timer bar for streak-slow when active
+      let timerBar = '';
+      if (upg.id === 'streakSlow' && state.streakSlowTimer > 0) {
+        const pct = Math.round((state.streakSlowTimer / 5) * 100);
+        timerBar = `<div class="upg-timer-bar"><div class="upg-timer-fill" style="width:${pct}%"></div></div>`;
+        modClass = 'upg-active';
+      }
+
+      return `<div class="upg-pill ${modClass}" title="${name}">
+        <span class="upg-icon">${icon}</span>
+        <span class="upg-label">${name}</span>
+        ${countBadge}
+        ${timerBar}
+      </div>`;
+    }).join('');
   }
 
   function renderLives(lives, max, theme) {
