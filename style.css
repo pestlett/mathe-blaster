@@ -397,6 +397,20 @@ input[type="number"]::-webkit-outer-spin-button {
   border-color: rgba(255,255,255,0.5);
 }
 
+.home-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.home-btns .btn-secondary {
+  flex: 1;
+}
+@media (max-width: 480px) {
+  .home-btns {
+    flex-direction: column;
+  }
+}
+
 /* ===== GAME SCREEN ===== */
 #screen-game {
   background: #000;
