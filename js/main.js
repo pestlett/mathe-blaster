@@ -213,8 +213,9 @@ function speakQuestion(text) {
     // Unfreeze any previous utterance that may not have fired onend
     state.ttsFreezeActive = false;
     window.speechSynthesis.cancel();
-    // Mute the mic so TTS output isn't picked up as voice input
-    Voice.stop();
+    // Mute SR results while TTS speaks — SR stays running so there's no
+    // restart dead zone. The user can speak the instant TTS finishes.
+    Voice.muteResults(true);
     const lang       = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const timesWord  = lang === 'de' ? 'mal' : lang === 'es' ? 'por' : 'times';
     const speakable  = text.replace(/×/, timesWord).replace(/\s+/g, ' ').trim();
@@ -225,7 +226,7 @@ function speakQuestion(text) {
     utt.onstart = () => { state.ttsFreezeActive = true; };
     const resume = () => {
       state.ttsFreezeActive = false;
-      if (state.phase === 'PLAYING' && !Engine.isPaused()) Voice.start();
+      Voice.muteResults(false); // unmute — SR already running, no restart needed
     };
     utt.onend   = resume;
     utt.onerror = resume;

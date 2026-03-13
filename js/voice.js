@@ -17,6 +17,10 @@ const Voice = (() => {
   let lastFiredNum  = null;
   let lastFiredTime = 0;
 
+  // While TTS is speaking, discard all SR results so the mic doesn't
+  // hear the speaker output. SR stays running (no restart dead zone).
+  let resultsMuted = false;
+
   // ---- Map game language → BCP-47 recognition lang ----
   const LANG_MAP = { en: 'en-US', de: 'de-DE', es: 'es-ES' };
   function recognitionLang() {
@@ -210,6 +214,7 @@ const Voice = (() => {
 
   // ---- Final transcript handling ----
   function handleTranscript(alternatives, confidences) {
+    if (resultsMuted) return;
     const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const cmds = NAV_COMMANDS[lang] || NAV_COMMANDS.en;
 
@@ -280,6 +285,7 @@ const Voice = (() => {
   // Shows the partially-recognised number in the input field while the user
   // is still speaking, giving immediate visual feedback.
   function handleInterim(transcript) {
+    if (resultsMuted) return;
     const text = transcript.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));
@@ -380,6 +386,7 @@ const Voice = (() => {
 
   function start() {
     if (!supported || !recognition) return;
+    resultsMuted  = false; // clear any stale mute from previous TTS
     listening = shouldRestart = true;
     lastFiredNum  = null;  // reset debounce on new game session
     lastFiredTime = 0;
@@ -399,5 +406,7 @@ const Voice = (() => {
     callbacks.onStatusChange?.(false);
   }
 
-  return { supported, init, start, stop, parseNumber };
+  function muteResults(v) { resultsMuted = v; }
+
+  return { supported, init, start, stop, muteResults, parseNumber };
 })();
