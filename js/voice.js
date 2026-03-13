@@ -384,8 +384,10 @@ const Voice = (() => {
     lastFiredNum  = null;  // reset debounce on new game session
     lastFiredTime = 0;
     recognition.lang = recognitionLang();
+    // NOTE: do NOT call onStatusChange(true) here — SR is not yet capturing.
+    // recognition.onstart fires when the engine is actually listening; that's
+    // the sole place we signal "ready" so the mic icon reflects reality.
     try { recognition.start(); resetWatchdog(); } catch (_) {}
-    callbacks.onStatusChange?.(true);
   }
 
   function stop() {
