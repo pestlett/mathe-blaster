@@ -43,6 +43,7 @@ html, body {
   background: radial-gradient(ellipse at 50% 30%, #1a1a4e 0%, #0d0d1a 70%);
   overflow-y: auto;
   align-items: flex-start;
+  justify-content: flex-start;
   padding: 20px;
   flex-direction: column;
 }
