@@ -24,11 +24,10 @@ const UI = (() => {
     const ageInput = document.getElementById('input-age');
     const rangeMin = document.getElementById('range-min');
     const rangeMax = document.getElementById('range-max');
-    const rangeDisplay = document.getElementById('range-display');
+    const rangeMinVal = document.getElementById('range-min-val');
+    const rangeMaxVal = document.getElementById('range-max-val');
     const hintThreshInput = document.getElementById('hint-threshold');
     const hintThreshDisplay = document.getElementById('hint-threshold-display');
-    const focusToggle = document.getElementById('focus-mode-toggle');
-    const focusSelect = document.getElementById('focus-table');
     const modeNote = document.getElementById('mode-note');
     const btnStart = document.getElementById('btn-start');
 
@@ -57,11 +56,6 @@ const UI = (() => {
       });
     });
 
-    // Focus mode toggle
-    focusToggle.addEventListener('change', () => {
-      focusSelect.disabled = !focusToggle.checked;
-    });
-
     // Difficulty
     document.querySelectorAll('.diff-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -71,20 +65,47 @@ const UI = (() => {
       });
     });
 
+    // Tables tab switcher
+    let tablesMode = 'range'; // 'range' | 'single'
+    let focusSingleTable = 10;
+    const rangePanel = document.getElementById('tables-range-panel');
+    const singlePanel = document.getElementById('tables-single-panel');
+    const singleLabel = document.getElementById('single-table-label');
+
+    document.querySelectorAll('.tables-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tables-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        tablesMode = tab.dataset.tab;
+        rangePanel.hidden = (tablesMode !== 'range');
+        singlePanel.hidden = (tablesMode !== 'single');
+      });
+    });
+
+    // Single-table grid
+    document.querySelectorAll('.table-num-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        focusSingleTable = parseInt(btn.dataset.val);
+        singleLabel.textContent = `${focusSingleTable}×`;
+      });
+    });
+
     // Range sliders — clamp so min ≤ max at all times
+    const updateRangeDisplay = () => {
+      rangeMinVal.textContent = rangeMin.value;
+      rangeMaxVal.textContent = rangeMax.value;
+    };
     rangeMin.addEventListener('input', () => {
-      if (parseInt(rangeMin.value) > parseInt(rangeMax.value)) {
-        rangeMax.value = rangeMin.value;
-      }
-      rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
+      if (parseInt(rangeMin.value) > parseInt(rangeMax.value)) rangeMax.value = rangeMin.value;
+      updateRangeDisplay();
     });
     rangeMax.addEventListener('input', () => {
-      if (parseInt(rangeMax.value) < parseInt(rangeMin.value)) {
-        rangeMin.value = rangeMax.value;
-      }
-      rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
+      if (parseInt(rangeMax.value) < parseInt(rangeMin.value)) rangeMin.value = rangeMax.value;
+      updateRangeDisplay();
     });
-    rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
+    updateRangeDisplay();
 
     hintThreshInput.addEventListener('input', () => {
       hintThreshDisplay.textContent = hintThreshInput.value;
@@ -105,18 +126,17 @@ const UI = (() => {
         return;
       }
 
-      let min = parseInt(rangeMin.value);
-      let max = parseInt(rangeMax.value);
-      if (min > max) { const t = min; min = max; max = t; }
-
-      // Focus mode overrides range
-      if (focusToggle.checked) {
-        const ft = parseInt(focusSelect.value);
-        min = ft; max = ft;
+      let min, max;
+      if (tablesMode === 'single') {
+        min = focusSingleTable; max = focusSingleTable;
+      } else {
+        min = parseInt(rangeMin.value);
+        max = parseInt(rangeMax.value);
+        if (min > max) { const t = min; min = max; max = t; }
       }
 
       Progress.saveName(name);
-      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value), practiceMode: selectedMode === 'practice' });
+      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value), practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single' });
     });
 
     // Clear error highlight on input

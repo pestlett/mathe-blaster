@@ -157,14 +157,53 @@ input[type="number"]::-webkit-outer-spin-button {
   margin-top: 5px;
 }
 
+/* Tables tab switcher */
+.tables-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 14px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.tables-tab {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tables-tab:first-child { border-right: 1px solid var(--card-border); }
+.tables-tab.active {
+  background: rgba(247,201,72,0.15);
+  color: var(--accent);
+}
+
+/* Range display */
+.range-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 8px;
+}
+.range-values strong {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
 /* Range sliders */
 .range-container {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
 }
 .range-slider {
-  flex: 1;
+  width: 100%;
   -webkit-appearance: none;
   height: 6px;
   border-radius: 3px;
@@ -173,19 +212,57 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
+  box-shadow: 0 0 8px rgba(247,201,72,0.5);
 }
 .range-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border: none;
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
+}
+
+/* Tick marks under sliders */
+.range-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.3);
+  margin-top: 2px;
+}
+
+/* Single-table number grid */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.table-num-btn {
+  padding: 10px 0;
+  border-radius: 10px;
+  border: 2px solid var(--card-border);
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.table-num-btn:hover {
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
+}
+.table-num-btn.active {
+  border-color: var(--accent);
+  background: rgba(247,201,72,0.18);
+  color: var(--accent);
 }
 
 /* Mode buttons */
@@ -213,38 +290,6 @@ input[type="number"]::-webkit-outer-spin-button {
   color: var(--accent);
 }
 
-/* Focus mode row */
-.focus-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-}
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.88rem;
-  color: rgba(255,255,255,0.7);
-}
-.toggle-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.focus-select {
-  background: var(--input-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  cursor: pointer;
-  outline: none;
-}
-.focus-select:disabled { opacity: 0.35; cursor: default; }
 
 /* Difficulty buttons */
 .difficulty-btns {

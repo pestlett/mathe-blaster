@@ -37,25 +37,45 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Tables Range: <span id="range-display">1 – 10</span></label>
-        <div class="range-container">
-          <input type="range" id="range-min" min="1" max="12" value="1" class="range-slider">
-          <input type="range" id="range-max" min="1" max="12" value="10" class="range-slider">
+        <label>Tables</label>
+        <div class="tables-tabs">
+          <button class="tables-tab active" data-tab="range">Range</button>
+          <button class="tables-tab" data-tab="single">One Table</button>
         </div>
-        <div class="focus-row">
-          <label class="toggle-label">
-            <input type="checkbox" id="focus-mode-toggle">
-            <span>Focus on one table</span>
-          </label>
-          <select id="focus-table" class="focus-select" disabled>
-            <option value="2">2×</option><option value="3">3×</option>
-            <option value="4">4×</option><option value="5">5×</option>
-            <option value="6">6×</option><option value="7">7×</option>
-            <option value="8">8×</option><option value="9">9×</option>
-            <option value="10">10×</option><option value="11">11×</option>
-            <option value="12">12×</option>
-          </select>
+        <div id="tables-range-panel">
+          <div class="range-values">
+            <span>From <strong id="range-min-val">1</strong></span>
+            <span>To <strong id="range-max-val">10</strong></span>
+          </div>
+          <div class="range-container">
+            <input type="range" id="range-min" min="1" max="12" value="1" class="range-slider">
+            <input type="range" id="range-max" min="1" max="12" value="10" class="range-slider">
+          </div>
+          <div class="range-ticks">
+            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+            <span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span>
+          </div>
         </div>
+        <div id="tables-single-panel" hidden>
+          <div class="table-grid" id="table-grid">
+            <button class="table-num-btn" data-val="1">1</button>
+            <button class="table-num-btn" data-val="2">2</button>
+            <button class="table-num-btn" data-val="3">3</button>
+            <button class="table-num-btn" data-val="4">4</button>
+            <button class="table-num-btn" data-val="5">5</button>
+            <button class="table-num-btn" data-val="6">6</button>
+            <button class="table-num-btn" data-val="7">7</button>
+            <button class="table-num-btn" data-val="8">8</button>
+            <button class="table-num-btn" data-val="9">9</button>
+            <button class="table-num-btn active" data-val="10">10</button>
+            <button class="table-num-btn" data-val="11">11</button>
+            <button class="table-num-btn" data-val="12">12</button>
+          </div>
+          <div class="setting-note" style="margin-top:8px">Only questions from the <span id="single-table-label">10×</span> table</div>
+        </div>
+        <!-- hidden inputs kept for JS compatibility -->
+        <input type="hidden" id="focus-mode-toggle" value="0">
+        <input type="hidden" id="focus-table" value="10">
       </div>
       <div class="form-group">
         <label>Mode</label>
