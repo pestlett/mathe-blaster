@@ -761,8 +761,6 @@ const UI = (() => {
       section.classList.remove('hidden');
       rowEl.innerHTML = '';
 
-      const adjBonuses = getAdjacencyBonuses(orderedUpgrades);
-
       orderedUpgrades.forEach((upg, i) => {
         if (i > 0) {
           const prevId = orderedUpgrades[i - 1].id;
@@ -831,7 +829,8 @@ const UI = (() => {
         el.classList.add('hidden');
         onDone(null, orderedUpgrades);
       };
-      skipBtn.classList.toggle('hidden', options.length === 0);
+      skipBtn.textContent = options.length > 0 ? 'Keep order ›' : 'Done ›';
+      skipBtn.classList.remove('hidden');
     }
 
     buildReorderRow();
