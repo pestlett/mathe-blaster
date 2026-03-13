@@ -1,7 +1,42 @@
 // progress.js - localStorage persistence: per-question stats + sessions
 
 const Progress = (() => {
-  const STORAGE_KEY = 'multiblaster_v1';
+  const STORAGE_KEY_LEGACY = 'multiblaster_v1';
+  let currentKey = STORAGE_KEY_LEGACY;
+
+  // Normalise name+age into a safe storage slug
+  function playerSlug(name, age) {
+    const n = (name || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    const a = parseInt(age) || 0;
+    return (n || 'guest') + (a > 0 ? `_${a}` : '');
+  }
+
+  // Call this whenever we know the active player name + age.
+  // Migrates legacy single-user data to the per-player key on first encounter.
+  function setPlayer(name, age) {
+    const newKey = `multiblaster_v1_${playerSlug(name, age)}`;
+    if (newKey === currentKey) return;
+    try {
+      const existing = JSON.parse(localStorage.getItem(newKey));
+      const isEmpty = !existing || (
+        !existing.sessions?.length &&
+        !existing.stats &&
+        !Object.keys(existing.lifetime || {}).length
+      );
+      if (isEmpty) {
+        const legacy = localStorage.getItem(STORAGE_KEY_LEGACY);
+        if (legacy) {
+          const legacyData = JSON.parse(legacy);
+          // Only migrate if the legacy record belongs to this player
+          const legacyName = legacyData?.player?.name || '';
+          if (legacyName.toLowerCase().trim() === (name || '').toLowerCase().trim()) {
+            localStorage.setItem(newKey, legacy);
+          }
+        }
+      }
+    } catch {}
+    currentKey = newKey;
+  }
 
   const ACHIEVEMENTS = [
     { id: 'first_correct',  label: 'First Blood',       desc: 'Get your first correct answer',        check: (d) => d.totalCorrect >= 1 },
@@ -20,7 +55,7 @@ const Progress = (() => {
 
   function load() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { player: {}, stats: {}, sessions: [], achievements: {}, lifetime: {} };
+      return JSON.parse(localStorage.getItem(currentKey)) || { player: {}, stats: {}, sessions: [], achievements: {}, lifetime: {} };
     } catch {
       return { player: {}, stats: {}, sessions: [], achievements: {}, lifetime: {} };
     }
@@ -28,7 +63,7 @@ const Progress = (() => {
 
   function save(data) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(currentKey, JSON.stringify(data));
     } catch {}
   }
 
@@ -147,6 +182,20 @@ const Progress = (() => {
     save(d);
   }
 
+  // ---- Extended tables unlock ----
+  function unlockExtendedTables() {
+    const d = load();
+    if (!d.lifetime) d.lifetime = {};
+    if (!d.lifetime.extendedTablesUnlocked) {
+      d.lifetime.extendedTablesUnlocked = true;
+      save(d);
+    }
+  }
+
+  function isExtendedTablesUnlocked() {
+    return !!(load().lifetime?.extendedTablesUnlocked);
+  }
+
   // ---- Mastery overview ----
   // Returns every fact in the game range with its masteredLevel,
   // plus aggregate counts for win-condition checking.
@@ -180,5 +229,5 @@ const Progress = (() => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || null; } catch { return null; }
   }
 
-  return { getAll, saveName, recordAttempt, getStats, getMastery, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings };
+  return { setPlayer, getAll, saveName, recordAttempt, getStats, getMastery, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked };
 })();

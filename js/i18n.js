@@ -35,6 +35,7 @@ const I18n = (() => {
       dailyNew:         '⚡ Daily Challenge — {table}× table · {diff}',
       dailyDone:        '⚡ Daily Challenge ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Parent Dashboard',
+      extendedTablesUnlocked: '🎉 Extended Tables Unlocked! Try 13–20×',
 
       // Help section
       helpTitle:        '❓ How to Play',
@@ -172,6 +173,7 @@ const I18n = (() => {
       dailyNew:         '⚡ Tages-Challenge — {table}×-Tabelle · {diff}',
       dailyDone:        '⚡ Tages-Challenge ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Eltern-Dashboard',
+      extendedTablesUnlocked: '🎉 Erweiterte Tabellen freigeschaltet! Probiere 13–20×',
 
       // Help section
       helpTitle:        '❓ Wie spielt man',
@@ -302,6 +304,7 @@ const I18n = (() => {
       dailyNew:         '⚡ Desafío Diario — tabla del {table}× · {diff}',
       dailyDone:        '⚡ Desafío Diario ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Panel de Padres',
+      extendedTablesUnlocked: '🎉 ¡Tablas Extendidas Desbloqueadas! Prueba 13–20×',
 
       // Help section
       helpTitle:        '❓ Cómo jugar',

@@ -115,6 +115,7 @@ const UI = (() => {
     });
 
     // Range sliders
+    const EXTENDED_MAX = 20;
     const updateRangeDisplay = () => {
       rangeMinVal.textContent = rangeMin.value;
       rangeMaxVal.textContent = rangeMax.value;
@@ -128,6 +129,45 @@ const UI = (() => {
       updateRangeDisplay();
     });
     updateRangeDisplay();
+
+    // Extended tables: expand sliders + single-table grid when unlocked
+    function _updateTablesRange() {
+      const extended = Progress.isExtendedTablesUnlocked();
+      const newMax = extended ? EXTENDED_MAX : 12;
+      rangeMin.max = newMax;
+      rangeMax.max = newMax;
+      // Re-clamp current values
+      if (parseInt(rangeMin.value) > newMax) rangeMin.value = newMax;
+      if (parseInt(rangeMax.value) > newMax) rangeMax.value = newMax;
+      updateRangeDisplay();
+      // Rebuild tick marks
+      const ticks = document.querySelector('.range-ticks');
+      if (ticks) {
+        ticks.innerHTML = Array.from({ length: newMax }, (_, i) => `<span>${i + 1}</span>`).join('');
+      }
+      // Rebuild extended single-table buttons (13–20)
+      const grid = document.getElementById('table-grid');
+      grid.querySelectorAll('.table-num-btn.extended').forEach(b => b.remove());
+      if (extended) {
+        for (let v = 13; v <= EXTENDED_MAX; v++) {
+          const btn = document.createElement('button');
+          btn.className = 'table-num-btn extended';
+          btn.dataset.val = v;
+          btn.textContent = v;
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            focusSingleTable = v;
+            singleLabel.textContent = `${v}×`;
+            singleNote.textContent = I18n.t('singleNote', { table: v });
+          });
+          grid.appendChild(btn);
+        }
+      }
+      // Show/hide unlock badge
+      const badge = document.getElementById('extended-tables-badge');
+      if (badge) badge.hidden = !extended;
+    }
 
     hintThreshInput.addEventListener('input', () => {
       hintThreshDisplay.textContent = hintThreshInput.value;
@@ -148,11 +188,13 @@ const UI = (() => {
         if (min > max) { const tmp = min; min = max; max = tmp; }
       }
 
+      Progress.setPlayer(name, age);
       Progress.saveName(name);
       Progress.saveSettings({
         theme: selectedTheme, diff: selectedDiff, mode: selectedMode,
         tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
+        lastPlayer: name, lastAge: age,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
@@ -195,18 +237,33 @@ const UI = (() => {
       if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
       if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
       const dp = Progress.getDailyParams();
+      Progress.setPlayer(name, age);
       Progress.saveName(name);
+      Progress.saveSettings({ ...Progress.loadSettings(), lastPlayer: name, lastAge: age });
       onStart({ name, age, theme: selectedTheme,
         minTable: dp.table, maxTable: dp.table, difficulty: dp.difficulty,
         hintThreshold: parseInt(hintThreshInput.value), practiceMode: false, isDaily: true });
     });
 
-    // Restore saved name
-    const savedName = Progress.getAll().player?.name;
-    if (savedName && !nameInput.value) nameInput.value = savedName;
-
-    // Restore saved settings
+    // Restore saved name + age, then activate player data for that identity
     const saved = Progress.loadSettings();
+    const savedName = saved?.lastPlayer || Progress.getAll().player?.name;
+    if (savedName && !nameInput.value) nameInput.value = savedName;
+    if (saved?.lastAge && !ageInput.value) ageInput.value = saved.lastAge;
+    if (savedName || saved?.lastAge) {
+      Progress.setPlayer(nameInput.value, ageInput.value);
+    }
+    _updateTablesRange();
+
+    // Re-activate player data + refresh extended-tables when name or age changes
+    function _onIdentityChange() {
+      Progress.setPlayer(nameInput.value.trim(), ageInput.value);
+      _updateTablesRange();
+    }
+    nameInput.addEventListener('change', _onIdentityChange);
+    ageInput.addEventListener('change', _onIdentityChange);
+
+    // Restore remaining settings
     if (saved) {
       if (saved.theme) document.querySelector(`.theme-card[data-theme="${saved.theme}"]`)?.click();
       if (saved.diff)  document.querySelector(`.diff-btn[data-diff="${saved.diff}"]`)?.click();

@@ -162,6 +162,85 @@ describe('Progress.isMostImproved', () => {
   });
 });
 
+describe('Progress.setPlayer — per-player isolation', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeProgressCtx(); });
+
+  test('data is isolated between players', () => {
+    ctx.Progress.setPlayer('Emma', 7);
+    ctx.Progress.recordAttempt('3x4', true, 1000);
+
+    ctx.Progress.setPlayer('Dad', 40);
+    const dadStats = ctx.Progress.getStats();
+    expect(dadStats['3x4']).toBeUndefined();
+  });
+
+  test('switching back to same player restores their data', () => {
+    ctx.Progress.setPlayer('Emma', 7);
+    ctx.Progress.recordAttempt('3x4', true, 1000);
+
+    ctx.Progress.setPlayer('Dad', 40);
+    ctx.Progress.setPlayer('Emma', 7);
+    const stats = ctx.Progress.getStats();
+    expect(stats['3x4'].attempts).toBe(1);
+  });
+
+  test('legacy data migrated when player name matches', () => {
+    // Seed legacy data with player name
+    ctx.localStorage.setItem('multiblaster_v1', JSON.stringify({
+      player: { name: 'Emma' },
+      stats: { '5x6': { attempts: 3, correct: 2, totalTimeMs: 6000, lastSeen: 0, masteredLevel: 2 } },
+      sessions: [],
+      achievements: {},
+      lifetime: {},
+    }));
+    ctx.Progress.setPlayer('Emma', 7);
+    const stats = ctx.Progress.getStats();
+    expect(stats['5x6'].attempts).toBe(3);
+  });
+
+  test('legacy data NOT migrated when player name differs', () => {
+    ctx.localStorage.setItem('multiblaster_v1', JSON.stringify({
+      player: { name: 'Emma' },
+      stats: { '5x6': { attempts: 3, correct: 2, totalTimeMs: 6000, lastSeen: 0, masteredLevel: 2 } },
+      sessions: [],
+      achievements: {},
+      lifetime: {},
+    }));
+    ctx.Progress.setPlayer('Dad', 40);
+    const stats = ctx.Progress.getStats();
+    expect(stats['5x6']).toBeUndefined();
+  });
+});
+
+describe('Progress extended tables unlock', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeProgressCtx(); ctx.Progress.setPlayer('Emma', 7); });
+
+  test('isExtendedTablesUnlocked is false by default', () => {
+    expect(ctx.Progress.isExtendedTablesUnlocked()).toBe(false);
+  });
+
+  test('unlockExtendedTables sets flag', () => {
+    ctx.Progress.unlockExtendedTables();
+    expect(ctx.Progress.isExtendedTablesUnlocked()).toBe(true);
+  });
+
+  test('calling unlockExtendedTables twice is idempotent', () => {
+    ctx.Progress.unlockExtendedTables();
+    ctx.Progress.unlockExtendedTables();
+    expect(ctx.Progress.isExtendedTablesUnlocked()).toBe(true);
+  });
+
+  test('extended tables unlock is per-player', () => {
+    ctx.Progress.setPlayer('Emma', 7);
+    ctx.Progress.unlockExtendedTables();
+
+    ctx.Progress.setPlayer('Dad', 40);
+    expect(ctx.Progress.isExtendedTablesUnlocked()).toBe(false);
+  });
+});
+
 describe('Progress.getDailyParams', () => {
   let ctx;
   beforeEach(() => { ctx = makeProgressCtx(); });

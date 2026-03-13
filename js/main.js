@@ -248,6 +248,7 @@ function checkMasteryWin() {
   if (state.phase !== 'PLAYING' || state.masteryWin) return;
   const { mastered, total } = Progress.getMastery(state.minTable, state.maxTable);
   if (total > 0 && mastered === total) {
+    Progress.unlockExtendedTables();
     state.masteryWin = true;
     state.confetti = spawnConfetti(window.innerWidth);
     vibrate([40, 60, 80, 60, 40]);
@@ -445,6 +446,7 @@ function togglePause() {
 }
 
 function startGame(settings) {
+  Progress.setPlayer(settings.name, settings.age);
   state.name = settings.name;
   state.age = settings.age;
   state.theme = settings.theme;
