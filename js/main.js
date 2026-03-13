@@ -598,10 +598,15 @@ function update(dt) {
   const unpauseFreezing = state.unpauseFreezeTimer > 0;
   const freezeMult      = (levelFreezing || ttsFreezing || unpauseFreezing) ? 0 : (state.freezeActive > 0 ? 0.25 : 1);
 
+  // Boss aura: regular objects fall at 65% speed while a boss is alive
+  const hasBossActive = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
+  const bossMult = hasBossActive ? 0.65 : 1;
+
   // Update all objects (keep animating during ENDING)
   for (const obj of state.objects) {
-    // Apply freeze slowdown to non-special objects
-    const effectiveDt = (obj.isFreeze || obj.isLifeUp) ? dt : dt * freezeMult;
+    // Special items ignore boss aura; boss ignores its own aura; regular objects slowed by it
+    const isSpecial = obj.isFreeze || obj.isLifeUp || obj.isBoss;
+    const effectiveDt = isSpecial ? dt * freezeMult : dt * freezeMult * bossMult;
     Objects.update(obj, effectiveDt, window.innerHeight - 148);
 
     // Detect first frame of dying (object hit bottom)
@@ -654,8 +659,16 @@ function update(dt) {
   if (isBossLevel && !hasBoss) {
     state._bossSpawnedThisLevel = true;
     const stats = Progress.getStats();
-    const q = Questions.pick(state.minTable, state.maxTable, stats, [], state.wrongQueue);
-    state.objects.push(Objects.createBoss(q, window.innerWidth, window.innerHeight, speed));
+    // Scale number of questions with level: 2 at L5, 3 at L10, 4 at L15, cap at 5
+    const numQ = Math.min(5, 1 + Math.floor(state.level / 5));
+    const usedAnswers = [];
+    const bossQuestions = [];
+    for (let i = 0; i < numQ; i++) {
+      const q = Questions.pick(state.minTable, state.maxTable, stats, usedAnswers, state.wrongQueue);
+      bossQuestions.push(q);
+      usedAnswers.push(q.answer);
+    }
+    state.objects.push(Objects.createBoss(bossQuestions, window.innerWidth, window.innerHeight, speed));
   }
   if (state.level % 5 !== 0 || state.correctThisLevel > 0) {
     state._bossSpawnedThisLevel = false;
@@ -808,27 +821,57 @@ function submitAnswer() {
   const val = parseInt(input.value.trim());
   if (isNaN(val)) { focusAnswerInput(); return; }
 
-  // Boss: correct answer awards 50 bonus pts and ends boss round
+  // Boss: cycles through multiple questions; shrinks on correct, grows on wrong
   if (target.isBoss) {
     if (val === target.answer) {
       const particleColor = Themes.particleColorForTheme(state.theme);
-      Objects.triggerDestruction(target, particleColor);
-      state.score += 50;
+      Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
+      state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
       state.totalCorrect++;
       state.streak++;
       state.maxStreak = Math.max(state.maxStreak, state.streak);
-      state.bossesDefeated++;
-      Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
-      state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
-      checkTableMastery();
-      Audio.play('levelUp');
-      UI.showLevelUp('Boss!', null);
+      state.score += 15;
+      target.questionIndex++;
+      target.scale = Math.max(0.3, target.scale - 0.25); // shrink on each hit
+
+      if (target.questionIndex >= target.questionsTotal) {
+        // All questions answered — boss defeated
+        Objects.triggerDestruction(target, particleColor, 40); // big explosion
+        state.score += 30; // kill bonus
+        state.bossesDefeated++;
+
+        // Chain kill: destroy all nearby objects within 160px
+        const killRadius = 160;
+        for (const obj of state.objects) {
+          if (obj === target || obj.dead || obj.dying || obj.destroyed) continue;
+          const dx = obj.x - target.x;
+          const dy = obj.y - target.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= killRadius) {
+            Objects.triggerDestruction(obj, particleColor);
+            state.score += 5;
+          }
+        }
+        checkTableMastery();
+        Audio.play('levelUp');
+        UI.showLevelUp('BOSS!', null);
+      } else {
+        // Advance to the next question
+        const nextQ = target.questions[target.questionIndex];
+        target.question = nextQ.display;
+        target.answer = nextQ.answer;
+        target.key = nextQ.key;
+        target.wrongAttempts = 0;
+        checkTableMastery();
+        Audio.play('levelUp');
+        UI.showLevelUp(`${target.questionIndex}/${target.questionsTotal}`, null);
+      }
       UI.updateHUD(state);
       input.value = '';
       input.placeholder = I18n.t('answerPlaceholder');
       state.answerStartTime = Date.now();
       Targeting.syncTarget(state.objects);
     } else {
+      target.scale = Math.min(1.5, (target.scale ?? 1.0) + 0.15); // grow on wrong answer
       target.wrongAttempts = (target.wrongAttempts || 0) + 1;
       Audio.play('wrong');
       UI.shakeInput();

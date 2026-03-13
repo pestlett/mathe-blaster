@@ -79,10 +79,10 @@ const Objects = (() => {
     }
   }
 
-  function triggerDestruction(obj, particleColor) {
+  function triggerDestruction(obj, particleColor, particleCount = 20) {
     obj.destroyed = true;
     obj.destroyTimer = 0;
-    const count = 20;
+    const count = particleCount;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
       const speed = 60 + Math.random() * 140;
@@ -108,15 +108,20 @@ const Objects = (() => {
     }
   }
 
-  function createBoss(question, canvasWidth, canvasHeight, speed) {
+  function createBoss(questions, canvasWidth, canvasHeight, speed) {
+    // questions is an array; boss cycles through them one by one
     // Boss spawns centred, moves slowly, is large
-    const x = canvasWidth / 2;
+    const first = questions[0];
     return {
       isBoss: true,
-      question: question.display,
-      answer: question.answer,
-      key: question.key,
-      x,
+      questions,
+      questionIndex: 0,     // which question we're currently on
+      questionsTotal: questions.length,
+      scale: 1.0,           // shrinks on correct answers, grows on wrong
+      question: first.display,
+      answer: first.answer,
+      key: first.key,
+      x: canvasWidth / 2,
       y: -100,
       speed: Math.max(30, speed * 0.4), // much slower
       isTargeted: false,
