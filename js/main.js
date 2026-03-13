@@ -386,7 +386,7 @@ function submitAnswer() {
       input.value = '';
       state.answerStartTime = Date.now();
     }
-    input.focus();
+    focusAnswerInput();
     return;
   }
 
@@ -406,7 +406,7 @@ function submitAnswer() {
       UI.showTryAgain();
       input.value = '';
     }
-    input.focus();
+    focusAnswerInput();
     return;
   }
 
@@ -426,7 +426,7 @@ function submitAnswer() {
       UI.showTryAgain();
       input.value = '';
     }
-    input.focus();
+    focusAnswerInput();
     return;
   }
 
@@ -495,7 +495,7 @@ function submitAnswer() {
     state.answerStartTime = Date.now();
   }
 
-  input.focus();
+  focusAnswerInput();
 }
 
 // ---- GAME OVER ----
