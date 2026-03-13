@@ -11,9 +11,9 @@ function focusAnswerInput() {
 const DIFFICULTY = {
   // baseSpeed reduced ~25% to give voice-input users time to react.
   // Speed still ramps per level so it gets challenging quickly.
-  easy:   { maxObjects: 2, baseSpeed: 36,  maxSpeed: 130 },
-  medium: { maxObjects: 3, baseSpeed: 52,  maxSpeed: 190 },
-  hard:   { maxObjects: 4, baseSpeed: 72,  maxSpeed: 260 }
+  easy:   { maxObjects: 3, baseSpeed: 40,  maxSpeed: 130 },
+  medium: { maxObjects: 4, baseSpeed: 58,  maxSpeed: 190 },
+  hard:   { maxObjects: 5, baseSpeed: 80,  maxSpeed: 260 }
 };
 const MAX_LIVES = 3;
 const CORRECT_PER_LEVEL = 10;
