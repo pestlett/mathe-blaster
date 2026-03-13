@@ -174,16 +174,26 @@ const Themes = (() => {
       if (obj.destroyTimer < 0.5) {
         ctx.save();
         ctx.globalAlpha = 1 - obj.destroyTimer * 2;
-        drawThemeObject(ctx, obj, theme, false);
+        if (obj.isLifeUp) drawLifeUp(ctx, obj, false);
+        else drawThemeObject(ctx, obj, theme, false);
         ctx.restore();
       }
       return;
     }
     if (obj.dying) {
-      drawDyingObject(ctx, obj, theme);
+      if (obj.isLifeUp) {
+        // Life-up just fades when it hits the bottom — no missed-question treatment
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - obj.dieTimer / 1.2);
+        drawLifeUp(ctx, obj, false);
+        ctx.restore();
+      } else {
+        drawDyingObject(ctx, obj, theme);
+      }
       return;
     }
-    drawThemeObject(ctx, obj, theme, true);
+    if (obj.isLifeUp) drawLifeUp(ctx, obj, true);
+    else drawThemeObject(ctx, obj, theme, true);
   }
 
   function drawThemeObject(ctx, obj, theme, showQuestion) {
@@ -420,6 +430,69 @@ const Themes = (() => {
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
     ctx.shadowBlur = 6;
     ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  // ========================
+  //  LIFE-UP ITEM
+  // ========================
+
+  function drawLifeUp(ctx, obj, showLabel) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y;
+    const pulse = 0.75 + 0.25 * Math.sin(Date.now() * 0.005);
+    const targeted = obj.isTargeted;
+
+    ctx.save();
+
+    // Outer glow ring
+    ctx.shadowColor = '#2ed573';
+    ctx.shadowBlur = targeted ? 50 : 28;
+    const ringR = 36 + (targeted ? 6 * pulse : 0);
+    ctx.strokeStyle = targeted ? '#ffffff' : '#2ed573';
+    ctx.lineWidth = targeted ? 4 : 2.5;
+    ctx.globalAlpha = targeted ? (0.55 + 0.45 * pulse) : 0.7;
+    ctx.beginPath();
+    ctx.arc(x, y, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (targeted) {
+      ctx.globalAlpha = 0.2 * pulse;
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.arc(x, y, ringR + 8, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Filled circle background
+    ctx.globalAlpha = 0.88;
+    ctx.shadowBlur = 20;
+    const bg = ctx.createRadialGradient(x - 8, y - 8, 2, x, y, 30);
+    bg.addColorStop(0, '#a8ffb0');
+    bg.addColorStop(0.6, '#2ed573');
+    bg.addColorStop(1, '#0aab44');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Heart shape
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 22px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('❤', x, y - 2);
+
+    if (showLabel) {
+      ctx.fillStyle = targeted ? '#fff' : '#e8ffe8';
+      ctx.font = 'bold 11px Segoe UI, sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.7)';
+      ctx.shadowBlur = 4;
+      ctx.fillText('+1 life', x, y + 22);
+    }
+
     ctx.restore();
   }
 

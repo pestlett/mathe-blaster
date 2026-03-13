@@ -29,6 +29,7 @@ let state = {
   objects: [],
   missedList: [],
   wrongQueue: [],   // questions answered incorrectly this session
+  lifeUpTimer: 0,   // accumulates seconds toward next life-up spawn
   answerStartTime: 0,
 };
 
@@ -109,6 +110,7 @@ function startGame(settings) {
   state.objects = [];
   state.missedList = [];
   state.wrongQueue = [];
+  state.lifeUpTimer = 0;
   state.answerStartTime = Date.now();
   state.phase = 'PLAYING';
 
@@ -136,13 +138,17 @@ function update(dt) {
     // Detect first frame of dying (object hit bottom)
     if (obj.dying && !obj._dieHandled) {
       obj._dieHandled = true;
-      state.lives = Math.max(0, state.lives - 1);
-      state.missedList.push({ question: obj.question, answer: obj.answer });
-      Audio.play('lifeLost');
-      UI.updateHUD(state);
-      if (state.lives <= 0 && state.phase === 'PLAYING') {
-        state.phase = 'ENDING';
-        setTimeout(() => endGame(), 1400);
+      if (obj.isLifeUp) {
+        // Life-up missed — just disappears, no penalty
+      } else {
+        state.lives = Math.max(0, state.lives - 1);
+        state.missedList.push({ question: obj.question, answer: obj.answer });
+        Audio.play('lifeLost');
+        UI.updateHUD(state);
+        if (state.lives <= 0 && state.phase === 'PLAYING') {
+          state.phase = 'ENDING';
+          setTimeout(() => endGame(), 1400);
+        }
       }
     }
   }
@@ -156,8 +162,20 @@ function update(dt) {
   const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0);
   const speed = diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1);
 
-  // Spawn new objects
-  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed).length;
+  // Spawn life-up item — at most one on screen, only when injured, every ~20s
+  const hasLifeUp = state.objects.some(o => o.isLifeUp && !o.dead && !o.dying && !o.destroyed);
+  if (!hasLifeUp && state.lives < MAX_LIVES) {
+    state.lifeUpTimer += dt;
+    if (state.lifeUpTimer >= 20) {
+      state.lifeUpTimer = 0;
+      state.objects.push(Objects.createLifeUp(window.innerWidth, speed));
+    }
+  } else {
+    state.lifeUpTimer = 0; // reset timer when at full health or one already active
+  }
+
+  // Spawn new question objects
+  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp).length;
   if (aliveCount < maxObj) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
@@ -172,6 +190,11 @@ function update(dt) {
   // Sync targeting
   Targeting.syncTarget(state.objects);
   UI.updateHUD(state);
+
+  // Update input placeholder based on current target type
+  const currentTarget = Targeting.getTarget();
+  const input = document.getElementById('answer-input');
+  input.placeholder = (currentTarget && currentTarget.isLifeUp) ? 'Press Enter!' : 'Answer...';
 }
 
 // ---- RENDER ----
@@ -195,11 +218,25 @@ function render(ctx, w, h, t) {
 function submitAnswer() {
   if (state.phase !== 'PLAYING') return;
   const input = document.getElementById('answer-input');
-  const val = parseInt(input.value.trim());
-  if (isNaN(val)) { input.focus(); return; }
 
   const target = Targeting.getTarget();
   if (!target) { input.value = ''; input.focus(); return; }
+
+  // Life-up: collect on any Enter press (no answer needed)
+  if (target.isLifeUp) {
+    Objects.triggerDestruction(target, '#2ed573');
+    state.lives = Math.min(MAX_LIVES, state.lives + 1);
+    UI.updateHUD(state);
+    Audio.play('levelUp');
+    input.value = '';
+    input.placeholder = 'Answer...';
+    Targeting.syncTarget(state.objects);
+    input.focus();
+    return;
+  }
+
+  const val = parseInt(input.value.trim());
+  if (isNaN(val)) { input.focus(); return; }
 
   const elapsed = Date.now() - state.answerStartTime;
   state.totalAttempts++;

@@ -88,5 +88,30 @@ const Objects = (() => {
     }
   }
 
-  return { create, update, triggerDestruction };
+  function createLifeUp(canvasWidth, speed) {
+    const margin = 90;
+    const x = margin + Math.random() * (canvasWidth - margin * 2);
+    return {
+      isLifeUp: true,
+      question: '❤ +1',
+      answer: null,
+      key: '__lifeup__',
+      x,
+      y: -80,
+      speed: speed * 0.65,   // falls slower so the player has time to react
+      isTargeted: false,
+      wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0,
+      age: 0,
+      dying: false,
+      dieTimer: 0,
+      dead: false,
+      destroyTimer: 0,
+      destroyed: false,
+      particles: [],
+      spawnTime: Date.now()
+    };
+  }
+
+  return { create, createLifeUp, update, triggerDestruction };
 })();
