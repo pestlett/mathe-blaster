@@ -147,6 +147,7 @@ function startGame(settings) {
   state.wrongQueue = [];
   state.lifeUpTimer = 0;
   state.freezeTimer = 0;
+  state._bossSpawnedThisLevel = false;
   state.freezeActive = 0;
   state.answerStartTime = Date.now();
   state.phase = 'PLAYING';
@@ -211,6 +212,32 @@ function update(dt) {
   const diff = DIFFICULTY[state.difficulty];
   const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0);
   const speed = Math.min(diff.maxSpeed, diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1));
+
+  // Boss round: spawn one giant boss on levels that are multiples of 5
+  const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
+  const isBossLevel = state.level > 1 && state.level % 5 === 0 && state.correctThisLevel === 0 && !state._bossSpawnedThisLevel;
+  if (isBossLevel && !hasBoss) {
+    state._bossSpawnedThisLevel = true;
+    const stats = Progress.getStats();
+    const q = Questions.pick(state.minTable, state.maxTable, stats, [], state.wrongQueue);
+    state.objects.push(Objects.createBoss(q, window.innerWidth, window.innerHeight, speed));
+  }
+  if (state.level % 5 !== 0 || state.correctThisLevel > 0) {
+    state._bossSpawnedThisLevel = false;
+  }
+
+  // If boss is alive, skip normal spawns
+  if (hasBoss) {
+    Targeting.syncTarget(state.objects);
+    for (const obj of state.objects) {
+      if (!obj.isLifeUp && !obj.isFreeze) obj.hintActive = obj.wrongAttempts >= state.hintThreshold;
+    }
+    UI.updateHUD(state);
+    const currentTarget = Targeting.getTarget();
+    const inp = document.getElementById('answer-input');
+    inp.placeholder = (currentTarget && currentTarget.isBoss) ? 'Defeat the boss!' : 'Answer...';
+    return;
+  }
 
   // Spawn freeze item — at most one on screen, every ~30s
   const hasFreeze = state.objects.some(o => o.isFreeze && !o.dead && !o.dying && !o.destroyed);
@@ -307,6 +334,35 @@ function submitAnswer() {
 
   const val = parseInt(input.value.trim());
   if (isNaN(val)) { input.focus(); return; }
+
+  // Boss: correct answer awards 50 bonus pts and ends boss round
+  if (target.isBoss) {
+    if (val === target.answer) {
+      const particleColor = Themes.particleColorForTheme(state.theme);
+      Objects.triggerDestruction(target, particleColor);
+      state.score += 50;
+      state.totalCorrect++;
+      state.streak++;
+      Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
+      state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
+      Audio.play('levelUp');
+      UI.showLevelUp('Boss!', null);
+      UI.updateHUD(state);
+      input.value = '';
+      input.placeholder = 'Answer...';
+      state.answerStartTime = Date.now();
+      Targeting.syncTarget(state.objects);
+    } else {
+      target.wrongAttempts = (target.wrongAttempts || 0) + 1;
+      Audio.play('wrong');
+      UI.shakeInput();
+      UI.showTryAgain();
+      input.value = '';
+      state.answerStartTime = Date.now();
+    }
+    input.focus();
+    return;
+  }
 
   // Freeze: correct answer slows all objects for 5s
   if (target.isFreeze) {

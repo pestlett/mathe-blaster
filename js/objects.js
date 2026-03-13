@@ -100,6 +100,33 @@ const Objects = (() => {
     }
   }
 
+  function createBoss(question, canvasWidth, canvasHeight, speed) {
+    // Boss spawns centred, moves slowly, is large
+    const x = canvasWidth / 2;
+    return {
+      isBoss: true,
+      question: question.display,
+      answer: question.answer,
+      key: question.key,
+      x,
+      y: -100,
+      speed: Math.max(30, speed * 0.4), // much slower
+      isTargeted: false,
+      wobbleOffset: 0,
+      wobbleX: 0,
+      age: 0,
+      dying: false,
+      dieTimer: 0,
+      dead: false,
+      destroyTimer: 0,
+      destroyed: false,
+      particles: [],
+      spawnTime: Date.now(),
+      wrongAttempts: 0,
+      hintActive: false
+    };
+  }
+
   function createFreeze(question, canvasWidth, speed, existingXPositions = []) {
     const x = pickX(canvasWidth, existingXPositions);
     return {
@@ -150,5 +177,5 @@ const Objects = (() => {
     };
   }
 
-  return { create, createFreeze, createLifeUp, update, triggerDestruction };
+  return { create, createBoss, createFreeze, createLifeUp, update, triggerDestruction };
 })();

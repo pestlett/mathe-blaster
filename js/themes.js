@@ -176,6 +176,7 @@ const Themes = (() => {
         ctx.globalAlpha = 1 - obj.destroyTimer * 2;
         if (obj.isLifeUp) drawLifeUp(ctx, obj, false);
         else if (obj.isFreeze) drawFreezeItem(ctx, obj, false);
+        else if (obj.isBoss) drawBossObject(ctx, obj, theme, false);
         else drawThemeObject(ctx, obj, theme, false);
         ctx.restore();
       }
@@ -195,6 +196,7 @@ const Themes = (() => {
     }
     if (obj.isLifeUp) drawLifeUp(ctx, obj, true);
     else if (obj.isFreeze) drawFreezeItem(ctx, obj, true);
+    else if (obj.isBoss) drawBossObject(ctx, obj, theme, true);
     else drawThemeObject(ctx, obj, theme, true);
   }
 
@@ -542,6 +544,62 @@ const Themes = (() => {
     }
 
     ctx.restore();
+  }
+
+  // ========================
+  //  BOSS OBJECT
+  // ========================
+
+  function drawBossObject(ctx, obj, theme, showQuestion) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y;
+    const t = Date.now() * 0.001;
+    const pulse = 0.6 + 0.4 * Math.sin(t * 3);
+
+    // Theme-coloured giant body
+    const colours = { space: ['#8b0000', '#ff4500'], ocean: ['#002266', '#0066ff'], sky: ['#4b0082', '#9932cc'] };
+    const [dark, bright] = colours[theme] || colours.space;
+
+    ctx.save();
+    // Dramatic outer glow
+    ctx.shadowColor = bright;
+    ctx.shadowBlur = 40 + 20 * pulse;
+
+    // Pulsing outer ring
+    ctx.strokeStyle = bright;
+    ctx.lineWidth = 5;
+    ctx.globalAlpha = 0.5 + 0.3 * pulse;
+    ctx.beginPath();
+    ctx.arc(x, y, 72 + 8 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Body
+    ctx.globalAlpha = 1;
+    const grad = ctx.createRadialGradient(x - 20, y - 20, 5, x, y, 64);
+    grad.addColorStop(0, bright);
+    grad.addColorStop(0.5, dark);
+    grad.addColorStop(1, '#000');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, 64, 0, Math.PI * 2);
+    ctx.fill();
+
+    // "BOSS" label
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ff0';
+    ctx.font = 'bold 12px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BOSS', x, y - 28);
+
+    // +50pts badge
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px Segoe UI, sans-serif';
+    ctx.fillText('+50 pts', x, y + 32);
+
+    ctx.restore();
+
+    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#ffffff', 22);
   }
 
   // ========================
