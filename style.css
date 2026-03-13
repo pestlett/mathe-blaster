@@ -456,6 +456,50 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 
+/* Pause button in HUD */
+#btn-pause {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.7);
+  font-size: 1rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  pointer-events: all;
+  margin-top: 4px;
+  transition: background 0.15s;
+}
+#btn-pause:hover { background: rgba(255,255,255,0.2); }
+
+/* Pause overlay */
+#pause-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+#pause-overlay.visible { display: flex; }
+.pause-card {
+  background: rgba(13,13,26,0.95);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 40px 60px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.pause-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
 /* ===== OVERLAY CARDS (game-over, leaderboard) ===== */
 #screen-gameover,
 #screen-leaderboard {

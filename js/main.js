@@ -62,6 +62,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnFire.addEventListener('click', submitAnswer);
 
+  // Pause / resume
+  const btnPause = document.getElementById('btn-pause');
+  const btnResume = document.getElementById('btn-resume');
+  btnPause.addEventListener('click', togglePause);
+  btnResume.addEventListener('click', togglePause);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+      if (state.phase === 'PLAYING' || Engine.isPaused()) togglePause();
+    }
+  });
+
   // ---- Voice setup ----
   const btnMic = document.getElementById('btn-mic');
   if (!Voice.supported) {
@@ -92,6 +103,20 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+function togglePause() {
+  if (state.phase !== 'PLAYING' && !Engine.isPaused()) return;
+  if (Engine.isPaused()) {
+    Engine.resume();
+    Voice.start();
+    document.getElementById('pause-overlay').classList.remove('visible');
+    document.getElementById('answer-input').focus();
+  } else {
+    Engine.pause();
+    Voice.stop();
+    document.getElementById('pause-overlay').classList.add('visible');
+  }
+}
 
 function startGame(settings) {
   state.name = settings.name;
