@@ -554,52 +554,63 @@ const Themes = (() => {
     const x = obj.x + obj.wobbleX;
     const y = obj.y;
     const t = Date.now() * 0.001;
+    const scale = obj.scale ?? 1.0;
     const pulse = 0.6 + 0.4 * Math.sin(t * 3);
+    const r = Math.max(28, 64 * scale); // body radius scales with boss health
 
-    // Theme-coloured giant body
+    // Theme-coloured body
     const colours = { space: ['#8b0000', '#ff4500'], ocean: ['#002266', '#0066ff'], sky: ['#4b0082', '#9932cc'] };
     const [dark, bright] = colours[theme] || colours.space;
 
     ctx.save();
-    // Dramatic outer glow
     ctx.shadowColor = bright;
-    ctx.shadowBlur = 40 + 20 * pulse;
+    ctx.shadowBlur = (30 + 15 * pulse) * scale;
 
     // Pulsing outer ring
     ctx.strokeStyle = bright;
     ctx.lineWidth = 5;
     ctx.globalAlpha = 0.5 + 0.3 * pulse;
     ctx.beginPath();
-    ctx.arc(x, y, 72 + 8 * pulse, 0, Math.PI * 2);
+    ctx.arc(x, y, r * 1.12 + 6 * pulse, 0, Math.PI * 2);
     ctx.stroke();
 
     // Body
     ctx.globalAlpha = 1;
-    const grad = ctx.createRadialGradient(x - 20, y - 20, 5, x, y, 64);
+    const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.08, x, y, r);
     grad.addColorStop(0, bright);
     grad.addColorStop(0.5, dark);
     grad.addColorStop(1, '#000');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(x, y, 64, 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
 
     // "BOSS" label
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#ff0';
-    ctx.font = 'bold 12px Segoe UI, sans-serif';
+    ctx.font = `bold ${Math.max(8, Math.round(12 * scale))}px Segoe UI, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('BOSS', x, y - 28);
+    ctx.fillText('BOSS', x, y - r * 0.45);
 
-    // +50pts badge
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 10px Segoe UI, sans-serif';
-    ctx.fillText('+50 pts', x, y + 32);
+    // Progress dots (one dot per question; filled = answered, hollow = remaining)
+    if ((obj.questionsTotal ?? 1) > 1) {
+      const dotR = Math.max(3, 5 * scale);
+      const spacing = dotR * 3;
+      const total = obj.questionsTotal;
+      const done  = obj.questionIndex;
+      const startX = x - ((total - 1) * spacing) / 2;
+      for (let i = 0; i < total; i++) {
+        ctx.beginPath();
+        ctx.arc(startX + i * spacing, y + r * 0.55, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = i < done ? '#ff0' : 'rgba(255,255,255,0.3)';
+        ctx.fill();
+      }
+    }
 
     ctx.restore();
 
-    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#ffffff', 22);
+    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#ffffff', Math.max(14, Math.round(22 * scale)));
   }
 
   // ========================
