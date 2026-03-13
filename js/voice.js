@@ -321,12 +321,20 @@ const Voice = (() => {
 
     if (!texts.length) return;
 
-    // Commands: highest-confidence (first) match wins
+    // Commands: try exact match first, then last-word fallback.
+    // The last-word fallback handles SR picking up ambient audio before
+    // the command word, e.g. "tea fire" → "fire", "here fire" → "fire".
+    function tryCommand(text) {
+      if (cmds.fire.includes(text))     { console.log('[Voice] cmd: fire');     callbacks.onFire?.();     callbacks.onResultDone?.(); return true; }
+      if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     callbacks.onResultDone?.(); return true; }
+      if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); callbacks.onResultDone?.(); return true; }
+      if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    callbacks.onResultDone?.(); return true; }
+      return false;
+    }
     for (const text of texts) {
-      if (cmds.fire.includes(text))     { console.log('[Voice] cmd: fire');     callbacks.onFire?.();     callbacks.onResultDone?.(); return; }
-      if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     callbacks.onResultDone?.(); return; }
-      if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); callbacks.onResultDone?.(); return; }
-      if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    callbacks.onResultDone?.(); return; }
+      if (tryCommand(text)) return;
+      const lastWord = text.split(/\s+/).pop();
+      if (lastWord && lastWord !== text && tryCommand(lastWord)) return;
     }
 
     // Numbers: confidence-weighted voting across all alternatives.
@@ -335,8 +343,11 @@ const Voice = (() => {
     const votes = {};
     texts.forEach((text, idx) => {
       const conf = (confidences?.[idx] > 0) ? confidences[idx] : (1 / (idx + 1));
-      // Try raw text first, then noise-stripped
-      const candidates = [text, stripNoise(text)].filter((t, i, arr) => t && arr.indexOf(t) === i);
+      // Try raw text, noise-stripped, then last token as fallback.
+      // Last-token fallback handles SR prepending ambient audio before the
+      // actual answer word, e.g. "here six" → 6, "2 x 9 18" → 18.
+      const lastToken = text.split(/\s+/).filter(Boolean).pop() || '';
+      const candidates = [text, stripNoise(text), lastToken].filter((t, i, arr) => t && arr.indexOf(t) === i);
       for (const t of candidates) {
         const n = parseNumber(t);
         if (n !== null && n >= 0 && n <= 200) {
@@ -497,6 +508,8 @@ const Voice = (() => {
             alts.push(result[j].transcript);
             confs.push(result[j].confidence);
           }
+          // Skip empty results (common SR noise on continuous mode)
+          if (!alts[0]?.trim()) break;
           _tlog('final', `"${alts[0]?.trim()}" conf=${confs[0]?.toFixed(2)}`);
           console.log('[Voice] final:', alts, '| conf:', confs);
           handleTranscript(alts, confs);
