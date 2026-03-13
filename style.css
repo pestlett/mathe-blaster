@@ -537,6 +537,8 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /* Voice suggestion pill */
 .voice-suggestion {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   background: rgba(0, 180, 255, 0.12);
   border: 2px solid rgba(0, 180, 255, 0.45);
@@ -550,6 +552,20 @@ input[type="number"]::-webkit-outer-spin-button {
   animation: voicePillIn 0.18s ease-out;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
   -webkit-tap-highlight-color: transparent;
+}
+.voice-suggestion.countdown::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: rgba(0, 220, 255, 0.9);
+  animation: countdownBar var(--countdown-duration, 1.5s) linear forwards;
+}
+@keyframes countdownBar {
+  from { width: 100%; }
+  to   { width: 0; }
 }
 .voice-suggestion:active {
   transform: scale(0.97);

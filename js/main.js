@@ -165,18 +165,39 @@ function drawProgressBar(ctx, target, h) {
 }
 
 // ---- Voice suggestion pill (module-level so submitAnswer can access it) ----
-let _voiceSuggestionEl = null;
+let _voiceSuggestionEl  = null;
+let _autoSubmitTimer    = null;
+
+function cancelAutoSubmit() {
+  if (_autoSubmitTimer) { clearTimeout(_autoSubmitTimer); _autoSubmitTimer = null; }
+  if (_voiceSuggestionEl) _voiceSuggestionEl.classList.remove('countdown');
+}
+
+function startAutoSubmit(target) {
+  cancelAutoSubmit();
+  const crashLine = window.innerHeight - 148;
+  const timeLeft  = Math.max(0.3, (crashLine - target.y) / Math.max(1, target.speed));
+  const duration  = Math.min(1.8, Math.max(0.5, timeLeft * 0.35));
+  _voiceSuggestionEl.style.setProperty('--countdown-duration', `${duration.toFixed(2)}s`);
+  _voiceSuggestionEl.classList.add('countdown');
+  _autoSubmitTimer = setTimeout(() => {
+    _autoSubmitTimer = null;
+    _voiceSuggestionEl.classList.remove('countdown');
+    if (state.phase === 'PLAYING') submitAnswer();
+  }, duration * 1000);
+}
 
 function showSuggestion(n, isInterim) {
   if (!_voiceSuggestionEl) return;
   _voiceSuggestionEl.innerHTML =
     `<span class="voice-suggestion-num">${n}</span>` +
-    `<span class="voice-suggestion-label">${isInterim ? '…' : 'tap to fire'}</span>`;
-  _voiceSuggestionEl.classList.remove('hidden', 'interim', 'confirmed');
+    `<span class="voice-suggestion-label">${isInterim ? '…' : '↵'}</span>`;
+  _voiceSuggestionEl.classList.remove('hidden', 'interim', 'confirmed', 'countdown');
   _voiceSuggestionEl.classList.add(isInterim ? 'interim' : 'confirmed');
 }
 
 function hideSuggestion() {
+  cancelAutoSubmit();
   if (!_voiceSuggestionEl) return;
   _voiceSuggestionEl.classList.add('hidden');
 }
@@ -223,8 +244,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('keydown', e => {
     if (state.phase !== 'PLAYING') return;
-    if (e.key === 'ArrowLeft') { e.preventDefault(); Targeting.moveLeft(state.objects); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); Targeting.moveRight(state.objects); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); hideSuggestion(); Targeting.moveLeft(state.objects); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); hideSuggestion(); Targeting.moveRight(state.objects); }
     if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
     // Keep input focused on desktop
     if (!['ArrowLeft','ArrowRight','Enter','Tab'].includes(e.key)) {
@@ -234,8 +255,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   answerInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); Targeting.moveLeft(state.objects); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); Targeting.moveRight(state.objects); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); hideSuggestion(); Targeting.moveLeft(state.objects); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); hideSuggestion(); Targeting.moveRight(state.objects); }
   });
 
   btnFire.addEventListener('click', submitAnswer);
@@ -259,8 +280,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const dy = e.changedTouches[0].clientY - swipeStartY;
     if (Math.abs(dx) < SWIPE_MIN_X) return;       // too short — ignore
     if (Math.abs(dy) > SWIPE_MAX_Y) return;        // too vertical — ignore
-    if (dx < 0) Targeting.moveLeft(state.objects);
-    else        Targeting.moveRight(state.objects);
+    if (dx < 0) { hideSuggestion(); Targeting.moveLeft(state.objects); }
+    else        { hideSuggestion(); Targeting.moveRight(state.objects); }
   }, { passive: true });
 
   // Mute toggle — phones default to muted so mic picks up clearly
@@ -342,7 +363,8 @@ window.addEventListener('DOMContentLoaded', () => {
         if (state.phase !== 'PLAYING') return;
         answerInput.value = String(n);
         showSuggestion(n, false);
-        // Don't auto-submit — user taps pill, taps Fire, or says "fire" to confirm
+        const target = Targeting.getTarget();
+        if (target) startAutoSubmit(target);
       },
       onResultDone: () => clearProcessing(),  // no-match or after any result
 
@@ -435,6 +457,7 @@ function startGame(settings) {
   state.phase = 'PLAYING';
 
   Targeting.reset();
+  cancelAutoSubmit();
   _lastSpokenTarget = null;
   clearTimeout(_speakTimer);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
