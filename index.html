@@ -110,6 +110,31 @@
         <input type="range" id="hint-threshold" min="1" max="5" value="3" class="range-slider" style="max-width:200px">
         <span class="setting-note" data-i18n="hintNote">Shows a dot-grid picture when stuck</span>
       </div>
+      <!-- Help / How to Play -->
+      <details class="help-section">
+        <summary data-i18n="helpTitle">❓ How to Play</summary>
+        <div class="help-body">
+          <p data-i18n="helpIntro">Multiplication problems fall from the sky. Answer them before they hit the ground!</p>
+          <ul>
+            <li data-i18n="helpTarget">Use <strong>← →</strong> arrow keys to target a problem</li>
+            <li data-i18n="helpType">Type the answer and press <strong>Enter</strong> or tap <strong>Fire!</strong></li>
+            <li data-i18n="helpLives">You have 3 lives — lose one each time a problem hits the bottom</li>
+            <li data-i18n="helpStreak">Get answers right in a row for a combo streak and bonus points</li>
+            <li data-i18n="helpFreeze">Catch the ❄️ <strong>Freeze</strong> item to slow everything for 5s</li>
+            <li data-i18n="helpLifeUp">Catch the 💚 <strong>Life Up</strong> item to regain a life</li>
+            <li data-i18n="helpBoss">Every 5 levels a <strong>Boss</strong> appears — defeat it for 50 bonus points</li>
+          </ul>
+          <p class="help-subhead" data-i18n="helpVoiceTitle">🎤 Voice commands</p>
+          <ul>
+            <li data-i18n="helpVoiceNumber"><strong>Say the number</strong> — e.g. "forty-eight" or "48"</li>
+            <li data-i18n="helpVoiceFire"><strong>fire / yes / done</strong> — submit the answer</li>
+            <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
+            <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>
+            <li data-i18n="helpVoiceClear"><strong>clear / delete</strong> — clear the answer box</li>
+          </ul>
+        </div>
+      </details>
+
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
       <div style="display:flex;gap:8px;margin-top:8px">

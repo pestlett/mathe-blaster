@@ -9,9 +9,11 @@ function focusAnswerInput() {
 }
 
 const DIFFICULTY = {
-  easy:   { maxObjects: 2, baseSpeed: 48,  maxSpeed: 160 },
-  medium: { maxObjects: 3, baseSpeed: 70,  maxSpeed: 240 },
-  hard:   { maxObjects: 4, baseSpeed: 96,  maxSpeed: 320 }
+  // baseSpeed reduced ~25% to give voice-input users time to react.
+  // Speed still ramps per level so it gets challenging quickly.
+  easy:   { maxObjects: 2, baseSpeed: 36,  maxSpeed: 130 },
+  medium: { maxObjects: 3, baseSpeed: 52,  maxSpeed: 190 },
+  hard:   { maxObjects: 4, baseSpeed: 72,  maxSpeed: 260 }
 };
 const MAX_LIVES = 3;
 const CORRECT_PER_LEVEL = 10;
@@ -280,7 +282,8 @@ function update(dt) {
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
       const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      state.objects.push(Objects.createFreeze(q, window.innerWidth, speed, liveX));
+      const fz = Objects.createFreeze(q, window.innerWidth, speed, liveX);
+      if (fz) state.objects.push(fz); else state.freezeTimer = 28; // retry in 2s
     }
   } else if (hasFreeze) {
     state.freezeTimer = 0;
@@ -296,7 +299,8 @@ function update(dt) {
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
       const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      state.objects.push(Objects.createLifeUp(q, window.innerWidth, speed, liveX));
+      const lu = Objects.createLifeUp(q, window.innerWidth, speed, liveX);
+      if (lu) state.objects.push(lu); else state.lifeUpTimer = 18; // retry in 2s
     }
   } else {
     state.lifeUpTimer = 0; // reset timer when at full health or one already active
@@ -309,7 +313,9 @@ function update(dt) {
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
     const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
     const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-    state.objects.push(Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX));
+    const obj = Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX);
+    if (obj) state.objects.push(obj);
+    // else: no room yet — retry happens automatically next frame
   }
 
   // Remove fully dead objects

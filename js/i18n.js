@@ -36,6 +36,23 @@ const I18n = (() => {
       dailyDone:        '⚡ Daily Challenge ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Parent Dashboard',
 
+      // Help section
+      helpTitle:        '❓ How to Play',
+      helpIntro:        'Multiplication problems fall from the sky. Answer them before they hit the ground!',
+      helpTarget:       'Use ← → arrow keys (or swipe) to target a problem',
+      helpType:         'Type the answer and press Enter or tap Fire!',
+      helpLives:        'You have 3 lives — lose one each time a problem hits the bottom',
+      helpStreak:       'Get answers right in a row for a combo streak and bonus points',
+      helpFreeze:       'Catch the ❄️ Freeze item to slow everything for 5s',
+      helpLifeUp:       'Catch the 💚 Life Up item to regain a life',
+      helpBoss:         'Every 5 levels a Boss appears — defeat it for 50 bonus points',
+      helpVoiceTitle:   '🎤 Voice commands',
+      helpVoiceNumber:  'Say the number — e.g. "forty-eight" or "48"',
+      helpVoiceFire:    'fire / yes / done — submit the answer',
+      helpVoiceNext:    'next / forward — switch to the next problem',
+      helpVoiceBack:    'back / previous — switch to the previous problem',
+      helpVoiceClear:   'clear / delete — clear the answer box',
+
       // HUD
       levelLabel:        'Level ',
       hintWrongTries:    'wrong tries',
@@ -145,6 +162,23 @@ const I18n = (() => {
       dailyDone:        '⚡ Tages-Challenge ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Eltern-Dashboard',
 
+      // Help section
+      helpTitle:        '❓ Wie spielt man',
+      helpIntro:        'Rechenaufgaben fallen vom Himmel. Beantworte sie, bevor sie den Boden berühren!',
+      helpTarget:       'Mit ← → Pfeiltasten eine Aufgabe anvisieren',
+      helpType:         'Antwort eintippen und Enter drücken oder Schießen! tippen',
+      helpLives:        'Du hast 3 Leben — eines geht verloren, wenn eine Aufgabe unten ankommt',
+      helpStreak:       'Mehrere richtige Antworten hintereinander ergeben einen Combo-Bonus',
+      helpFreeze:       'Das ❄️ Einfrieren-Item verlangsamt alles für 5 Sekunden',
+      helpLifeUp:       'Das 💚 Leben-Item gibt ein Leben zurück',
+      helpBoss:         'Alle 5 Level erscheint ein Boss — besiege ihn für 50 Bonuspunkte',
+      helpVoiceTitle:   '🎤 Sprachbefehle',
+      helpVoiceNumber:  'Zahl sagen — z.B. "achtundvierzig" oder "48"',
+      helpVoiceFire:    'feuer / fertig / ja — Antwort absenden',
+      helpVoiceNext:    'weiter / vor — zur nächsten Aufgabe',
+      helpVoiceBack:    'zurück — zur vorherigen Aufgabe',
+      helpVoiceClear:   'löschen — Eingabefeld leeren',
+
       // HUD
       levelLabel:        'Level ',
       hintWrongTries:    'falsche Versuche',
@@ -247,6 +281,23 @@ const I18n = (() => {
       dailyNew:         '⚡ Desafío Diario — tabla del {table}× · {diff}',
       dailyDone:        '⚡ Desafío Diario ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Panel de Padres',
+
+      // Help section
+      helpTitle:        '❓ Cómo jugar',
+      helpIntro:        '¡Los problemas de multiplicación caen del cielo. ¡Respóndelos antes de que toquen el suelo!',
+      helpTarget:       'Usa las teclas ← → para apuntar a un problema',
+      helpType:         'Escribe la respuesta y pulsa Enter o toca ¡Disparar!',
+      helpLives:        'Tienes 3 vidas — pierdes una cada vez que un problema llega al suelo',
+      helpStreak:       'Respuestas seguidas correctas dan un combo con puntos extra',
+      helpFreeze:       'El objeto ❄️ Congelar ralentiza todo durante 5s',
+      helpLifeUp:       'El objeto 💚 Vida Extra te devuelve una vida',
+      helpBoss:         'Cada 5 niveles aparece un Jefe — derrótalo y gana 50 puntos extra',
+      helpVoiceTitle:   '🎤 Comandos de voz',
+      helpVoiceNumber:  'Di el número — p.ej. "cuarenta y ocho" o "48"',
+      helpVoiceFire:    'fuego / listo / sí — enviar la respuesta',
+      helpVoiceNext:    'siguiente / adelante — pasar al siguiente problema',
+      helpVoiceBack:    'atrás / anterior — volver al problema anterior',
+      helpVoiceClear:   'borrar / limpiar — vaciar el cuadro de respuesta',
 
       // HUD
       levelLabel:        'Nivel ',

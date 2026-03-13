@@ -4,21 +4,29 @@ const Objects = (() => {
   const WOBBLE_AMPLITUDE = 18;
   const WOBBLE_SPEED = 1.8; // radians per second
 
-  const MARGIN = 80;
-  const MIN_SEP = 130; // minimum px between object centres at spawn
+  const MARGIN = 60;
 
+  // Minimum separation scales with usable screen width so narrow mobile
+  // screens can still fit multiple objects without forcing overlap.
+  function minSep(canvasWidth) {
+    const usable = canvasWidth - 2 * MARGIN;
+    return Math.min(130, Math.max(60, usable / 4));
+  }
+
+  // Returns null when no gap exists — caller should delay the spawn.
   function pickX(canvasWidth, existingXPositions) {
     const lo = MARGIN, hi = canvasWidth - MARGIN;
-    for (let attempt = 0; attempt < 40; attempt++) {
+    const sep = minSep(canvasWidth);
+    for (let attempt = 0; attempt < 60; attempt++) {
       const x = lo + Math.random() * (hi - lo);
-      if (existingXPositions.every(ex => Math.abs(x - ex) >= MIN_SEP)) return x;
+      if (existingXPositions.every(ex => Math.abs(x - ex) >= sep)) return x;
     }
-    // Fallback: just pick a random position if no gap found
-    return lo + Math.random() * (hi - lo);
+    return null; // no valid gap found — caller must wait
   }
 
   function create(question, canvasWidth, canvasHeight, speed, existingXPositions = []) {
     const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null; // no room yet — main.js will retry next frame
     return {
       question: question.display,
       answer: question.answer,
@@ -129,6 +137,7 @@ const Objects = (() => {
 
   function createFreeze(question, canvasWidth, speed, existingXPositions = []) {
     const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
     return {
       isFreeze: true,
       question: question.display,
@@ -155,6 +164,7 @@ const Objects = (() => {
 
   function createLifeUp(question, canvasWidth, speed, existingXPositions = []) {
     const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
     return {
       isLifeUp: true,
       question: question.display,
