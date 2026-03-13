@@ -74,6 +74,15 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnResume = document.getElementById('btn-resume');
   btnPause.addEventListener('click', togglePause);
   btnResume.addEventListener('click', togglePause);
+  document.getElementById('btn-pause-menu').addEventListener('click', () => {
+    Engine.resume();
+    Engine.stop();
+    Audio.stopMusic();
+    Voice.stop();
+    state.phase = 'ONBOARDING';
+    document.getElementById('pause-overlay').classList.remove('visible');
+    UI.showScreen('onboarding');
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
       if (state.phase === 'PLAYING' || Engine.isPaused()) togglePause();
