@@ -446,7 +446,8 @@ function togglePause() {
   if (state.phase !== 'PLAYING' && !Engine.isPaused()) return;
   if (Engine.isPaused()) {
     Engine.resume();
-    Voice.start();
+    Voice.start();                       // mic activates immediately
+    state.unpauseFreezeTimer = 1.5;      // objects hold for 1.5s so player can orient
     document.getElementById('pause-overlay').classList.remove('visible');
     focusAnswerInput();
   } else {
@@ -487,6 +488,7 @@ function startGame(settings) {
   state._bossSpawnedThisLevel = false;
   state.freezeActive = 0;
   state.levelTransitionTimer = 0;
+  state.unpauseFreezeTimer = 0;
   state.ttsFreezeActive = false;
   state.masteryWin = false;
   state.confetti = [];
@@ -527,6 +529,11 @@ function update(dt) {
     state.levelTransitionTimer = Math.max(0, state.levelTransitionTimer - dt);
   }
 
+  // Tick down unpause grace period
+  if (state.unpauseFreezeTimer > 0) {
+    state.unpauseFreezeTimer = Math.max(0, state.unpauseFreezeTimer - dt);
+  }
+
   // Tick down streak flash
   if (state.streakFlashTimer > 0) {
     state.streakFlashTimer = Math.max(0, state.streakFlashTimer - dt);
@@ -538,10 +545,11 @@ function update(dt) {
     state.confetti = state.confetti.filter(p => p.life > 0);
   }
 
-  // Speed multiplier: 0 during level transition or TTS; 0.25× during freeze item
-  const levelFreezing = state.levelTransitionTimer > 0;
-  const ttsFreezing   = state.ttsFreezeActive;
-  const freezeMult    = (levelFreezing || ttsFreezing) ? 0 : (state.freezeActive > 0 ? 0.25 : 1);
+  // Speed multiplier: 0 during level transition, TTS, or unpause grace; 0.25× during freeze item
+  const levelFreezing   = state.levelTransitionTimer > 0;
+  const ttsFreezing     = state.ttsFreezeActive;
+  const unpauseFreezing = state.unpauseFreezeTimer > 0;
+  const freezeMult      = (levelFreezing || ttsFreezing || unpauseFreezing) ? 0 : (state.freezeActive > 0 ? 0.25 : 1);
 
   // Update all objects (keep animating during ENDING)
   for (const obj of state.objects) {
@@ -651,7 +659,7 @@ function update(dt) {
 
   // Spawn new question objects (skip during level transition or TTS)
   const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze).length;
-  if (!levelFreezing && !ttsFreezing && aliveCount < maxObj) {
+  if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < maxObj) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
     const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
