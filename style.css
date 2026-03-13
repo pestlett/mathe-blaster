@@ -535,6 +535,56 @@ input[type="number"]::-webkit-outer-spin-button {
   100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
 }
 
+/* Voice suggestion pill */
+.voice-suggestion {
+  width: 100%;
+  background: rgba(0, 180, 255, 0.12);
+  border: 2px solid rgba(0, 180, 255, 0.45);
+  border-radius: 18px;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  animation: voicePillIn 0.18s ease-out;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.voice-suggestion:active {
+  transform: scale(0.97);
+}
+.voice-suggestion.hidden {
+  display: none;
+}
+.voice-suggestion.interim {
+  opacity: 0.55;
+  border-color: rgba(255,255,255,0.2);
+  animation: none;
+}
+.voice-suggestion.confirmed {
+  border-color: rgba(0, 220, 255, 0.75);
+  box-shadow: 0 0 18px rgba(0, 220, 255, 0.3);
+}
+.voice-suggestion-num {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.voice-suggestion-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+@keyframes voicePillIn {
+  from { opacity: 0; transform: scale(0.88) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 /* Answer area */
 #answer-area {
   position: absolute;

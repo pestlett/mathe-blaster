@@ -51,6 +51,23 @@ let state = {
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
 };
 
+// ---- Voice suggestion pill (module-level so submitAnswer can access it) ----
+let _voiceSuggestionEl = null;
+
+function showSuggestion(n, isInterim) {
+  if (!_voiceSuggestionEl) return;
+  _voiceSuggestionEl.innerHTML =
+    `<span class="voice-suggestion-num">${n}</span>` +
+    `<span class="voice-suggestion-label">${isInterim ? '…' : 'tap to fire'}</span>`;
+  _voiceSuggestionEl.classList.remove('hidden', 'interim', 'confirmed');
+  _voiceSuggestionEl.classList.add(isInterim ? 'interim' : 'confirmed');
+}
+
+function hideSuggestion() {
+  if (!_voiceSuggestionEl) return;
+  _voiceSuggestionEl.classList.add('hidden');
+}
+
 // ---- Bootstrap ----
 window.addEventListener('DOMContentLoaded', () => {
   Engine.init(update, render);
@@ -124,6 +141,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // ---- Voice setup ----
   const btnMic = document.getElementById('btn-mic');
+  _voiceSuggestionEl = document.getElementById('voice-suggestion');
+
+  _voiceSuggestionEl.addEventListener('click', () => {
+    if (state.phase === 'PLAYING') { hideSuggestion(); submitAnswer(); }
+  });
+
   if (!Voice.supported) {
     btnMic.style.display = 'none';
   } else {
@@ -146,16 +169,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     Voice.init({
-      onNext:       () => { clearProcessing(); if (state.phase === 'PLAYING') Targeting.moveRight(state.objects); },
-      onPrevious:   () => { clearProcessing(); if (state.phase === 'PLAYING') Targeting.moveLeft(state.objects); },
-      onClear:      () => { clearProcessing(); if (state.phase === 'PLAYING') answerInput.value = ''; },
-      onInterim:    (n) => { if (state.phase === 'PLAYING') answerInput.value = String(n); },
-      onFire:       () => { clearProcessing(); if (state.phase === 'PLAYING') submitAnswer(); },
+      onNext:       () => { clearProcessing(); hideSuggestion(); if (state.phase === 'PLAYING') Targeting.moveRight(state.objects); },
+      onPrevious:   () => { clearProcessing(); hideSuggestion(); if (state.phase === 'PLAYING') Targeting.moveLeft(state.objects); },
+      onClear:      () => { clearProcessing(); hideSuggestion(); if (state.phase === 'PLAYING') answerInput.value = ''; },
+      onInterim:    (n) => { if (state.phase === 'PLAYING') { showSuggestion(n, true);  answerInput.value = String(n); } },
+      onFire:       () => { clearProcessing(); if (state.phase === 'PLAYING') { hideSuggestion(); submitAnswer(); } },
       onNumber:     (n) => {
         clearProcessing();
         if (state.phase !== 'PLAYING') return;
         answerInput.value = String(n);
-        submitAnswer();
+        showSuggestion(n, false);
+        // Don't auto-submit — user taps pill, taps Fire, or says "fire" to confirm
       },
       onResultDone: () => clearProcessing(),  // no-match or after any result
 
@@ -249,6 +273,7 @@ function startGame(settings) {
   Audio.playMusic(state.theme);
 
   document.getElementById('answer-input').value = '';
+  hideSuggestion();
   UI.updateHUD(state);
   UI.showScreen('game');
   Engine.start();
@@ -424,6 +449,7 @@ function render(ctx, w, h, t) {
 // ---- ANSWER SUBMISSION ----
 function submitAnswer() {
   if (state.phase !== 'PLAYING') return;
+  hideSuggestion();
   const input = document.getElementById('answer-input');
 
   const target = Targeting.getTarget();
