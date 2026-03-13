@@ -16,26 +16,72 @@ const Voice = (() => {
   const DEBOUNCE_MS = 1500;
   let lastFiredNum  = null;
   let lastFiredTime = 0;
+  let lastFiredQuestionKey = '';
+  let activeQuestionKey = '';
 
   // While TTS is speaking, discard all SR results so the mic doesn't
   // hear the speaker output. SR stays running (no restart dead zone).
   let resultsMuted = false;
 
-  // Echo-tail filter: even after muteResults → false, reject numbers that
-  // match what TTS just said, for a short grace window (acoustic echo arrives
-  // 50–400 ms after onend on most hardware).
-  let _echoGraceUntil = 0;
-  let _echoNums       = new Set(); // numeric values spoken in the last TTS
+  // Echo-tail filters:
+  // 1) short number guard for raw operand echoes ("7")
+  // 2) longer question-pattern guard for phrase echoes ("7 times 8", "78")
+  let _echoNums            = new Set();
+  let _echoOperandNums     = [];
+  let _echoConcatNums      = new Set();
+  let _echoNumberGuardUntil = 0;
+  let _echoPhraseGuardUntil = 0;
+  let _echoOperatorWords    = new Set(['times', 'x']);
 
-  function setTTSEchoFilter(nums, graceMs) {
-    _echoNums       = new Set(nums);
-    _echoGraceUntil = Date.now() + graceMs;
+  const OPERATOR_WORDS = {
+    en: ['times', 'x'],
+    de: ['mal', 'x'],
+    es: ['por', 'x'],
+  };
+
+  function setTTSEchoFilter(config, legacyGraceMs) {
+    const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
+    let nums = [];
+    let operands = [];
+    let numberGraceMs = 0;
+    let phraseGraceMs = 0;
+    let opLang = lang;
+
+    if (Array.isArray(config)) {
+      nums = config;
+      operands = config;
+      numberGraceMs = legacyGraceMs || 0;
+      phraseGraceMs = legacyGraceMs || 0;
+    } else {
+      nums = config?.nums || [];
+      operands = config?.operands || nums;
+      numberGraceMs = config?.numberGraceMs ?? config?.graceMs ?? legacyGraceMs ?? 0;
+      phraseGraceMs = config?.phraseGraceMs ?? config?.graceMs ?? legacyGraceMs ?? 0;
+      opLang = config?.lang || lang;
+    }
+
+    _echoNums = new Set(
+      nums.map(n => Number(n)).filter(n => Number.isInteger(n) && n >= 0 && n <= 200)
+    );
+    _echoOperandNums = [...new Set(
+      operands.map(n => Number(n)).filter(n => Number.isInteger(n) && n >= 0 && n <= 200)
+    )];
+    _echoConcatNums = new Set();
+    if (_echoOperandNums.length >= 2) {
+      const [a, b] = _echoOperandNums;
+      _echoConcatNums.add(Number(`${a}${b}`));
+      _echoConcatNums.add(Number(`${b}${a}`));
+    }
+    _echoOperatorWords = new Set(OPERATOR_WORDS[opLang] || OPERATOR_WORDS.en);
+    const now = Date.now();
+    _echoNumberGuardUntil = now + Math.max(0, numberGraceMs);
+    _echoPhraseGuardUntil = now + Math.max(0, phraseGraceMs);
   }
 
   // NOTE: getUserMedia priming was removed — holding a stream open with
   // getUserMedia locks the mic on mobile (iOS/Android exclusive access),
   // preventing SpeechRecognition from starting. The other echo-suppression
-  // layers (adaptive unmute delay, echo-tail filter, speaking guard) are
+  // layers (adaptive unmute delay and echo-tail filtering) are
   // sufficient without it.
 
   // ---- Map game language → BCP-47 recognition lang ----
@@ -138,11 +184,45 @@ const Voice = (() => {
     return WORD_MAP_EN;
   }
 
+  function normalizeSpeechText(text) {
+    return text.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9 \-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function parseAtomicToken(token) {
+    if (!token) return null;
+    if (/^\d+$/.test(token)) return Number(token);
+    const map = getWordMap();
+    if (map[token] !== undefined) return map[token];
+    if (WORD_MAP_EN[token] !== undefined) return WORD_MAP_EN[token];
+    return null;
+  }
+
+  function looksLikeQuestionEcho(text) {
+    if (_echoOperandNums.length < 2) return false;
+    const normalized = normalizeSpeechText(text);
+    if (!normalized) return false;
+
+    const tokens = normalized.split(' ').filter(Boolean);
+    const atomNums = tokens.map(parseAtomicToken).filter(n => n !== null);
+    const atomSet = new Set(atomNums);
+    const hasBothOperands = _echoOperandNums.every(n => atomSet.has(n));
+    const hasOperatorWord = tokens.some(t => _echoOperatorWords.has(t));
+
+    if (hasBothOperands && (hasOperatorWord || atomNums.length >= 2)) return true;
+
+    const compact = normalized.replace(/\s+/g, '');
+    if (/^\d+$/.test(compact) && _echoConcatNums.has(Number(compact))) return true;
+
+    return false;
+  }
+
   // ---- Number parser ----
   function parseNumber(text) {
-    text = text.trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9 \-]/g, '');
+    text = normalizeSpeechText(text);
     if (!text) return null;
 
     // Direct digit string ("42", "7")
@@ -284,22 +364,34 @@ const Voice = (() => {
     }
     if (winner === null) winner = Number(entries[0][0]);
 
-    // Echo-tail filter: reject if this number was in the last TTS utterance
-    // and we're still within the acoustic-echo grace window.
-    if (Date.now() < _echoGraceUntil && _echoNums.has(winner)) {
+    const now = Date.now();
+
+    // Question-pattern echo filter: catches read-back variants like
+    // "6 times 8", "six eight", or "68" right after TTS.
+    if (now < _echoPhraseGuardUntil && texts.some(looksLikeQuestionEcho)) {
+      console.log('[Voice] echo filter: question phrase match, discarding', alternatives);
+      callbacks.onResultDone?.();
+      return;
+    }
+
+    // Operand-only fallback: keep this short to avoid blocking valid fast
+    // answers on facts like 1×7 where the answer equals a spoken operand.
+    if (now < _echoNumberGuardUntil && _echoNums.has(winner)) {
       console.log(`[Voice] echo filter: ${winner} matches TTS token, discarding`);
       callbacks.onResultDone?.();
       return;
     }
 
-    // Debounce: ignore identical answer within DEBOUNCE_MS
-    const now = Date.now();
-    if (winner === lastFiredNum && now - lastFiredTime < DEBOUNCE_MS) {
+    // Debounce within the same active question only.
+    const sameQuestion = !!activeQuestionKey && activeQuestionKey === lastFiredQuestionKey;
+    if (sameQuestion && winner === lastFiredNum && now - lastFiredTime < DEBOUNCE_MS) {
       console.log(`[Voice] dedup skip ${winner}`);
+      callbacks.onResultDone?.();
       return;
     }
     lastFiredNum  = winner;
     lastFiredTime = now;
+    lastFiredQuestionKey = activeQuestionKey || '';
 
     console.log(`[Voice] → ${winner} | weights ${JSON.stringify(votes)} | alts`, alternatives);
     callbacks.onNumber?.(winner);
@@ -311,8 +403,7 @@ const Voice = (() => {
   // is still speaking, giving immediate visual feedback.
   function handleInterim(transcript) {
     if (resultsMuted) return;
-    const text = transcript.trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const text = normalizeSpeechText(transcript);
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));
     if (n !== null && n >= 0 && n <= 200) callbacks.onInterim?.(n);
   }
@@ -415,6 +506,7 @@ const Voice = (() => {
     listening = shouldRestart = true;
     lastFiredNum  = null;  // reset debounce on new game session
     lastFiredTime = 0;
+    lastFiredQuestionKey = '';
     recognition.lang = recognitionLang();
     // NOTE: do NOT call onStatusChange(true) here — SR is not yet capturing.
     // recognition.onstart fires when the engine is actually listening; that's
@@ -431,7 +523,11 @@ const Voice = (() => {
     callbacks.onStatusChange?.(false);
   }
 
+  function setActiveQuestion(questionKey) {
+    activeQuestionKey = questionKey || '';
+  }
+
   function muteResults(v) { resultsMuted = v; }
 
-  return { supported, init, start, stop, muteResults, setTTSEchoFilter, parseNumber };
+  return { supported, init, start, stop, muteResults, setTTSEchoFilter, setActiveQuestion, parseNumber };
 })();
