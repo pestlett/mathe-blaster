@@ -208,7 +208,7 @@ let _speakTimer       = null;
 let _ttsStartTime     = 0; // tracks when TTS actually started playing (utt.onstart)
 let _ttsSafetyTimer   = null;
 
-function speakQuestion(text) {
+function speakQuestion(text, answer) {
   if (!window.speechSynthesis) return;
   clearTimeout(_speakTimer);
   _speakTimer = setTimeout(() => {
@@ -242,8 +242,13 @@ function speakQuestion(text) {
       // Tell the echo-tail filter which numbers were spoken so it can reject
       // them if they arrive within the grace window after unmuting.
       const echoNums = speakable.split(/\s+/).map(t => parseInt(t, 10)).filter(n => !isNaN(n));
-      Voice.setTTSEchoFilter(echoNums, tailMs + 500);
-      setTimeout(() => Voice.muteResults(false), tailMs);
+      Voice.armTTSTailFilter({
+        promptText: speakable,
+        promptNumbers: echoNums,
+        allowedAnswer: answer,
+        tailMs,
+        graceMs: tailMs + 500,
+      });
     };
     utt.onend   = resume;
     utt.onerror = resume;
@@ -263,7 +268,7 @@ function maybeSpeak() {
   const target = Targeting.getTarget();
   if (target && target !== _lastSpokenTarget) {
     _lastSpokenTarget = target;
-    speakQuestion(target.question);
+    speakQuestion(target.question, target.answer);
   }
 }
 

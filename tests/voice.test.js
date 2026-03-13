@@ -18,6 +18,36 @@ function makeVoiceCtx(lang = 'en') {
   return ctx;
 }
 
+function makeVoiceRuntimeCtx(lang = 'en') {
+  let recognitionInstance = null;
+
+  class FakeSpeechRecognition {
+    constructor() {
+      recognitionInstance = this;
+      this.continuous = false;
+      this.interimResults = false;
+      this.maxAlternatives = 1;
+      this.lang = 'en-US';
+    }
+    start() {}
+    stop() {}
+    abort() {}
+  }
+
+  const ctx = makeContext({
+    window: {
+      SpeechRecognition: FakeSpeechRecognition,
+      webkitSpeechRecognition: null,
+    },
+  });
+  ctx.I18n = { getLang: () => lang };
+  loadModule(ctx, 'voice.js');
+  return {
+    ctx,
+    getRecognition: () => recognitionInstance,
+  };
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 function parse(ctx, text) {
   return ctx.Voice.parseNumber(text);
@@ -113,4 +143,78 @@ describe('parseNumber — Spanish', () => {
   test('"noventa y nueve" → 99', () => expect(parse(ctx, 'noventa y nueve')).toBe(99));
   test('"cien" → 100', () => expect(parse(ctx, 'cien')).toBe(100));
   test('"ciento veinte" → 120', () => expect(parse(ctx, 'ciento veinte')).toBe(120));
+});
+
+// ── Runtime TTS-tail behaviour ───────────────────────────────────────────────
+describe('voice runtime — TTS tail handling', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  function makeFinalResult(...alternatives) {
+    const entries = alternatives.map(alt => ({
+      transcript: alt.transcript,
+      confidence: alt.confidence ?? 0.9,
+    }));
+    return {
+      resultIndex: 0,
+      results: [{
+        isFinal: true,
+        length: entries.length,
+        ...entries,
+      }],
+    };
+  }
+
+  test('speechstart during TTS tail releases mute so the first answer is captured', () => {
+    const { ctx, getRecognition } = makeVoiceRuntimeCtx('en');
+    const seen = [];
+    ctx.Voice.init({
+      onNumber: n => seen.push(n),
+      onSpeechStart: () => {},
+      onStatusChange: () => {},
+    });
+
+    ctx.Voice.start();
+    ctx.Voice.muteResults(true);
+    ctx.Voice.armTTSTailFilter({
+      promptText: '6 times 8',
+      promptNumbers: [6, 8],
+      allowedAnswer: 48,
+      tailMs: 280,
+      graceMs: 780,
+    });
+
+    const recognition = getRecognition();
+    recognition.onspeechstart();
+    recognition.onresult(makeFinalResult({ transcript: 'forty eight', confidence: 0.92 }));
+
+    expect(seen).toEqual([48]);
+  });
+
+  test('prompt digits are still filtered during the TTS grace window', () => {
+    const { ctx, getRecognition } = makeVoiceRuntimeCtx('en');
+    const seen = [];
+    ctx.Voice.init({
+      onNumber: n => seen.push(n),
+      onSpeechStart: () => {},
+      onStatusChange: () => {},
+      onResultDone: () => {},
+    });
+
+    ctx.Voice.start();
+    ctx.Voice.muteResults(true);
+    ctx.Voice.armTTSTailFilter({
+      promptText: '6 times 8',
+      promptNumbers: [6, 8],
+      allowedAnswer: 48,
+      tailMs: 280,
+      graceMs: 780,
+    });
+
+    const recognition = getRecognition();
+    recognition.onspeechstart();
+    recognition.onresult(makeFinalResult({ transcript: '8', confidence: 0.91 }));
+
+    expect(seen).toEqual([]);
+  });
 });

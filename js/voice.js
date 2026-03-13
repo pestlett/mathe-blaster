@@ -26,17 +26,84 @@ const Voice = (() => {
   // 50–400 ms after onend on most hardware).
   let _echoGraceUntil = 0;
   let _echoNums       = new Set(); // numeric values spoken in the last TTS
+  let _echoJoinedNums = new Set();
+  let _echoPromptText = '';
+  let _echoAllowedAnswer = null;
+  let _postTTSMuteUntil  = 0;
+  let _ttsTailTimer      = null;
 
-  function setTTSEchoFilter(nums, graceMs) {
-    _echoNums       = new Set(nums);
-    _echoGraceUntil = Date.now() + graceMs;
+  function normalizeSpeechText(text) {
+    return String(text || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function releaseTTSTailMute() {
+    clearTimeout(_ttsTailTimer);
+    _ttsTailTimer = null;
+    _postTTSMuteUntil = 0;
+    resultsMuted = false;
+  }
+
+  function armTTSTailFilter({ promptText = '', promptNumbers = [], allowedAnswer = null, tailMs = 0, graceMs = 0 }) {
+    clearTimeout(_ttsTailTimer);
+    _ttsTailTimer = null;
+
+    const now = Date.now();
+    const nums = Array.isArray(promptNumbers) ? promptNumbers.filter(n => Number.isFinite(n)) : [];
+    _echoNums = new Set(nums);
+    _echoGraceUntil = now + Math.max(graceMs, tailMs);
+    _echoPromptText = normalizeSpeechText(promptText);
+    _echoAllowedAnswer = Number.isFinite(allowedAnswer) ? allowedAnswer : null;
+    _postTTSMuteUntil = now + Math.max(0, tailMs);
+
+    _echoJoinedNums = new Set();
+    if (nums.length > 1) {
+      const joined = parseInt(nums.map(String).join(''), 10);
+      if (!isNaN(joined)) _echoJoinedNums.add(joined);
+    }
+
+    if (tailMs <= 0) {
+      releaseTTSTailMute();
+      return;
+    }
+
+    _ttsTailTimer = setTimeout(() => releaseTTSTailMute(), tailMs);
+  }
+
+  function inTTSTailWindow() {
+    return resultsMuted && Date.now() < _postTTSMuteUntil;
+  }
+
+  function isLikelyTTSEcho(alternatives, winner = null) {
+    if (Date.now() >= _echoGraceUntil) return false;
+
+    const texts = alternatives.map(normalizeSpeechText).filter(Boolean);
+    for (const text of texts) {
+      if (_echoPromptText && text === _echoPromptText) return true;
+      if (/\b(times|time|x|mal|por|by)\b/.test(text)) return true;
+      const digitTokens = text.split(' ').filter(t => /^\d+$/.test(t));
+      if (digitTokens.length >= 2 && digitTokens.every(t => _echoNums.has(Number(t)))) return true;
+    }
+
+    if (winner !== null) {
+      if (_echoJoinedNums.has(winner)) return true;
+      if (_echoNums.has(winner) && winner !== _echoAllowedAnswer) return true;
+    }
+
+    return false;
   }
 
   // NOTE: getUserMedia priming was removed — holding a stream open with
   // getUserMedia locks the mic on mobile (iOS/Android exclusive access),
   // preventing SpeechRecognition from starting. The other echo-suppression
   // layers (adaptive unmute delay, echo-tail filter, speaking guard) are
-  // sufficient without it.
+  // sufficient without it, along with the event-driven TTS tail release.
 
   // ---- Map game language → BCP-47 recognition lang ----
   const LANG_MAP = { en: 'en-US', de: 'de-DE', es: 'es-ES' };
@@ -286,7 +353,7 @@ const Voice = (() => {
 
     // Echo-tail filter: reject if this number was in the last TTS utterance
     // and we're still within the acoustic-echo grace window.
-    if (Date.now() < _echoGraceUntil && _echoNums.has(winner)) {
+    if (isLikelyTTSEcho(alternatives, winner)) {
       console.log(`[Voice] echo filter: ${winner} matches TTS token, discarding`);
       callbacks.onResultDone?.();
       return;
@@ -314,7 +381,7 @@ const Voice = (() => {
     const text = transcript.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));
-    if (n !== null && n >= 0 && n <= 200) callbacks.onInterim?.(n);
+    if (n !== null && n >= 0 && n <= 200 && !isLikelyTTSEcho([transcript], n)) callbacks.onInterim?.(n);
   }
 
   // ---- Watchdog ----
@@ -365,7 +432,13 @@ const Voice = (() => {
     // Sound/speech lifecycle — drives the 4-state mic button UI
     recognition.onsoundstart  = () => callbacks.onSoundStart?.();
     recognition.onsoundend    = () => callbacks.onSoundEnd?.();
-    recognition.onspeechstart = () => callbacks.onSpeechStart?.();
+    recognition.onspeechstart = () => {
+      if (inTTSTailWindow()) {
+        console.log('[Voice] speech detected during TTS tail, unmuting early');
+        releaseTTSTailMute();
+      }
+      callbacks.onSpeechStart?.();
+    };
     // onspeechend fires when the engine stops detecting speech but before
     // the final result arrives — this is the "I heard you, thinking..." gap
     recognition.onspeechend   = () => callbacks.onSpeechEnd?.();
@@ -411,6 +484,9 @@ const Voice = (() => {
 
   function start() {
     if (!supported || !recognition) return;
+    clearTimeout(_ttsTailTimer);
+    _ttsTailTimer = null;
+    _postTTSMuteUntil = 0;
     resultsMuted  = false; // clear any stale mute from previous TTS
     listening = shouldRestart = true;
     lastFiredNum  = null;  // reset debounce on new game session
@@ -427,11 +503,23 @@ const Voice = (() => {
     listening = shouldRestart = false;
     clearTimeout(restartTimer);
     clearTimeout(watchdogTimer);
+    clearTimeout(_ttsTailTimer);
+    _ttsTailTimer = null;
+    _postTTSMuteUntil = 0;
     try { recognition.stop(); } catch (_) {}
     callbacks.onStatusChange?.(false);
   }
 
-  function muteResults(v) { resultsMuted = v; }
+  function muteResults(v) {
+    if (v) {
+      clearTimeout(_ttsTailTimer);
+      _ttsTailTimer = null;
+      _postTTSMuteUntil = 0;
+      resultsMuted = true;
+      return;
+    }
+    releaseTTSTailMute();
+  }
 
-  return { supported, init, start, stop, muteResults, setTTSEchoFilter, parseNumber };
+  return { supported, init, start, stop, muteResults, armTTSTailFilter, parseNumber };
 })();
