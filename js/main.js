@@ -254,18 +254,33 @@ function maybeSpeak() {
   }
 }
 
-// ---- Mastery win condition ----
-function checkMasteryWin() {
-  if (state.phase !== 'PLAYING' || state.masteryWin) return;
-  const { mastered, total } = Progress.getMastery(state.minTable, state.maxTable);
-  if (total > 0 && mastered === total) {
-    Progress.unlockExtendedTables();
-    state.masteryWin = true;
+// ---- Per-table mastery announcements ----
+// Checks if any table in the current range has had all its facts mastered
+// for the first time this session. Shows a banner and confetti but does NOT
+// end the game. When every table in the range is done, extended tables are
+// unlocked.
+function checkTableMastery() {
+  if (state.phase !== 'PLAYING') return;
+  const { facts } = Progress.getMastery(state.minTable, state.maxTable);
+  const aValues = [...new Set(facts.map(f => f.a))];
+  let allDone = true;
+
+  for (const a of aValues) {
+    const tableFacts = facts.filter(f => f.a === a);
+    const isMastered = tableFacts.length > 0 && tableFacts.every(f => f.masteredLevel >= 5);
+    if (!isMastered) { allDone = false; continue; }
+    if (state.masteredTablesAnnounced.has(a)) continue;
+    // Newly mastered this session — announce once
+    state.masteredTablesAnnounced.add(a);
     state.confetti = spawnConfetti(window.innerWidth);
     vibrate([40, 60, 80, 60, 40]);
-    UI.showLevelUp('🏆 All Mastered!', null);
-    state.phase = 'ENDING';
-    setTimeout(() => endGame(), 2000);
+    UI.showLevelUp(I18n.t('tableMastered', { table: a }), null);
+  }
+
+  // Unlock extended tables when every table in range is done
+  if (allDone && aValues.length > 0) {
+    Progress.unlockExtendedTables();
+    state.masteryWin = true; // flag for game-over summary only
   }
 }
 
@@ -491,6 +506,7 @@ function startGame(settings) {
   state.unpauseFreezeTimer = 0;
   state.ttsFreezeActive = false;
   state.masteryWin = false;
+  state.masteredTablesAnnounced = new Set();
   state.confetti = [];
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
@@ -768,7 +784,7 @@ function submitAnswer() {
       state.bossesDefeated++;
       Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
-      checkMasteryWin();
+      checkTableMastery();
       Audio.play('levelUp');
       UI.showLevelUp('Boss!', null);
       UI.updateHUD(state);
@@ -840,7 +856,7 @@ function submitAnswer() {
     state.correctThisLevel++;
 
     Progress.recordAttempt(target.key, true, elapsed);
-    checkMasteryWin();
+    checkTableMastery();
 
     // Graduate out of wrong queue if it was there
     state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);

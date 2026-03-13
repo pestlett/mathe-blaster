@@ -94,6 +94,7 @@ const I18n = (() => {
       achievementsBtn:   'Achievements',
 
       // Mastery
+      tableMastered:        '⭐ {table}× table mastered!',
       masteryTitle:         'Table Progress',
       masteryWinBanner:     'ALL TABLES MASTERED!',
       masteryLegendDone:    ' Mastered  ',
@@ -232,6 +233,7 @@ const I18n = (() => {
       leaderboard:       'Bestenliste',
       achievementsBtn:   'Erfolge',
 
+      tableMastered:        '⭐ {table}× Tabelle gemeistert!',
       masteryTitle:         'Tabellenfortschritt',
       masteryWinBanner:     'ALLE TABELLEN GEMEISTERT!',
       masteryLegendDone:    ' Gemeistert  ',
@@ -366,6 +368,7 @@ const I18n = (() => {
       leaderboard:       'Clasificación',
       achievementsBtn:   'Logros',
 
+      tableMastered:        '⭐ ¡Tabla del {table}× dominada!',
       masteryTitle:         'Progreso de tablas',
       masteryWinBanner:     '¡TODAS LAS TABLAS DOMINADAS!',
       masteryLegendDone:    ' Dominado  ',
