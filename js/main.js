@@ -22,6 +22,7 @@ const SPEED_INCREASE_PER_LEVEL = 0.18;
 // ---- Game state ----
 let state = {
   phase: 'ONBOARDING', // ONBOARDING | PLAYING | GAME_OVER
+  voiceActive: false,  // true while SpeechRecognition is actively listening
   name: 'Player',
   age: null,
   theme: 'space',
@@ -177,7 +178,13 @@ function startAutoSubmit(target) {
   cancelAutoSubmit();
   const crashLine = window.innerHeight - 148;
   const timeLeft  = Math.max(0.3, (crashLine - target.y) / Math.max(1, target.speed));
-  const duration  = Math.min(1.8, Math.max(0.5, timeLeft * 0.35));
+  // On phone+voice, give more time before auto-submitting — voice recognition
+  // takes 1.5–2.5s (speak + engine + network), and it's already the confirmed
+  // result so we just need to let the countdown complete comfortably.
+  const phoneVoice = window.innerWidth < 640 && state.voiceActive;
+  const duration  = phoneVoice
+    ? Math.min(2.5, Math.max(0.8, timeLeft * 0.5))
+    : Math.min(1.8, Math.max(0.5, timeLeft * 0.35));
   _voiceSuggestionEl.style.setProperty('--countdown-duration', `${duration.toFixed(2)}s`);
   _voiceSuggestionEl.classList.add('countdown');
   _autoSubmitTimer = setTimeout(() => {
@@ -453,6 +460,7 @@ window.addEventListener('DOMContentLoaded', () => {
       },
 
       onStatusChange: (active, reason) => {
+        state.voiceActive = active && reason !== 'denied';
         if (active) {
           micState('listening');
           btnMic.title = 'Voice active — speak your answer';
@@ -526,6 +534,7 @@ function startGame(settings) {
   state.levelTransitionTimer = 0;
   state.unpauseFreezeTimer = 0;
   state.ttsFreezeActive = false;
+  state.voiceActive = false;
   state.masteryWin = false;
   state.masteredTablesAnnounced = new Set();
   state.confetti = [];
@@ -631,8 +640,13 @@ function update(dt) {
   }
 
   const diff = DIFFICULTY[state.difficulty];
-  const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0);
-  const speed = Math.min(diff.maxSpeed, diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1));
+  // Phone + voice: reduce max concurrent objects and falling speed so there's
+  // enough time to speak an answer before items hit the bottom.
+  const isPhoneVoice = window.innerWidth < 640 && state.voiceActive;
+  const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0) - (isPhoneVoice ? 1 : 0);
+  const rawSpeed = diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1);
+  const phoneVoiceMult = isPhoneVoice ? 0.65 : 1;
+  const speed = Math.min(diff.maxSpeed * phoneVoiceMult, rawSpeed * phoneVoiceMult);
 
   // Boss round: spawn one giant boss on levels that are multiples of 5
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
