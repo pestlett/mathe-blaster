@@ -1,13 +1,13 @@
 // main.js - game state machine & entry point
 
 const DIFFICULTY = {
-  easy:   { maxObjects: 2, baseSpeed: 48 },
-  medium: { maxObjects: 3, baseSpeed: 70 },
-  hard:   { maxObjects: 4, baseSpeed: 96 }
+  easy:   { maxObjects: 2, baseSpeed: 48,  maxSpeed: 160 },
+  medium: { maxObjects: 3, baseSpeed: 70,  maxSpeed: 240 },
+  hard:   { maxObjects: 4, baseSpeed: 96,  maxSpeed: 320 }
 };
 const MAX_LIVES = 3;
 const CORRECT_PER_LEVEL = 10;
-const SPEED_INCREASE_PER_LEVEL = 0.10;
+const SPEED_INCREASE_PER_LEVEL = 0.18;
 
 // ---- Game state ----
 let state = {
@@ -160,7 +160,7 @@ function update(dt) {
 
   const diff = DIFFICULTY[state.difficulty];
   const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0);
-  const speed = diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1);
+  const speed = Math.min(diff.maxSpeed, diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1));
 
   // Spawn life-up item — at most one on screen, only when injured, every ~20s
   const hasLifeUp = state.objects.some(o => o.isLifeUp && !o.dead && !o.dying && !o.destroyed);
