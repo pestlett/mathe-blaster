@@ -116,5 +116,36 @@ const Progress = (() => {
     return ACHIEVEMENTS.map(a => ({ ...a, unlocked: !!d.achievements?.[a.id], unlockedAt: d.achievements?.[a.id] }));
   }
 
-  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS };
+  // Daily challenge helpers
+  function getDailyKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  }
+
+  function getDailyParams() {
+    // Seed a simple PRNG from today's date string to get consistent table/difficulty
+    const key = getDailyKey();
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    const tables = [2,3,4,5,6,7,8,9,10,11,12];
+    const diffs = ['easy','medium','hard'];
+    const table = tables[hash % tables.length];
+    const diff = diffs[(hash >> 4) % diffs.length];
+    return { table, difficulty: diff, dateKey: key };
+  }
+
+  function getDailyResult() {
+    const d = load();
+    const key = getDailyKey();
+    return d.dailyResults?.[key] || null;
+  }
+
+  function saveDailyResult(result) {
+    const d = load();
+    if (!d.dailyResults) d.dailyResults = {};
+    d.dailyResults[getDailyKey()] = result;
+    save(d);
+  }
+
+  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult };
 })();

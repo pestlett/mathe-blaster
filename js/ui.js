@@ -124,6 +124,30 @@ const UI = (() => {
 
     // Allow Enter to start
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnStart.click(); });
+
+    // Daily challenge button
+    const btnDaily = document.getElementById('btn-daily');
+    const dp = Progress.getDailyParams();
+    const existing = Progress.getDailyResult();
+    btnDaily.textContent = existing ? `⚡ Daily Challenge ✓ (${dp.table}× • ${dp.difficulty})` : `⚡ Daily Challenge — ${dp.table}× table • ${dp.difficulty}`;
+    if (existing) btnDaily.classList.add('daily-done');
+
+    btnDaily.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      const age = parseInt(ageInput.value);
+      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
+      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      Progress.saveName(name);
+      onStart({
+        name, age,
+        theme: selectedTheme,
+        minTable: dp.table, maxTable: dp.table,
+        difficulty: dp.difficulty,
+        hintThreshold: parseInt(hintThreshInput.value),
+        practiceMode: false,
+        isDaily: true
+      });
+    });
   }
 
   // ---- HUD ----
@@ -198,7 +222,9 @@ const UI = (() => {
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
         ).join('')}</div>`
       : '';
+    const dailyBadge = session.dailyBadge ? '<div class="daily-complete-badge">⚡ Daily Challenge Complete!</div>' : '';
     document.getElementById('gameover-stats').innerHTML = `
+      ${dailyBadge}
       <div>Score: <strong>${session.score}</strong></div>
       <div>Level reached: <strong>${session.level}</strong></div>
       <div>Accuracy: <strong>${Math.round(session.accuracy * 100)}%</strong></div>

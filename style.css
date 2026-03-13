@@ -706,6 +706,34 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   color: var(--accent);
 }
 
+/* Daily challenge button on onboarding */
+.btn-daily {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #f7c948;
+  background: transparent;
+  color: #f7c948;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s, transform 0.15s;
+  letter-spacing: 0.02em;
+}
+.btn-daily:hover { background: rgba(247,201,72,0.12); transform: translateY(-2px); }
+.btn-daily.daily-done { border-color: #2ed573; color: #2ed573; }
+.daily-complete-badge {
+  background: rgba(247,201,72,0.15);
+  border: 1px solid rgba(247,201,72,0.4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
 /* Transition animation */
 .screen-fade-out {
   animation: fadeOut 0.4s ease forwards;

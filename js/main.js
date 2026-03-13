@@ -134,6 +134,7 @@ function startGame(settings) {
   state.difficulty = settings.difficulty;
   state.hintThreshold = settings.hintThreshold || 3;
   state.practiceMode = settings.practiceMode || false;
+  state.isDaily = settings.isDaily || false;
   state.score = 0;
   state.level = 1;
   state.lives = MAX_LIVES;
@@ -497,6 +498,10 @@ function endGame() {
     missCount: state.missedList.length
   };
   const newAchievements = Progress.saveSession(session);
+  if (state.isDaily) {
+    Progress.saveDailyResult({ score: state.score, level: state.level, accuracy });
+    session.dailyBadge = true;
+  }
 
   UI.showGameOver(
     session,
