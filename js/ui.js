@@ -233,6 +233,20 @@ const UI = (() => {
     tryAgainTimer = setTimeout(() => { el.textContent = ''; }, 500);
   }
 
+  // ---- Miss flash (centre-screen equation reveal) ----
+  function showMissFlash(question, answer) {
+    const container = document.getElementById('miss-flash-container');
+    const el = document.createElement('div');
+    el.className = 'miss-flash';
+    el.innerHTML =
+      `<span class="miss-flash-eq">${question}</span>` +
+      `<span class="miss-flash-arrow">=</span>` +
+      `<span class="miss-flash-ans">${answer}</span>`;
+    container.appendChild(el);
+    // Remove element after animation ends (2.4s)
+    setTimeout(() => el.remove(), 2450);
+  }
+
   // ---- Input shake animation ----
   function shakeInput() {
     const inp = document.getElementById('answer-input');
@@ -428,5 +442,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showGameOver, showLeaderboard, showAchievements, showDashboard };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard };
 })();

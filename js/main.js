@@ -205,6 +205,7 @@ function update(dt) {
       } else if (!state.practiceMode) {
         state.lives = Math.max(0, state.lives - 1);
         state.missedList.push({ question: obj.question, answer: obj.answer });
+        UI.showMissFlash(obj.question, obj.answer);
         Audio.play('lifeLost');
         UI.updateHUD(state);
         if (state.lives <= 0 && state.phase === 'PLAYING') {
@@ -214,6 +215,7 @@ function update(dt) {
       } else {
         // Practice mode: track missed but no life loss
         state.missedList.push({ question: obj.question, answer: obj.answer });
+        UI.showMissFlash(obj.question, obj.answer);
       }
     }
   }

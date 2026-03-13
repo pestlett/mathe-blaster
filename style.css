@@ -402,6 +402,57 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 100%;
 }
 
+/* Miss flash notifications */
+#miss-flash-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 30;
+}
+
+@keyframes missFlash {
+  0%   { opacity: 0; transform: scale(1.25); }
+  12%  { opacity: 1; transform: scale(1); }
+  65%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+.miss-flash {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(10, 10, 30, 0.82);
+  border: 2px solid rgba(255, 80, 80, 0.7);
+  border-radius: 16px;
+  padding: 10px 22px;
+  animation: missFlash 2.4s ease forwards;
+  white-space: nowrap;
+}
+
+.miss-flash-eq {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ff7070;
+  letter-spacing: 0.02em;
+}
+
+.miss-flash-arrow {
+  font-size: 1.2rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.miss-flash-ans {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #f7c948;
+}
+
 /* HUD Overlay */
 #hud-overlay {
   position: absolute;
