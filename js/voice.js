@@ -21,6 +21,36 @@ const Voice = (() => {
   // hear the speaker output. SR stays running (no restart dead zone).
   let resultsMuted = false;
 
+  // Echo-tail filter: even after muteResults → false, reject numbers that
+  // match what TTS just said, for a short grace window (acoustic echo arrives
+  // 50–400 ms after onend on most hardware).
+  let _echoGraceUntil = 0;
+  let _echoNums       = new Set(); // numeric values spoken in the last TTS
+
+  function setTTSEchoFilter(nums, graceMs) {
+    _echoNums       = new Set(nums);
+    _echoGraceUntil = Date.now() + graceMs;
+  }
+
+  // getUserMedia echo-cancellation priming — done once on first mic use.
+  // On Chrome/Android this primes the audio subsystem to use hardware AEC
+  // before SpeechRecognition opens its own mic stream.
+  let _micPrimed = false;
+  function _primeMic() {
+    if (_micPrimed || !navigator.mediaDevices?.getUserMedia) return;
+    _micPrimed = true;
+    navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: { ideal: true },
+        noiseSuppression: { ideal: true },
+        autoGainControl:  { ideal: true },
+      }
+    }).then(stream => {
+      // Hold the stream open so the constraint stays active for SR
+      window._voiceMicStream = stream;
+    }).catch(() => {});
+  }
+
   // ---- Map game language → BCP-47 recognition lang ----
   const LANG_MAP = { en: 'en-US', de: 'de-DE', es: 'es-ES' };
   function recognitionLang() {
@@ -215,6 +245,9 @@ const Voice = (() => {
   // ---- Final transcript handling ----
   function handleTranscript(alternatives, confidences) {
     if (resultsMuted) return;
+    // Belt-and-suspenders: if TTS is still playing (onend fired early on some
+    // platforms), treat it the same as resultsMuted.
+    if (window.speechSynthesis?.speaking) return;
     const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const cmds = NAV_COMMANDS[lang] || NAV_COMMANDS.en;
 
@@ -230,6 +263,16 @@ const Voice = (() => {
       if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     callbacks.onResultDone?.(); return; }
       if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); callbacks.onResultDone?.(); return; }
       if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    callbacks.onResultDone?.(); return; }
+    }
+
+    // Confidence floor: discard results that are unusually low confidence.
+    // (Only applied when the engine actually reports non-zero scores — Chrome
+    // on Firefox reports 0 for everything so we skip the check there.)
+    const maxConf = confidences?.reduce((m, c) => Math.max(m, c), 0) ?? 0;
+    if (maxConf > 0 && maxConf < 0.45) {
+      console.log('[Voice] low confidence, discarding:', maxConf, alternatives);
+      callbacks.onResultDone?.();
+      return;
     }
 
     // Numbers: confidence-weighted voting across all alternatives.
@@ -267,6 +310,14 @@ const Voice = (() => {
     }
     if (winner === null) winner = Number(entries[0][0]);
 
+    // Echo-tail filter: reject if this number was in the last TTS utterance
+    // and we're still within the acoustic-echo grace window.
+    if (Date.now() < _echoGraceUntil && _echoNums.has(winner)) {
+      console.log(`[Voice] echo filter: ${winner} matches TTS token, discarding`);
+      callbacks.onResultDone?.();
+      return;
+    }
+
     // Debounce: ignore identical answer within DEBOUNCE_MS
     const now = Date.now();
     if (winner === lastFiredNum && now - lastFiredTime < DEBOUNCE_MS) {
@@ -286,6 +337,7 @@ const Voice = (() => {
   // is still speaking, giving immediate visual feedback.
   function handleInterim(transcript) {
     if (resultsMuted) return;
+    if (window.speechSynthesis?.speaking) return;
     const text = transcript.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));
@@ -386,6 +438,7 @@ const Voice = (() => {
 
   function start() {
     if (!supported || !recognition) return;
+    _primeMic();           // prime AEC before SR opens mic (no-op after first call)
     resultsMuted  = false; // clear any stale mute from previous TTS
     listening = shouldRestart = true;
     lastFiredNum  = null;  // reset debounce on new game session
@@ -408,5 +461,5 @@ const Voice = (() => {
 
   function muteResults(v) { resultsMuted = v; }
 
-  return { supported, init, start, stop, muteResults, parseNumber };
+  return { supported, init, start, stop, muteResults, setTTSEchoFilter, parseNumber };
 })();

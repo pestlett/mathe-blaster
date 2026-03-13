@@ -205,6 +205,7 @@ function hideSuggestion() {
 // ---- Read question aloud (speechSynthesis) ----
 let _lastSpokenTarget = null;
 let _speakTimer       = null;
+let _ttsStartTime     = 0; // tracks when TTS actually started playing (utt.onstart)
 
 function speakQuestion(text) {
   if (!window.speechSynthesis) return;
@@ -223,10 +224,20 @@ function speakQuestion(text) {
     utt.lang         = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
     utt.rate         = 0.92;
     utt.pitch        = 1.1;
-    utt.onstart = () => { state.ttsFreezeActive = true; };
+    utt.volume  = 0.72; // slightly reduced to lessen acoustic mic pickup
+    utt.onstart = () => { state.ttsFreezeActive = true; _ttsStartTime = Date.now(); };
     const resume = () => {
       state.ttsFreezeActive = false;
-      Voice.muteResults(false); // unmute — SR already running, no restart needed
+      // Adaptive unmute delay: utt.onend fires before the acoustic echo
+      // clears the mic (hardware round-trip is 50–400ms). Wait at least
+      // 280ms, or 15% of utterance duration — whichever is larger.
+      const spokenMs = Date.now() - _ttsStartTime;
+      const tailMs   = Math.max(280, Math.round(spokenMs * 0.15));
+      // Tell the echo-tail filter which numbers were spoken so it can reject
+      // them if they arrive within the grace window after unmuting.
+      const echoNums = speakable.split(/\s+/).map(t => parseInt(t, 10)).filter(n => !isNaN(n));
+      Voice.setTTSEchoFilter(echoNums, tailMs + 500);
+      setTimeout(() => Voice.muteResults(false), tailMs);
     };
     utt.onend   = resume;
     utt.onerror = resume;
