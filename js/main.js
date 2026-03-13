@@ -171,7 +171,8 @@ function update(dt) {
       const stats = Progress.getStats();
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
       const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
-      state.objects.push(Objects.createLifeUp(q, window.innerWidth, speed));
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      state.objects.push(Objects.createLifeUp(q, window.innerWidth, speed, liveX));
     }
   } else {
     state.lifeUpTimer = 0; // reset timer when at full health or one already active
@@ -183,8 +184,8 @@ function update(dt) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
     const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
-    const idx = state.objects.filter(o => !o.dead).length;
-    state.objects.push(Objects.create(q, window.innerWidth, window.innerHeight, speed, idx));
+    const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+    state.objects.push(Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX));
   }
 
   // Remove fully dead objects

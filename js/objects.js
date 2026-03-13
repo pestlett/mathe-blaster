@@ -4,16 +4,26 @@ const Objects = (() => {
   const WOBBLE_AMPLITUDE = 18;
   const WOBBLE_SPEED = 1.8; // radians per second
 
-  function create(question, canvasWidth, canvasHeight, speed, index) {
-    const margin = 90;
-    // Spread objects horizontally with some separation
-    const slotWidth = (canvasWidth - margin * 2) / 4;
-    const baseX = margin + (index % 4) * slotWidth + slotWidth / 2 + (Math.random() - 0.5) * 30;
+  const MARGIN = 80;
+  const MIN_SEP = 130; // minimum px between object centres at spawn
+
+  function pickX(canvasWidth, existingXPositions) {
+    const lo = MARGIN, hi = canvasWidth - MARGIN;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const x = lo + Math.random() * (hi - lo);
+      if (existingXPositions.every(ex => Math.abs(x - ex) >= MIN_SEP)) return x;
+    }
+    // Fallback: just pick a random position if no gap found
+    return lo + Math.random() * (hi - lo);
+  }
+
+  function create(question, canvasWidth, canvasHeight, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
     return {
       question: question.display,
       answer: question.answer,
       key: question.key,
-      x: Math.max(margin, Math.min(canvasWidth - margin, baseX)),
+      x,
       y: -80,
       speed,
       isTargeted: false,
@@ -88,9 +98,8 @@ const Objects = (() => {
     }
   }
 
-  function createLifeUp(question, canvasWidth, speed) {
-    const margin = 90;
-    const x = margin + Math.random() * (canvasWidth - margin * 2);
+  function createLifeUp(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
     return {
       isLifeUp: true,
       question: question.display,
