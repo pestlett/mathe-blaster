@@ -32,24 +32,11 @@ const Voice = (() => {
     _echoGraceUntil = Date.now() + graceMs;
   }
 
-  // getUserMedia echo-cancellation priming — done once on first mic use.
-  // On Chrome/Android this primes the audio subsystem to use hardware AEC
-  // before SpeechRecognition opens its own mic stream.
-  let _micPrimed = false;
-  function _primeMic() {
-    if (_micPrimed || !navigator.mediaDevices?.getUserMedia) return;
-    _micPrimed = true;
-    navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: { ideal: true },
-        noiseSuppression: { ideal: true },
-        autoGainControl:  { ideal: true },
-      }
-    }).then(stream => {
-      // Hold the stream open so the constraint stays active for SR
-      window._voiceMicStream = stream;
-    }).catch(() => {});
-  }
+  // NOTE: getUserMedia priming was removed — holding a stream open with
+  // getUserMedia locks the mic on mobile (iOS/Android exclusive access),
+  // preventing SpeechRecognition from starting. The other echo-suppression
+  // layers (adaptive unmute delay, echo-tail filter, speaking guard) are
+  // sufficient without it.
 
   // ---- Map game language → BCP-47 recognition lang ----
   const LANG_MAP = { en: 'en-US', de: 'de-DE', es: 'es-ES' };
@@ -265,16 +252,6 @@ const Voice = (() => {
       if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    callbacks.onResultDone?.(); return; }
     }
 
-    // Confidence floor: discard results that are unusually low confidence.
-    // (Only applied when the engine actually reports non-zero scores — Chrome
-    // on Firefox reports 0 for everything so we skip the check there.)
-    const maxConf = confidences?.reduce((m, c) => Math.max(m, c), 0) ?? 0;
-    if (maxConf > 0 && maxConf < 0.45) {
-      console.log('[Voice] low confidence, discarding:', maxConf, alternatives);
-      callbacks.onResultDone?.();
-      return;
-    }
-
     // Numbers: confidence-weighted voting across all alternatives.
     // Falls back to position-based weight (1/rank) when confidence scores are
     // all zero (common on some engines/platforms).
@@ -438,7 +415,6 @@ const Voice = (() => {
 
   function start() {
     if (!supported || !recognition) return;
-    _primeMic();           // prime AEC before SR opens mic (no-op after first call)
     resultsMuted  = false; // clear any stale mute from previous TTS
     listening = shouldRestart = true;
     lastFiredNum  = null;  // reset debounce on new game session
