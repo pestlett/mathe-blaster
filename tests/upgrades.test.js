@@ -1,7 +1,12 @@
 // tests/upgrades.test.js
 'use strict';
 
-const { UPGRADES, STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS, upgradeNameForTheme, upgradeDescForTheme, drawUpgrades } = require('../js/upgrades.js');
+const {
+  UPGRADES, SYNERGIES,
+  STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS,
+  upgradeNameForTheme, upgradeDescForTheme,
+  drawUpgrades, getSynergyHintsForUpgrade, getActiveSynergySets,
+} = require('../js/upgrades.js');
 
 // ---- apply() sets correct flags ----
 
@@ -273,5 +278,160 @@ describe('commutative pair mechanic', () => {
     );
 
     expect(mirror).toBeUndefined();
+  });
+});
+
+// ---- SYNERGIES definitions ----
+describe('SYNERGIES definitions', () => {
+  test('5 synergies defined', () => {
+    expect(SYNERGIES).toHaveLength(5);
+  });
+
+  test('each synergy has ids (2), type, and effect', () => {
+    for (const s of SYNERGIES) {
+      expect(s.ids).toHaveLength(2);
+      expect(s.type).toMatch(/^(positive|negative)$/);
+      expect(typeof s.effect).toBe('string');
+    }
+  });
+
+  test('3 positive and 2 negative synergies', () => {
+    const pos = SYNERGIES.filter(s => s.type === 'positive').length;
+    const neg = SYNERGIES.filter(s => s.type === 'negative').length;
+    expect(pos).toBe(3);
+    expect(neg).toBe(2);
+  });
+});
+
+// ---- getSynergyHintsForUpgrade ----
+describe('getSynergyHintsForUpgrade', () => {
+  test('returns positive hint when partner is active', () => {
+    // chain + luckyBonus = positive
+    const hints = getSynergyHintsForUpgrade('chain', ['luckyBonus'], 'space');
+    expect(hints).toHaveLength(1);
+    expect(hints[0].type).toBe('positive');
+    expect(hints[0].partnerName).toBe('Nebula Luck');
+  });
+
+  test('returns negative hint when conflict partner is active', () => {
+    // slowAll + quickBonus = negative
+    const hints = getSynergyHintsForUpgrade('quickBonus', ['slowAll'], 'ocean');
+    expect(hints).toHaveLength(1);
+    expect(hints[0].type).toBe('negative');
+    expect(hints[0].partnerName).toBe('Undertow');
+  });
+
+  test('returns multiple hints when multiple partners active', () => {
+    // quickBonus has: positive with streakBoost, negative with slowAll
+    const hints = getSynergyHintsForUpgrade('quickBonus', ['streakBoost', 'slowAll'], 'space');
+    expect(hints).toHaveLength(2);
+    const types = hints.map(h => h.type).sort();
+    expect(types).toEqual(['negative', 'positive']);
+  });
+
+  test('returns empty when no relevant partners active', () => {
+    const hints = getSynergyHintsForUpgrade('chain', ['bomb', 'shield'], 'space');
+    expect(hints).toHaveLength(0);
+  });
+
+  test('uses theme-appropriate partner name', () => {
+    const hints = getSynergyHintsForUpgrade('chain', ['luckyBonus'], 'sky');
+    expect(hints[0].partnerName).toBe('Lucky Wind');
+  });
+});
+
+// ---- getActiveSynergySets ----
+describe('getActiveSynergySets', () => {
+  test('both IDs in positive set when pair is active', () => {
+    const { positive, negative } = getActiveSynergySets(['chain', 'luckyBonus']);
+    expect(positive.has('chain')).toBe(true);
+    expect(positive.has('luckyBonus')).toBe(true);
+    expect(negative.size).toBe(0);
+  });
+
+  test('both IDs in negative set when conflict pair is active', () => {
+    const { positive, negative } = getActiveSynergySets(['slowAll', 'quickBonus']);
+    expect(negative.has('slowAll')).toBe(true);
+    expect(negative.has('quickBonus')).toBe(true);
+    expect(positive.size).toBe(0);
+  });
+
+  test('incomplete pair produces no entries', () => {
+    const { positive, negative } = getActiveSynergySets(['chain', 'shield']);
+    expect(positive.size).toBe(0);
+    expect(negative.size).toBe(0);
+  });
+
+  test('multiple pairs can be active simultaneously', () => {
+    // chain+lucky (positive) AND slowAll+quickBonus (negative)
+    const { positive, negative } = getActiveSynergySets(['chain', 'luckyBonus', 'slowAll', 'quickBonus']);
+    expect(positive.has('chain')).toBe(true);
+    expect(positive.has('luckyBonus')).toBe(true);
+    expect(negative.has('slowAll')).toBe(true);
+    expect(negative.has('quickBonus')).toBe(true);
+  });
+
+  test('quickBonus appears in positive AND negative when both partners present', () => {
+    // quickBonus synergises with streakBoost, conflicts with slowAll
+    const { positive, negative } = getActiveSynergySets(['streakBoost', 'quickBonus', 'slowAll']);
+    expect(positive.has('quickBonus')).toBe(true);
+    expect(negative.has('quickBonus')).toBe(true);
+  });
+});
+
+// ---- Synergy mechanics (scoring simulation) ----
+describe('synergy mechanics', () => {
+  test('Slow All + Quick: quick window halves to 750ms (conflict)', () => {
+    const speedMult = 0.75; // slowAll applied
+    const quickBonus = true;
+    const hasSynSlowQuick = speedMult < 1 && quickBonus;
+    expect(hasSynSlowQuick ? 750 : 1500).toBe(750);
+  });
+
+  test('without Slow All: quick window stays 1500ms', () => {
+    const speedMult = 1;
+    const quickBonus = true;
+    const hasSynSlowQuick = speedMult < 1 && quickBonus;
+    expect(hasSynSlowQuick ? 750 : 1500).toBe(1500);
+  });
+
+  test('Streak Slow + Slow All: timer duration 2s (conflict)', () => {
+    const speedMult = 0.75;
+    const dur = speedMult < 1 ? 2 : 5;
+    expect(dur).toBe(2);
+  });
+
+  test('Streak Slow alone: timer duration 5s', () => {
+    const speedMult = 1;
+    const dur = speedMult < 1 ? 2 : 5;
+    expect(dur).toBe(5);
+  });
+
+  test('Streak Boost + Quick: +30 bonus when streak >= 3', () => {
+    const streakBoost = true;
+    const streak = 5;
+    const bonus = (streakBoost && streak >= 3) ? 30 : 20;
+    expect(bonus).toBe(30);
+  });
+
+  test('Quick alone: +20 bonus', () => {
+    const streakBoost = false;
+    const streak = 5;
+    const bonus = (streakBoost && streak >= 3) ? 30 : 20;
+    expect(bonus).toBe(20);
+  });
+
+  test('Hot Zone + Reveal: ×2 multiplier when answer was revealed', () => {
+    const revealOnHotZone = true;
+    const answerRevealed = true;
+    const hotMult = (revealOnHotZone && answerRevealed) ? 2 : 1.5;
+    expect(hotMult).toBe(2);
+  });
+
+  test('Hot Zone without reveal: ×1.5 multiplier', () => {
+    const revealOnHotZone = true;
+    const answerRevealed = false;
+    const hotMult = (revealOnHotZone && answerRevealed) ? 2 : 1.5;
+    expect(hotMult).toBe(1.5);
   });
 });

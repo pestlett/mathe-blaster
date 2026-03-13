@@ -152,6 +152,68 @@ const STARTING_UPGRADE_IDS = ['chain','streakBoost','shield','slowAll','bomb','h
 // Unlockable upgrades
 const UNLOCK_UPGRADE_IDS   = ['commutative','streakSlow','reveal','lastChance'];
 
+// ---- Synergies & conflicts ----
+// Each entry describes a pair interaction. Both IDs must be active for the
+// effect to apply. Positive synergies amplify; negative ones diminish.
+const SYNERGIES = [
+  {
+    ids:    ['chain', 'luckyBonus'],
+    type:   'positive',
+    effect: 'Chain kills also count toward the lucky bonus counter.',
+  },
+  {
+    ids:    ['streakBoost', 'quickBonus'],
+    type:   'positive',
+    effect: 'Fast answers on a streak earn +30 pts instead of +20.',
+  },
+  {
+    ids:    ['hotZoneBoost', 'reveal'],
+    type:   'positive',
+    effect: 'Answering a revealed object in the hot zone earns ×2 instead of ×1.5.',
+  },
+  {
+    ids:    ['slowAll', 'quickBonus'],
+    type:   'negative',
+    effect: 'Slow fall breeds complacency — quick-answer window halves to 0.75s.',
+  },
+  {
+    ids:    ['streakSlow', 'slowAll'],
+    type:   'negative',
+    effect: 'Already dragging — streak-slow effect shrinks from 5s to 2s.',
+  },
+];
+
+// Returns synergy hints for one upgrade against the currently active set.
+// Used by the picker to warn or entice the player before choosing.
+// Returns: Array<{ type: 'positive'|'negative', partnerName: string, effect: string }>
+function getSynergyHintsForUpgrade(upgradeId, activeIds, theme) {
+  return SYNERGIES
+    .filter(s =>
+      s.ids.includes(upgradeId) &&
+      s.ids.some(id => id !== upgradeId && activeIds.includes(id))
+    )
+    .map(s => {
+      const partnerId   = s.ids.find(id => id !== upgradeId);
+      const partnerUpg  = UPGRADES.find(u => u.id === partnerId);
+      const partnerName = partnerUpg ? upgradeNameForTheme(partnerUpg, theme) : partnerId;
+      return { type: s.type, partnerName, effect: s.effect };
+    });
+}
+
+// Returns sets of upgrade IDs that are part of a live synergy/conflict pair.
+// Used by the bar renderer to colour the pills.
+function getActiveSynergySets(activeIds) {
+  const positive = new Set();
+  const negative = new Set();
+  for (const s of SYNERGIES) {
+    if (s.ids.every(id => activeIds.includes(id))) {
+      const target = s.type === 'positive' ? positive : negative;
+      s.ids.forEach(id => target.add(id));
+    }
+  }
+  return { positive, negative };
+}
+
 // Returns the active name for an upgrade given the current theme
 function upgradeNameForTheme(upgrade, theme) {
   return upgrade.names[theme] || upgrade.names.space;
@@ -178,5 +240,10 @@ function drawUpgrades(n, unlockedIds, activeIds) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { UPGRADES, STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS, upgradeNameForTheme, upgradeDescForTheme, drawUpgrades };
+  module.exports = {
+    UPGRADES, SYNERGIES,
+    STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS,
+    upgradeNameForTheme, upgradeDescForTheme,
+    drawUpgrades, getSynergyHintsForUpgrade, getActiveSynergySets,
+  };
 }

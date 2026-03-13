@@ -590,6 +590,7 @@ function startGame(settings) {
   state.commutativePair   = false;
   state.streakSlow        = false;
   state.streakSlowTimer   = 0;
+  state.streakSlowDuration = 5;
   state.revealOnHotZone   = false;
   state.lastChanceAvailable = false;
   state.lastChanceUsed    = false;
@@ -1045,7 +1046,13 @@ function submitAnswer() {
     if (elapsed < 3000) pts += 10;
     else if (elapsed < 6000) pts += 5;
     // Quick bonus (Warp Strike / Flash Current / Tailwind)
-    if (state.quickBonus && elapsed < 1500) pts += 20;
+    // CONFLICT: Slow All + Quick Bonus → window halves from 1500ms to 750ms
+    const hasSynSlowQuick = state.speedMult < 1 && state.quickBonus;
+    const quickWindow = hasSynSlowQuick ? 750 : 1500;
+    if (state.quickBonus && elapsed < quickWindow) {
+      // SYNERGY: Streak Boost + Quick Bonus → +30 instead of +20
+      pts += (state.streakBoost && state.streak >= 3) ? 30 : 20;
+    }
     // Streak multiplier — boosted by Solar Flare / Tidal Surge / Jet Stream
     let mult;
     if (state.streakBoost) {
@@ -1054,14 +1061,16 @@ function submitAnswer() {
       mult = state.streak >= 5 ? 2 : state.streak >= 3 ? 1.5 : 1;
     }
     pts = Math.round(pts * mult);
-    // Hot zone bonus: ×1.5 if answered while object is in the glowing band
+    // Hot zone bonus: ×1.5 (or ×2 with reveal synergy) if in the glowing band
     const canvasH = window.innerHeight;
     const hzTop    = state.hotZoneBoost ? HOT_ZONE_TOP_WIDE    : HOT_ZONE_TOP;
     const hzBottom = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
     const inHotZone = target.y >= canvasH * hzTop && target.y <= canvasH * hzBottom;
     if (inHotZone) {
-      pts = Math.round(pts * 1.5);
-      UI.showLevelUp('🔥 Hot zone!', null);
+      // SYNERGY: Hot Zone Boost + Reveal → ×2 when the answer was revealed
+      const hotMult = (state.revealOnHotZone && target._answerRevealed) ? 2 : 1.5;
+      pts = Math.round(pts * hotMult);
+      UI.showLevelUp(hotMult >= 2 ? '👁 Precision Lock!' : '🔥 Hot zone!', null);
     }
     // Lucky bonus (Nebula Luck / Treasure Drift / Lucky Wind)
     if (state.luckyBonus) {
@@ -1082,12 +1091,25 @@ function submitAnswer() {
 
     // Chain-answer (Gravity Well / Riptide / Lightning Strike)
     if (state.chainAnswer) {
+      let chainCount = 0;
       for (const obj of state.objects) {
         if (obj !== target && !obj.dying && !obj.dead && !obj.destroyed &&
             !obj.isFreeze && !obj.isLifeUp && !obj.isBoss &&
             obj.answer === target.answer) {
           Objects.triggerDestruction(obj, particleColor);
           state.score += Math.round(pts * 0.5);
+          chainCount++;
+        }
+      }
+      // SYNERGY: Chain + Lucky — each chain kill counts toward the lucky counter
+      if (state.luckyBonus && chainCount > 0) {
+        for (let i = 0; i < chainCount; i++) {
+          state.luckyBonusCounter = (state.luckyBonusCounter || 0) + 1;
+          if (state.luckyBonusCounter % 5 === 0) {
+            const luckyMult = 2 + Math.floor(Math.random() * 4);
+            state.score += Math.round(pts * luckyMult * 0.5);
+            UI.showLevelUp(`Chain Lucky ×${luckyMult}!`, null);
+          }
         }
       }
     }
@@ -1104,8 +1126,11 @@ function submitAnswer() {
       }
     }
     // Streak slow (Dark Matter / Abyss Pull / Storm Front)
+    // CONFLICT: Streak Slow + Slow All → 2s instead of 5s
     if (state.streakSlow && state.streak > 0 && state.streak % 5 === 0) {
-      state.streakSlowTimer = 5;
+      const dur = (state.speedMult < 1) ? 2 : 5;
+      state.streakSlowTimer   = dur;
+      state.streakSlowDuration = dur;
     }
 
     // Streak flash at ×1.5 (streak 3+) and ×2 (streak 5+)
@@ -1152,7 +1177,7 @@ function submitAnswer() {
           const unlockedIds = rp.unlockedUpgrades || [];
           const options = drawUpgrades(3, unlockedIds, state.activeUpgradeIds);
           if (options.length > 0) {
-            UI.showUpgradePicker(options, state.theme, (chosen) => {
+            UI.showUpgradePicker(options, state.theme, state.activeUpgradeIds, (chosen) => {
               chosen.apply(state);
               state.activeUpgrades.push(chosen);
               state.activeUpgradeIds.push(chosen.id);

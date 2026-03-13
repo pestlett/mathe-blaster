@@ -376,7 +376,8 @@ const UI = (() => {
     }
     bar.classList.remove('hidden');
 
-    // Build one pill per acquired upgrade
+    const { positive: synIds, negative: conflictIds } = getActiveSynergySets(state.activeUpgradeIds || []);
+
     bar.innerHTML = state.activeUpgrades.map(upg => {
       const name = upgradeNameForTheme(upg, state.theme);
       const icon = upg.icon || '★';
@@ -402,9 +403,16 @@ const UI = (() => {
       // Timer bar for streak-slow when active
       let timerBar = '';
       if (upg.id === 'streakSlow' && state.streakSlowTimer > 0) {
-        const pct = Math.round((state.streakSlowTimer / 5) * 100);
+        const maxDur = state.streakSlowDuration || 5;
+        const pct = Math.round((state.streakSlowTimer / maxDur) * 100);
         timerBar = `<div class="upg-timer-bar"><div class="upg-timer-fill" style="width:${pct}%"></div></div>`;
         modClass = 'upg-active';
+      }
+
+      // Synergy / conflict override (only if not already spent/active)
+      if (modClass === '') {
+        if (conflictIds.has(upg.id))  modClass = 'upg-conflict';
+        else if (synIds.has(upg.id))  modClass = 'upg-synergy';
       }
 
       return `<div class="upg-pill ${modClass}" title="${name}">
@@ -717,16 +725,29 @@ const UI = (() => {
   }
 
   // ---- Upgrade Picker ----
-  function showUpgradePicker(options, theme, onPick) {
+  function showUpgradePicker(options, theme, activeIds, onPick) {
     const el = document.getElementById('upgrade-picker');
     const optionsEl = document.getElementById('upgrade-options');
     optionsEl.innerHTML = '';
     options.forEach(upg => {
       const name = upgradeNameForTheme(upg, theme);
       const desc = upgradeDescForTheme(upg, theme);
+      // Synergy / conflict hints
+      const hints = getSynergyHintsForUpgrade(upg.id, activeIds, theme);
+      const hintsHtml = hints.map(h => {
+        const cls  = h.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
+        const icon = h.type === 'positive' ? '✦' : '⚠';
+        return `<div class="${cls}">${icon} ${h.type === 'positive' ? 'Synergy' : 'Conflict'} with ${h.partnerName}: ${h.effect}</div>`;
+      }).join('');
+      const synClass = hints.some(h => h.type === 'negative') ? 'upgrade-option-conflict'
+                     : hints.some(h => h.type === 'positive') ? 'upgrade-option-synergy'
+                     : '';
       const btn = document.createElement('button');
-      btn.className = 'upgrade-option';
-      btn.innerHTML = `<div class="upgrade-name">${name}</div><div class="upgrade-desc">${desc}</div>`;
+      btn.className = `upgrade-option ${synClass}`;
+      btn.innerHTML = `
+        <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '★'}</span> ${name}</div>
+        <div class="upgrade-desc">${desc}</div>
+        ${hintsHtml}`;
       btn.addEventListener('click', () => {
         el.classList.add('hidden');
         onPick(upg);
