@@ -178,12 +178,12 @@ function startAutoSubmit(target) {
   cancelAutoSubmit();
   const crashLine = window.innerHeight - 148;
   const timeLeft  = Math.max(0.3, (crashLine - target.y) / Math.max(1, target.speed));
-  // On phone+voice, give more time before auto-submitting — voice recognition
-  // takes 1.5–2.5s (speak + engine + network), and it's already the confirmed
-  // result so we just need to let the countdown complete comfortably.
+  // On phone+voice the SR result is already confirmed — submit almost
+  // immediately (0.3s flash) so the player doesn't have to wait.
+  // On desktop/keyboard the countdown is longer to give time to cancel.
   const phoneVoice = window.innerWidth < 640 && state.voiceActive;
   const duration  = phoneVoice
-    ? Math.min(2.5, Math.max(0.8, timeLeft * 0.5))
+    ? Math.min(0.5, Math.max(0.3, timeLeft * 0.08))
     : Math.min(1.8, Math.max(0.5, timeLeft * 0.35));
   _voiceSuggestionEl.style.setProperty('--countdown-duration', `${duration.toFixed(2)}s`);
   _voiceSuggestionEl.classList.add('countdown');
