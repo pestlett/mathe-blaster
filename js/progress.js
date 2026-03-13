@@ -30,10 +30,17 @@ const Progress = (() => {
   // Record an attempt for a question key like "7x8"
   function recordAttempt(key, correct, timeMs) {
     const d = load();
-    if (!d.stats[key]) d.stats[key] = { attempts: 0, correct: 0, totalTimeMs: 0, lastSeen: 0 };
+    if (!d.stats[key]) d.stats[key] = { attempts: 0, correct: 0, totalTimeMs: 0, lastSeen: 0, masteredLevel: 0 };
     const s = d.stats[key];
     s.attempts++;
-    if (correct) s.correct++;
+    if (correct) {
+      s.correct++;
+      // Spaced repetition: build mastery up to level 5
+      s.masteredLevel = Math.min(5, (s.masteredLevel || 0) + 1);
+    } else {
+      // Wrong answer drops mastery
+      s.masteredLevel = Math.max(0, (s.masteredLevel || 0) - 1);
+    }
     s.totalTimeMs += timeMs;
     s.lastSeen = Date.now();
     save(d);

@@ -31,6 +31,7 @@ let state = {
   wrongQueue: [],   // questions answered incorrectly this session
   lifeUpTimer: 0,   // accumulates seconds toward next life-up spawn
   answerStartTime: 0,
+  hintThreshold: 3, // wrong attempts before dot-grid hint appears
 };
 
 // ---- Bootstrap ----
@@ -99,6 +100,7 @@ function startGame(settings) {
   state.minTable = settings.minTable;
   state.maxTable = settings.maxTable;
   state.difficulty = settings.difficulty;
+  state.hintThreshold = settings.hintThreshold || 3;
   state.score = 0;
   state.level = 1;
   state.lives = MAX_LIVES;
@@ -193,6 +195,12 @@ function update(dt) {
 
   // Sync targeting
   Targeting.syncTarget(state.objects);
+
+  // Update hint visibility
+  for (const obj of state.objects) {
+    if (!obj.isLifeUp) obj.hintActive = obj.wrongAttempts >= state.hintThreshold;
+  }
+
   UI.updateHUD(state);
 
   // Update input placeholder — hint when a life-up is targeted
@@ -292,6 +300,7 @@ function submitAnswer() {
 
   } else {
     // Wrong — add to this session's wrong queue if not already there
+    target.wrongAttempts = (target.wrongAttempts || 0) + 1;
     state.streak = 0;
     UI.showCombo(0);
     Progress.recordAttempt(target.key, false, elapsed);

@@ -204,6 +204,39 @@ const Themes = (() => {
     if (theme === 'space') drawMeteor(ctx, x, y, obj, targeted, showQuestion);
     else if (theme === 'ocean') drawBubble(ctx, x, y, obj, targeted, showQuestion);
     else if (theme === 'sky') drawBalloon(ctx, x, y, obj, targeted, showQuestion);
+
+    if (obj.hintActive) drawHintGrid(ctx, obj);
+  }
+
+  // Draws a dot grid hint (a×b visual) below the object
+  function drawHintGrid(ctx, obj) {
+    const parts = (obj.key || '').split('x');
+    if (parts.length !== 2) return;
+    const rows = parseInt(parts[0]);
+    const cols = parseInt(parts[1]);
+    if (!rows || !cols || rows > 12 || cols > 12) return;
+
+    const maxW = 78, maxH = 78;
+    const gap = Math.min(maxW / cols, maxH / rows, 10);
+    const dotR = Math.max(1.5, gap * 0.32);
+    const gridW = cols * gap;
+    const gridH = rows * gap;
+    const bx = obj.x + obj.wobbleX - gridW / 2 + gap / 2;
+    const by = obj.y + 50;
+
+    ctx.save();
+    ctx.shadowColor = '#f7c948';
+    ctx.shadowBlur = 5;
+    ctx.fillStyle = '#f7c948';
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        ctx.globalAlpha = 0.88;
+        ctx.beginPath();
+        ctx.arc(bx + c * gap, by + r * gap, dotR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
   }
 
   function drawMeteor(ctx, x, y, obj, targeted, showQuestion) {
@@ -397,13 +430,20 @@ const Themes = (() => {
       ctx.restore();
     }
 
-    // Show answer in large text
+    // Fact flash: show full equation in large readable text
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#ff4757';
+    const factText = `${obj.question} = ${obj.answer}`;
     ctx.font = 'bold 22px Segoe UI, sans-serif';
+    const tw = ctx.measureText(factText).width;
+    // Dark background for readability
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.beginPath();
+    ctx.roundRect(x - tw / 2 - 10, y - 16, tw + 20, 32, 8);
+    ctx.fill();
+    ctx.fillStyle = '#ff4757';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`= ${obj.answer}`, x, y);
+    ctx.fillText(factText, x, y);
 
     ctx.restore();
   }

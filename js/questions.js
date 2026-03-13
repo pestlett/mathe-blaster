@@ -15,16 +15,24 @@ const Questions = (() => {
         // Never duplicate an answer already on screen
         if (excludeAnswers.includes(answer)) continue;
 
-        // Determine weight
-        let weight = 1;
+        // Determine weight (using integer multiples for pool slots)
+        // Base weights: mastered=1, normal=2, hard=4, wrong-this-session=16
+        let weight = 2;
         if (wrongKeys.has(key)) {
-          weight = 8; // missed this session — bring it back often
+          weight = 16; // missed this session — bring it back often
         } else {
           const s = stats[key];
           if (s && s.attempts > 0) {
-            const acc = s.correct / s.attempts;
-            const avgTime = s.totalTimeMs / s.attempts;
-            if (acc < 0.6 || avgTime > 8000) weight = 3; // historically hard
+            const mastered = s.masteredLevel || 0;
+            if (mastered >= 4) {
+              weight = 1; // mastered — rare appearance (spaced repetition)
+            } else if (mastered >= 2) {
+              weight = 2; // comfortable
+            } else {
+              const acc = s.correct / s.attempts;
+              const avgTime = s.totalTimeMs / s.attempts;
+              weight = (acc < 0.6 || avgTime > 8000) ? 6 : 2; // hard vs normal
+            }
           }
         }
 

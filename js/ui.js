@@ -23,6 +23,8 @@ const UI = (() => {
     const rangeMin = document.getElementById('range-min');
     const rangeMax = document.getElementById('range-max');
     const rangeDisplay = document.getElementById('range-display');
+    const hintThreshInput = document.getElementById('hint-threshold');
+    const hintThreshDisplay = document.getElementById('hint-threshold-display');
     const btnStart = document.getElementById('btn-start');
 
     let selectedTheme = 'space';
@@ -61,6 +63,10 @@ const UI = (() => {
     });
     rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
 
+    hintThreshInput.addEventListener('input', () => {
+      hintThreshDisplay.textContent = hintThreshInput.value;
+    });
+
     btnStart.addEventListener('click', () => {
       const name = nameInput.value.trim();
       const age = parseInt(ageInput.value);
@@ -80,7 +86,7 @@ const UI = (() => {
       let max = parseInt(rangeMax.value);
       if (min > max) { const t = min; min = max; max = t; }
       Progress.saveName(name);
-      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff });
+      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value) });
     });
 
     // Clear error highlight on input

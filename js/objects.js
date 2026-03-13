@@ -37,7 +37,9 @@ const Objects = (() => {
       destroyTimer: 0,    // for destruction animation
       destroyed: false,
       particles: [],
-      spawnTime: Date.now()
+      spawnTime: Date.now(),
+      wrongAttempts: 0,   // wrong answers submitted against this object
+      hintActive: false   // set by main.js when wrongAttempts >= threshold
     };
   }
 

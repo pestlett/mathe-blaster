@@ -150,6 +150,13 @@ input[type="number"]::-webkit-outer-spin-button {
   background: linear-gradient(to bottom, #74c0fc 0%, #a9d8ff 100%);
 }
 
+.setting-note {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 5px;
+}
+
 /* Range sliders */
 .range-container {
   display: flex;
