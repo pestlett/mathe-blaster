@@ -8,6 +8,7 @@ const Voice = (() => {
   let recognition = null;
   let listening = false;
   let shouldRestart = false;
+  let restartTimer = null;
   let callbacks = {};
 
   // ---- Word → number table (covers 1–144 for 1×1 through 12×12) ----
@@ -109,10 +110,10 @@ const Voice = (() => {
     callbacks = cbs;
 
     recognition = new SpeechRecognition();
-    recognition.continuous = false;   // false works more reliably on iOS/Android
+    recognition.continuous = true;    // keep the session open — avoids the stop/start flicker
     recognition.interimResults = false;
     recognition.lang = 'en-US';
-    recognition.maxAlternatives = 5;  // try multiple alternatives to catch homophones
+    recognition.maxAlternatives = 5;
 
     recognition.onresult = e => {
       const alternatives = [];
@@ -127,17 +128,25 @@ const Voice = (() => {
     };
 
     recognition.onend = () => {
-      // Auto-restart while game is playing
+      // Some browsers (especially iOS) end the session after a timeout even
+      // with continuous:true. Restart after a short delay to avoid rapid cycling.
       if (shouldRestart && listening) {
-        try { recognition.start(); } catch (_) {}
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => {
+          if (shouldRestart && listening) {
+            try { recognition.start(); } catch (_) {}
+          }
+        }, 300);
       }
     };
 
     recognition.onerror = e => {
-      if (e.error === 'no-speech') return; // normal timeout, onend will restart
+      if (e.error === 'no-speech') return; // will naturally onend → restart
+      if (e.error === 'aborted')   return; // triggered by our own stop(), ignore
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
         listening = false;
         shouldRestart = false;
+        clearTimeout(restartTimer);
         callbacks.onStatusChange?.(false, 'denied');
       }
     };
@@ -155,6 +164,7 @@ const Voice = (() => {
     if (!supported || !recognition) return;
     listening = false;
     shouldRestart = false;
+    clearTimeout(restartTimer);
     try { recognition.stop(); } catch (_) {}
     callbacks.onStatusChange?.(false);
   }
