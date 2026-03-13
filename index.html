@@ -160,6 +160,7 @@
 
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
+      <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
       <div class="home-btns">
         <button id="btn-leaderboard-home" class="btn-secondary" data-i18n="leaderboard">🏅 Leaderboard</button>
         <button id="btn-achievements-home" class="btn-secondary" data-i18n="achievementsBtn">🏆 Achievements</button>
@@ -198,6 +199,13 @@
         <button id="btn-pause-menu" class="btn-secondary" data-i18n="backToMenu">Back to Menu</button>
       </div>
     </div>
+    <!-- Upgrade Picker overlay (run mode) -->
+    <div id="upgrade-picker" class="upgrade-picker hidden">
+      <div class="upgrade-picker-card">
+        <div class="upgrade-picker-title">Level Up! Choose a power:</div>
+        <div class="upgrade-options" id="upgrade-options"></div>
+      </div>
+    </div>
     <div id="miss-flash-container"></div>
     <div id="answer-area">
       <button id="voice-suggestion" class="voice-suggestion hidden" aria-label="Submit detected answer"></button>
@@ -218,7 +226,8 @@
       <div id="gameover-stats"></div>
       <div id="gameover-missed"></div>
       <div id="gameover-achievements"></div>
-      <div id="gameover-mastery"></div>
+      <div id="gameover-run"></div>
+    <div id="gameover-mastery"></div>
       <div class="overlay-btns">
         <button id="btn-play-again" class="btn-primary" data-i18n="playAgain">Play Again</button>
         <button id="btn-leaderboard" class="btn-secondary" data-i18n="leaderboard">Leaderboard</button>
@@ -285,6 +294,7 @@
   </div>
 
   <script src="js/version.js"></script>
+  <script src="js/upgrades.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/voice.js"></script>
   <script src="js/progress.js"></script>

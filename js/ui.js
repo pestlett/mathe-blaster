@@ -222,6 +222,42 @@ const UI = (() => {
     ageInput.addEventListener('input', () => ageInput.classList.remove('field-error'));
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnStart.click(); });
 
+    // Run Mode button
+    const btnRunMode = document.getElementById('btn-run-mode');
+    const runSubtitle = document.getElementById('run-mode-subtitle');
+    function _refreshRunBtn() {
+      const rp = Progress.getRunProgress();
+      runSubtitle.textContent = rp.bestAnte > 0 ? ` · Best: Ante ${rp.bestAnte}` : ' · New!';
+    }
+    _refreshRunBtn();
+    btnRunMode.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      const age = parseInt(ageInput.value);
+      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
+      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      let min, max;
+      if (tablesMode === 'single') {
+        min = focusSingleTable; max = focusSingleTable;
+      } else {
+        min = parseInt(rangeMin.value);
+        max = parseInt(rangeMax.value);
+        if (min > max) { const tmp = min; min = max; max = tmp; }
+      }
+      Progress.setPlayer(name, age);
+      Progress.saveName(name);
+      Progress.saveSettings({
+        theme: selectedTheme, diff: selectedDiff, mode: selectedMode,
+        tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
+        singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
+        lastPlayer: name, lastAge: age,
+        triggerWord: triggerWdInput?.value?.trim(),
+      });
+      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
+        difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
+        practiceMode: false, runMode: true,
+        triggerWord: triggerWdInput?.value?.trim() || '' });
+    });
+
     // Daily challenge button
     const btnDaily = document.getElementById('btn-daily');
 
@@ -314,8 +350,14 @@ const UI = (() => {
     const tableLabel = state.minTable === state.maxTable
       ? I18n.t('tablesFocus', { table: state.minTable })
       : I18n.t('tablesRange', { min: state.minTable, max: state.maxTable });
-    document.getElementById('hud-tables').textContent =
-      tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
+    let hudTables = tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
+    if (state.runMode) {
+      const badges = [];
+      if (state.shieldCharges > 0) badges.push(`🛡×${state.shieldCharges}`);
+      if (state.bombCharges > 0)   badges.push(`💣×${state.bombCharges}`);
+      hudTables += ` | Ante ${state.currentAnte}` + (badges.length ? ' ' + badges.join(' ') : '');
+    }
+    document.getElementById('hud-tables').textContent = hudTables;
     renderLives(state.lives, state.maxLives, state.theme);
   }
 
@@ -435,7 +477,7 @@ const UI = (() => {
   }
 
   // ---- Game Over ----
-  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard) {
+  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard, runData) {
     const starsHtml = session.levelStars && session.levelStars.length > 0
       ? `<div class="stars-row">${session.levelStars.map((s, i) =>
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
@@ -470,6 +512,30 @@ const UI = (() => {
         }).join('');
     } else {
       achEl.innerHTML = '';
+    }
+
+    // Run mode section
+    const runEl = document.getElementById('gameover-run');
+    if (runData && runData.runMode) {
+      const newBest = runData.isNewBest ? '<span class="run-new-best"> New best!</span>' : '';
+      const badgeHtml = (runData.activeUpgrades || []).map(upg => {
+        const name = upgradeNameForTheme(upg, runData.theme);
+        return `<span class="run-upgrade-badge">${name}</span>`;
+      }).join('');
+      const newUnlocksHtml = (runData.newUnlocks || []).length > 0
+        ? `<div class="run-new-unlocks">New upgrades unlocked: ${runData.newUnlocks.map(id => {
+            const u = (typeof UPGRADES !== 'undefined' ? UPGRADES : []).find(u => u.id === id);
+            return u ? upgradeNameForTheme(u, runData.theme) : id;
+          }).join(', ')}</div>`
+        : '';
+      runEl.innerHTML = `
+        <div class="run-summary">
+          <div class="run-ante">Run ended at Ante ${runData.ante}${newBest}</div>
+          ${badgeHtml ? `<div class="run-upgrades-row">${badgeHtml}</div>` : ''}
+          ${newUnlocksHtml}
+        </div>`;
+    } else {
+      runEl.innerHTML = '';
     }
 
     document.getElementById('gameover-mastery').innerHTML =
@@ -595,6 +661,26 @@ const UI = (() => {
     showScreen('dashboard');
   }
 
+  // ---- Upgrade Picker ----
+  function showUpgradePicker(options, theme, onPick) {
+    const el = document.getElementById('upgrade-picker');
+    const optionsEl = document.getElementById('upgrade-options');
+    optionsEl.innerHTML = '';
+    options.forEach(upg => {
+      const name = upgradeNameForTheme(upg, theme);
+      const desc = upgradeDescForTheme(upg, theme);
+      const btn = document.createElement('button');
+      btn.className = 'upgrade-option';
+      btn.innerHTML = `<div class="upgrade-name">${name}</div><div class="upgrade-desc">${desc}</div>`;
+      btn.addEventListener('click', () => {
+        el.classList.add('hidden');
+        onPick(upg);
+      });
+      optionsEl.appendChild(btn);
+    });
+    el.classList.remove('hidden');
+  }
+
   // ---- Achievements ----
   function showAchievements(onBack) {
     const all = Progress.getAchievements();
@@ -613,5 +699,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker };
 })();

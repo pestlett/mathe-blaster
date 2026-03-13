@@ -1183,6 +1183,111 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
 }
 .btn-daily:hover { background: rgba(247,201,72,0.12); transform: translateY(-2px); }
 .btn-daily.daily-done { border-color: #2ed573; color: #2ed573; }
+
+/* Run Mode button on onboarding */
+.btn-run-mode {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #a29bfe;
+  background: transparent;
+  color: #a29bfe;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s, transform 0.15s;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-run-mode:hover { background: rgba(162,155,254,0.12); transform: translateY(-2px); }
+.run-mode-subtitle { font-size: 0.8rem; font-weight: 400; opacity: 0.8; }
+
+/* Upgrade picker overlay */
+.upgrade-picker {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+.upgrade-picker.hidden { display: none; }
+.upgrade-picker-card {
+  background: #1a1a2e;
+  border: 2px solid #a29bfe;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 460px;
+  width: 92%;
+  text-align: center;
+}
+.upgrade-picker-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #a29bfe;
+  margin-bottom: 20px;
+}
+.upgrade-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.upgrade-option {
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.upgrade-option:hover {
+  background: rgba(162,155,254,0.2);
+  border-color: #a29bfe;
+  transform: translateY(-2px);
+}
+.upgrade-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin-bottom: 4px;
+}
+.upgrade-desc {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Run mode game-over section */
+.run-summary {
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.run-ante {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #a29bfe;
+  margin-bottom: 8px;
+}
+.run-new-best { color: #f7c948; margin-left: 6px; }
+.run-upgrades-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.run-upgrade-badge {
+  background: rgba(162,155,254,0.18);
+  border: 1px solid rgba(162,155,254,0.5);
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 0.8rem;
+  color: #c8c5ff;
+}
+.run-new-unlocks { font-size: 0.85rem; color: #2ed573; font-weight: 600; }
 .daily-complete-badge {
   background: rgba(247,201,72,0.15);
   border: 1px solid rgba(247,201,72,0.4);
