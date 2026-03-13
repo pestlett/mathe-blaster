@@ -221,51 +221,62 @@ const Voice = (() => {
 
   function parseNumber(text) {
     text = text.trim().toLowerCase()
-      // strip accents for fallback matching
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9 \-]/g, '');
+
+    if (!text) return null;
 
     // Direct digit string ("42", "7")
     const asInt = parseInt(text, 10);
     if (!isNaN(asInt) && String(asInt) === text.trim()) return asInt;
 
+    // Space-separated digit tokens ("1 1", "2 1", "3 6")
+    // SR often breaks a spoken number into individual digits.
+    // If all tokens are the same digit → that digit ("1 1" → 1).
+    // If tokens differ → concatenate ("2 1" → 21, "3 6" → 36).
+    const digitTokens = text.trim().split(/\s+/);
+    if (digitTokens.length > 1 && digitTokens.every(t => /^\d+$/.test(t))) {
+      const nums = digitTokens.map(Number);
+      if (nums.every(n => n === nums[0])) return nums[0];          // "1 1" → 1
+      const concat = parseInt(digitTokens.join(''), 10);
+      if (!isNaN(concat)) return concat;                            // "2 1" → 21
+    }
+
     const map = getWordMap();
     const gameLang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
 
-    // Normalise hyphens and "and"/"und"/"y"
+    // Normalise hyphens and filler words
     const clean = text
       .replace(/-/g, ' ')
       .replace(/\b(and|und)\b/g, '')
       .replace(/\s+/g, ' ')
       .trim();
 
-    // Direct word lookup (single word or short phrase)
     if (map[clean] !== undefined) return map[clean];
-    if (WORD_MAP_EN[clean] !== undefined) return WORD_MAP_EN[clean]; // digit fallback always
+    if (WORD_MAP_EN[clean] !== undefined) return WORD_MAP_EN[clean];
 
-    // Spanish: "treinta y uno" → 31 (strip "y" for the lookup above, but handle explicitly)
+    // Spanish: "treinta y uno" → 31
     if (gameLang === 'es') {
       const esClean = text.replace(/\by\b/g, '').replace(/\s+/g, ' ').trim();
       if (map[esClean] !== undefined) return map[esClean];
       const esParts = esClean.split(' ').filter(Boolean);
       if (esParts.length === 2) {
-        const t = ES_TENS[esParts[0]], o = ES_ONES[esParts[1]];
-        if (t !== undefined && o !== undefined) return t + o;
+        const tv = ES_TENS[esParts[0]], ov = ES_ONES[esParts[1]];
+        if (tv !== undefined && ov !== undefined) return tv + ov;
       }
-      // "ciento X" / "cien X"
       if ((esParts[0] === 'ciento' || esParts[0] === 'cien') && esParts[1]) {
         const rest = parseNumber(esParts.slice(1).join(' '));
         if (rest !== null) return 100 + rest;
       }
     }
 
-    // English: "twenty four" / "forty eight"
+    // "twenty four", "forty eight", etc.
     const parts = clean.split(' ').filter(Boolean);
     if (parts.length === 2) {
       const a = map[parts[0]], b = map[parts[1]];
       if (a !== undefined && b !== undefined) {
-        if (a >= 20 && b > 0 && b < 10) return a + b;   // "twenty four"
-        if (a === 100 && b > 0) return 100 + b;          // "hundred four"
+        if (a >= 20 && b > 0 && b < 10) return a + b;
+        if (a === 100 && b > 0) return 100 + b;
       }
     }
 
@@ -305,34 +316,48 @@ const Voice = (() => {
     const gameLang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const cmds = NAV_COMMANDS[gameLang] || NAV_COMMANDS.en;
 
-    for (const raw of alternatives) {
-      const text = raw.trim().toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Normalise all alternatives once; drop empties
+    const texts = alternatives
+      .map(r => r.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
+      .filter(t => t.length > 0);
 
-      if (cmds.next.includes(text)) {
-        console.log('[Voice] command: next');
-        callbacks.onNext?.(); return;
-      }
-      if (cmds.previous.includes(text)) {
-        console.log('[Voice] command: previous');
-        callbacks.onPrevious?.(); return;
-      }
-      if (cmds.clear.includes(text)) {
-        console.log('[Voice] command: clear');
-        callbacks.onClear?.(); return;
-      }
+    if (!texts.length) return;
 
-      const num = parseNumber(text);
-      if (num !== null && num >= 0 && num <= 200) {
-        console.log(`[Voice] number ${num} (from "${raw.trim()}")`);
-        callbacks.onNumber?.(num);
-        return;
-      }
+    // Commands: take first matching alternative (highest confidence)
+    for (const text of texts) {
+      if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     return; }
+      if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); return; }
+      if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    return; }
     }
-    console.log('[Voice] no match for:', alternatives);
+
+    // Numbers: parse all alternatives and majority-vote.
+    // Alternatives are in descending confidence order, so on a tie we prefer
+    // the value that appeared earliest in the list.
+    const parsed = texts.map(t => parseNumber(t));
+    const valid  = parsed.filter(n => n !== null && n >= 0 && n <= 200);
+
+    if (!valid.length) {
+      console.log('[Voice] no match for:', alternatives);
+      return;
+    }
+
+    // Count votes per value
+    const votes = {};
+    for (const n of valid) votes[n] = (votes[n] || 0) + 1;
+
+    const maxVotes = Math.max(...Object.values(votes));
+    const topTier  = new Set(Object.keys(votes).filter(k => votes[k] === maxVotes).map(Number));
+
+    // Among tied candidates pick the one from the highest-confidence alternative
+    const winner = valid.find(n => topTier.has(n));
+
+    console.log(`[Voice] number ${winner} | votes ${JSON.stringify(votes)} | alts`, alternatives);
+    callbacks.onNumber?.(winner);
   }
 
   // ---- Watchdog: if recognition silently dies, restart ----
+  // Uses abort() rather than stop() so any pending/buffered audio is
+  // discarded instead of being delivered as a stale result in the new session.
   const WATCHDOG_MS = 8000;
   function resetWatchdog() {
     clearTimeout(watchdogTimer);
@@ -340,8 +365,8 @@ const Voice = (() => {
       watchdogTimer = setTimeout(() => {
         if (shouldRestart && listening) {
           console.log('[Voice] watchdog restart');
-          try { recognition.stop(); } catch (_) {}
-          // onend will trigger the actual restart
+          try { recognition.abort(); } catch (_) {}
+          // onerror('aborted') fires → ignored; onend fires → scheduleRestart
         }
       }, WATCHDOG_MS);
     }

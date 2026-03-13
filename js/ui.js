@@ -13,7 +13,7 @@ const UI = (() => {
   function showScreen(name) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[name].classList.add('active');
-    if (name === 'game') {
+    if (name === 'game' && !isMobile()) {
       document.getElementById('answer-input').focus();
     }
   }

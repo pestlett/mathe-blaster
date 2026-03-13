@@ -1,5 +1,13 @@
 // main.js - game state machine & entry point
 
+function isMobile() {
+  return navigator.maxTouchPoints > 0;
+}
+
+function focusAnswerInput() {
+  if (!isMobile()) document.getElementById('answer-input').focus();
+}
+
 const DIFFICULTY = {
   easy:   { maxObjects: 2, baseSpeed: 48,  maxSpeed: 160 },
   medium: { maxObjects: 3, baseSpeed: 70,  maxSpeed: 240 },
@@ -55,9 +63,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowLeft') { e.preventDefault(); Targeting.moveLeft(state.objects); }
     if (e.key === 'ArrowRight') { e.preventDefault(); Targeting.moveRight(state.objects); }
     if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
-    // Keep input focused
+    // Keep input focused on desktop
     if (!['ArrowLeft','ArrowRight','Enter','Tab'].includes(e.key)) {
-      answerInput.focus();
+      focusAnswerInput();
     }
   });
 
@@ -126,7 +134,7 @@ function togglePause() {
     Engine.resume();
     Voice.start();
     document.getElementById('pause-overlay').classList.remove('visible');
-    document.getElementById('answer-input').focus();
+    focusAnswerInput();
   } else {
     Engine.pause();
     Voice.stop();
@@ -346,10 +354,10 @@ function submitAnswer() {
   const input = document.getElementById('answer-input');
 
   const target = Targeting.getTarget();
-  if (!target) { input.value = ''; input.focus(); return; }
+  if (!target) { input.value = ''; focusAnswerInput(); return; }
 
   const val = parseInt(input.value.trim());
-  if (isNaN(val)) { input.focus(); return; }
+  if (isNaN(val)) { focusAnswerInput(); return; }
 
   // Boss: correct answer awards 50 bonus pts and ends boss round
   if (target.isBoss) {
