@@ -106,6 +106,10 @@ window.addEventListener('DOMContentLoaded', () => {
       onNext:     () => { if (state.phase === 'PLAYING') Targeting.moveRight(state.objects); },
       onPrevious: () => { if (state.phase === 'PLAYING') Targeting.moveLeft(state.objects); },
       onClear:    () => { if (state.phase === 'PLAYING') answerInput.value = ''; },
+      // Interim: show number in input field as user speaks (live feedback)
+      onInterim:  (n) => { if (state.phase === 'PLAYING') answerInput.value = String(n); },
+      // Fire: submit whatever is currently in the input box
+      onFire:     () => { if (state.phase === 'PLAYING') submitAnswer(); },
       onNumber:   (n) => {
         if (state.phase !== 'PLAYING') return;
         answerInput.value = String(n);
@@ -114,7 +118,10 @@ window.addEventListener('DOMContentLoaded', () => {
       onStatusChange: (active, reason) => {
         btnMic.classList.toggle('listening', active);
         btnMic.classList.toggle('denied', reason === 'denied');
+        if (!active) btnMic.classList.remove('sound-detected');
       },
+      onSoundStart: () => { btnMic.classList.add('sound-detected'); },
+      onSoundEnd:   () => { btnMic.classList.remove('sound-detected'); },
     });
 
     btnMic.addEventListener('click', () => {
