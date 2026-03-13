@@ -42,6 +42,28 @@
           <input type="range" id="range-min" min="1" max="12" value="1" class="range-slider">
           <input type="range" id="range-max" min="1" max="12" value="10" class="range-slider">
         </div>
+        <div class="focus-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="focus-mode-toggle">
+            <span>Focus on one table</span>
+          </label>
+          <select id="focus-table" class="focus-select" disabled>
+            <option value="2">2×</option><option value="3">3×</option>
+            <option value="4">4×</option><option value="5">5×</option>
+            <option value="6">6×</option><option value="7">7×</option>
+            <option value="8">8×</option><option value="9">9×</option>
+            <option value="10">10×</option><option value="11">11×</option>
+            <option value="12">12×</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Mode</label>
+        <div class="mode-btns">
+          <button class="mode-btn active" data-mode="normal">Normal</button>
+          <button class="mode-btn" data-mode="practice">Practice</button>
+        </div>
+        <span class="setting-note" id="mode-note">Lose lives when objects hit the bottom</span>
       </div>
       <div class="form-group">
         <label>Difficulty</label>

@@ -25,10 +25,14 @@ const UI = (() => {
     const rangeDisplay = document.getElementById('range-display');
     const hintThreshInput = document.getElementById('hint-threshold');
     const hintThreshDisplay = document.getElementById('hint-threshold-display');
+    const focusToggle = document.getElementById('focus-mode-toggle');
+    const focusSelect = document.getElementById('focus-table');
+    const modeNote = document.getElementById('mode-note');
     const btnStart = document.getElementById('btn-start');
 
     let selectedTheme = 'space';
     let selectedDiff = 'medium';
+    let selectedMode = 'normal';
 
     // Theme cards
     document.querySelectorAll('.theme-card').forEach(card => {
@@ -37,6 +41,23 @@ const UI = (() => {
         card.classList.add('active');
         selectedTheme = card.dataset.theme;
       });
+    });
+
+    // Mode (normal / practice)
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedMode = btn.dataset.mode;
+        modeNote.textContent = selectedMode === 'practice'
+          ? 'No lives — answer at your own pace'
+          : 'Lose lives when objects hit the bottom';
+      });
+    });
+
+    // Focus mode toggle
+    focusToggle.addEventListener('change', () => {
+      focusSelect.disabled = !focusToggle.checked;
     });
 
     // Difficulty
@@ -85,8 +106,15 @@ const UI = (() => {
       let min = parseInt(rangeMin.value);
       let max = parseInt(rangeMax.value);
       if (min > max) { const t = min; min = max; max = t; }
+
+      // Focus mode overrides range
+      if (focusToggle.checked) {
+        const ft = parseInt(focusSelect.value);
+        min = ft; max = ft;
+      }
+
       Progress.saveName(name);
-      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value) });
+      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value), practiceMode: selectedMode === 'practice' });
     });
 
     // Clear error highlight on input
@@ -102,7 +130,10 @@ const UI = (() => {
     document.getElementById('hud-name').textContent = `Hi ${state.name}!`;
     document.getElementById('score-val').textContent = state.score;
     document.getElementById('level-val').textContent = state.level;
-    document.getElementById('hud-tables').textContent = `${state.minTable}–${state.maxTable} tables`;
+    const tableLabel = state.minTable === state.maxTable
+      ? `${state.minTable}× table`
+      : `${state.minTable}–${state.maxTable} tables`;
+    document.getElementById('hud-tables').textContent = tableLabel + (state.practiceMode ? ' · Practice' : '');
     renderLives(state.lives, state.maxLives, state.theme);
   }
 

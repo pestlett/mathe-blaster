@@ -18,6 +18,7 @@ let state = {
   minTable: 1,
   maxTable: 10,
   difficulty: 'medium',
+  practiceMode: false, // no lives lost, no game over
   score: 0,
   level: 1,
   lives: MAX_LIVES,
@@ -126,6 +127,7 @@ function startGame(settings) {
   state.maxTable = settings.maxTable;
   state.difficulty = settings.difficulty;
   state.hintThreshold = settings.hintThreshold || 3;
+  state.practiceMode = settings.practiceMode || false;
   state.score = 0;
   state.level = 1;
   state.lives = MAX_LIVES;
@@ -167,7 +169,7 @@ function update(dt) {
       obj._dieHandled = true;
       if (obj.isLifeUp) {
         // Life-up missed — just disappears, no penalty
-      } else {
+      } else if (!state.practiceMode) {
         state.lives = Math.max(0, state.lives - 1);
         state.missedList.push({ question: obj.question, answer: obj.answer });
         Audio.play('lifeLost');
@@ -176,6 +178,9 @@ function update(dt) {
           state.phase = 'ENDING';
           setTimeout(() => endGame(), 1400);
         }
+      } else {
+        // Practice mode: track missed but no life loss
+        state.missedList.push({ question: obj.question, answer: obj.answer });
       }
     }
   }
