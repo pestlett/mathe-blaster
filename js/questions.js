@@ -7,8 +7,15 @@ const Questions = (() => {
     const wrongKeys = new Set(wrongQueue.map(q => q.key));
     const pool = [];
 
-    for (let a = minTable; a <= maxTable; a++) {
-      for (let b = minTable; b <= maxTable; b++) {
+    // When a single table is selected, pair it against all multipliers 1–12
+    // so the player practises the full table, not just e.g. 6×6.
+    const aRange = { lo: minTable, hi: maxTable };
+    const bRange = minTable === maxTable
+      ? { lo: 1, hi: 12 }
+      : { lo: minTable, hi: maxTable };
+
+    for (let a = aRange.lo; a <= aRange.hi; a++) {
+      for (let b = bRange.lo; b <= bRange.hi; b++) {
         const answer = a * b;
         const key = `${a}x${b}`;
 
