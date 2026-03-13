@@ -342,6 +342,8 @@ const UI = (() => {
         <td>${name}</td>
         <td>${age}</td>
         <td>${s.score}</td>
+        <td>${Math.round(s.accuracy * 100)}%</td>
+        <td>${s.theme}</td>
         <td>${date}</td>
       </tr>`;
     }).join('');
