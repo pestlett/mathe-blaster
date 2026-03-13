@@ -53,14 +53,13 @@ const Engine = (() => {
 
   function loop(timestamp) {
     if (!running) return;
-    const dt = paused ? 0 : Math.min((timestamp - lastTime) / 1000, 0.1);
+    rafId = requestAnimationFrame(loop);
+    if (paused) { lastTime = timestamp; return; } // canvas holds last frame
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
-    if (!paused) elapsedTime += dt;
-
+    elapsedTime += dt;
     onUpdate(dt, elapsedTime);
     onRender(ctx, canvas.width, canvas.height, elapsedTime);
-
-    rafId = requestAnimationFrame(loop);
   }
 
   function getCanvas() { return canvas; }

@@ -23,19 +23,25 @@ const Targeting = (() => {
     objects.forEach(o => { o.isTargeted = (o === current); });
   }
 
+  // An object is targetable only once it has entered the visible canvas area.
+  // Objects spawn at y = -80; y > 0 means the reference point is on-screen.
+  function _visible(o) { return o.y > 0; }
+
+  function _alive(o) { return !o.dead && !o.dying && !o.destroyed; }
+
   function _autoTarget(objects) {
-    const alive = objects.filter(o => !o.dead && !o.dying && !o.destroyed);
-    if (alive.length === 0) { current = null; return; }
+    const candidates = objects.filter(o => _alive(o) && _visible(o));
+    if (candidates.length === 0) { current = null; return; }
     // Default to the object furthest down the screen (most urgent)
-    alive.sort((a, b) => b.y - a.y);
-    current = alive[0];
+    candidates.sort((a, b) => b.y - a.y);
+    current = candidates[0];
   }
 
   function moveLeft(objects) {
     if (!current) { _autoTarget(objects); return; }
     const cx = current.x + current.wobbleX;
     const candidates = objects.filter(
-      o => o !== current && !o.dead && !o.dying && !o.destroyed && (o.x + o.wobbleX) < cx
+      o => o !== current && _alive(o) && _visible(o) && (o.x + o.wobbleX) < cx
     );
     if (candidates.length === 0) return;
     candidates.sort((a, b) => (b.x + b.wobbleX) - (a.x + a.wobbleX));
@@ -46,7 +52,7 @@ const Targeting = (() => {
     if (!current) { _autoTarget(objects); return; }
     const cx = current.x + current.wobbleX;
     const candidates = objects.filter(
-      o => o !== current && !o.dead && !o.dying && !o.destroyed && (o.x + o.wobbleX) > cx
+      o => o !== current && _alive(o) && _visible(o) && (o.x + o.wobbleX) > cx
     );
     if (candidates.length === 0) return;
     candidates.sort((a, b) => (a.x + a.wobbleX) - (b.x + b.wobbleX));
