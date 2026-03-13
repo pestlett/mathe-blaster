@@ -29,6 +29,7 @@ const UPGRADES = [
     id: 'shield',
     icon: '🛡',
     tier: 'start',
+    stackable: true,
     names: { space: 'Shield Array', ocean: 'Coral Armor', sky: 'Gust Guard' },
     desc: {
       space: 'An energy shield absorbs the next miss without losing a life.',
@@ -41,6 +42,7 @@ const UPGRADES = [
     id: 'slowAll',
     icon: '🌀',
     tier: 'start',
+    stackable: true,
     names: { space: 'Warp Drag', ocean: 'Undertow', sky: 'Headwind' },
     desc: {
       space: 'Warp drag slows all objects to 75% speed for the run.',
@@ -53,6 +55,7 @@ const UPGRADES = [
     id: 'bomb',
     icon: '💣',
     tier: 'start',
+    stackable: true,
     names: { space: 'Nova Burst', ocean: 'Depth Charge', sky: 'Thunderbolt' },
     desc: {
       space: 'Charge a nova burst — press Space to destroy the lowest object.',
@@ -183,6 +186,62 @@ const SYNERGIES = [
   },
 ];
 
+// ---- Adjacency bonuses ----
+// Extra effects that only activate when two specific upgrades are NEIGHBOURS
+// in the bar. Reordering upgrades between rounds can unlock these.
+const ADJACENCY = [
+  {
+    ids:    ['chain', 'luckyBonus'],
+    flag:   'adj_chainLucky',
+    effect: 'Chain kills feed 2 lucky ticks instead of 1.',
+  },
+  {
+    ids:    ['streakBoost', 'quickBonus'],
+    flag:   'adj_streakQuick',
+    effect: 'Slow All conflict suppressed — quick window stays 1.5s.',
+  },
+  {
+    ids:    ['shield', 'bomb'],
+    flag:   'adj_shieldBomb',
+    effect: 'Each shield absorb refunds 1 bomb charge.',
+  },
+  {
+    ids:    ['hotZoneBoost', 'reveal'],
+    flag:   'adj_hotReveal',
+    effect: 'Precision Lock multiplier rises to ×2.5.',
+  },
+  {
+    ids:    ['streakSlow', 'slowAll'],
+    flag:   'adj_slowSlow',
+    effect: 'Conflict partially offset — streak-slow lasts 3s instead of 2s.',
+  },
+];
+
+// Returns a Set of adjacency flag strings that are currently active
+// based on which pairs are neighbours in the upgrades array.
+function getAdjacencyBonuses(upgrades) {
+  const active = new Set();
+  for (let i = 0; i < upgrades.length - 1; i++) {
+    const a = upgrades[i].id;
+    const b = upgrades[i + 1].id;
+    for (const adj of ADJACENCY) {
+      if ((adj.ids[0] === a && adj.ids[1] === b) ||
+          (adj.ids[0] === b && adj.ids[1] === a)) {
+        active.add(adj.flag);
+      }
+    }
+  }
+  return active;
+}
+
+// Returns the ADJACENCY entry (or null) for a specific adjacent pair.
+function getAdjacencyForPair(idA, idB) {
+  return ADJACENCY.find(adj =>
+    (adj.ids[0] === idA && adj.ids[1] === idB) ||
+    (adj.ids[0] === idB && adj.ids[1] === idA)
+  ) || null;
+}
+
 // Returns synergy hints for one upgrade against the currently active set.
 // Used by the picker to warn or entice the player before choosing.
 // Returns: Array<{ type: 'positive'|'negative', partnerName: string, effect: string }>
@@ -224,10 +283,11 @@ function upgradeDescForTheme(upgrade, theme) {
   return upgrade.desc[theme] || upgrade.desc.space;
 }
 
-// Draw N unique upgrades from the available pool (respects already-active IDs)
+// Draw N upgrades from the available pool.
+// Stackable upgrades can appear even if already owned; non-stackable are excluded once picked.
 function drawUpgrades(n, unlockedIds, activeIds) {
   const pool = UPGRADES.filter(u => {
-    if (activeIds.includes(u.id)) return false; // already have it
+    if (!u.stackable && activeIds.includes(u.id)) return false; // non-stackable: exclude if owned
     if (u.tier === 'start') return true;
     return unlockedIds.includes(u.id);
   });
@@ -241,9 +301,10 @@ function drawUpgrades(n, unlockedIds, activeIds) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    UPGRADES, SYNERGIES,
+    UPGRADES, SYNERGIES, ADJACENCY,
     STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS,
     upgradeNameForTheme, upgradeDescForTheme,
     drawUpgrades, getSynergyHintsForUpgrade, getActiveSynergySets,
+    getAdjacencyBonuses, getAdjacencyForPair,
   };
 }

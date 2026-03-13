@@ -2,10 +2,11 @@
 'use strict';
 
 const {
-  UPGRADES, SYNERGIES,
+  UPGRADES, SYNERGIES, ADJACENCY,
   STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS,
   upgradeNameForTheme, upgradeDescForTheme,
   drawUpgrades, getSynergyHintsForUpgrade, getActiveSynergySets,
+  getAdjacencyBonuses, getAdjacencyForPair,
 } = require('../js/upgrades.js');
 
 // ---- apply() sets correct flags ----
@@ -170,10 +171,20 @@ describe('drawUpgrades', () => {
     expect(drawn.length).toBeLessThanOrEqual(3);
   });
 
-  test('excludes already-active upgrade IDs', () => {
+  test('excludes non-stackable active upgrades, keeps stackable ones', () => {
+    // shield, bomb, slowAll are stackable — they remain in the pool even when owned
     const drawn = drawUpgrades(8, [], ['chain', 'streakBoost', 'shield', 'slowAll', 'bomb', 'hotZoneBoost', 'luckyBonus', 'quickBonus']);
-    // All starting upgrades are active — only starting pool available, so nothing returned
-    expect(drawn.length).toBe(0);
+    const ids = drawn.map(u => u.id);
+    // Non-stackable starting upgrades should be excluded
+    expect(ids).not.toContain('chain');
+    expect(ids).not.toContain('streakBoost');
+    expect(ids).not.toContain('hotZoneBoost');
+    expect(ids).not.toContain('luckyBonus');
+    expect(ids).not.toContain('quickBonus');
+    // Stackable upgrades should still be available
+    expect(ids).toContain('shield');
+    expect(ids).toContain('bomb');
+    expect(ids).toContain('slowAll');
   });
 
   test('includes unlock upgrades when unlocked', () => {
@@ -183,11 +194,17 @@ describe('drawUpgrades', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  test('does not include unlock upgrades unless unlocked', () => {
-    // Drain starting upgrades, don't unlock anything
+  test('does not include non-stackable unlock upgrades unless unlocked', () => {
+    // All starting non-stackable upgrades active, no unlocks — only stackable starters remain
     const activeIds = [...STARTING_UPGRADE_IDS];
-    const drawn = drawUpgrades(3, [], activeIds);
-    expect(drawn.length).toBe(0);
+    const drawn = drawUpgrades(8, [], activeIds);
+    const ids = drawn.map(u => u.id);
+    // No unlock-tier upgrades in pool (not unlocked)
+    for (const id of ['commutative', 'streakSlow', 'reveal', 'lastChance']) {
+      expect(ids).not.toContain(id);
+    }
+    // Only stackable starters available
+    expect(ids.every(id => ['shield', 'bomb', 'slowAll'].includes(id))).toBe(true);
   });
 
   test('returns no duplicate IDs', () => {
@@ -433,5 +450,207 @@ describe('synergy mechanics', () => {
     const answerRevealed = false;
     const hotMult = (revealOnHotZone && answerRevealed) ? 2 : 1.5;
     expect(hotMult).toBe(1.5);
+  });
+});
+
+// ---- ADJACENCY definitions ----
+describe('ADJACENCY definitions', () => {
+  test('5 adjacency bonuses defined', () => {
+    expect(ADJACENCY).toHaveLength(5);
+  });
+
+  test('each entry has ids (2), flag, and effect', () => {
+    for (const a of ADJACENCY) {
+      expect(a.ids).toHaveLength(2);
+      expect(typeof a.flag).toBe('string');
+      expect(a.flag.startsWith('adj_')).toBe(true);
+      expect(typeof a.effect).toBe('string');
+    }
+  });
+
+  test('all flag names are unique', () => {
+    const flags = ADJACENCY.map(a => a.flag);
+    expect(new Set(flags).size).toBe(flags.length);
+  });
+
+  test('contains expected pairs', () => {
+    const pairs = ADJACENCY.map(a => a.ids.slice().sort().join('+'));
+    expect(pairs).toContain(['chain', 'luckyBonus'].sort().join('+'));
+    expect(pairs).toContain(['streakBoost', 'quickBonus'].sort().join('+'));
+    expect(pairs).toContain(['shield', 'bomb'].sort().join('+'));
+    expect(pairs).toContain(['hotZoneBoost', 'reveal'].sort().join('+'));
+    expect(pairs).toContain(['streakSlow', 'slowAll'].sort().join('+'));
+  });
+});
+
+// ---- getAdjacencyBonuses ----
+describe('getAdjacencyBonuses', () => {
+  const getUpgrade = id => UPGRADES.find(u => u.id === id);
+
+  test('returns empty set when no upgrades', () => {
+    const result = getAdjacencyBonuses([]);
+    expect(result.size).toBe(0);
+  });
+
+  test('returns active flag when adjacent pair matches', () => {
+    const upgrades = [getUpgrade('chain'), getUpgrade('luckyBonus')];
+    const result = getAdjacencyBonuses(upgrades);
+    expect(result.has('adj_chainLucky')).toBe(true);
+  });
+
+  test('works regardless of order (chain after lucky)', () => {
+    const upgrades = [getUpgrade('luckyBonus'), getUpgrade('chain')];
+    const result = getAdjacencyBonuses(upgrades);
+    expect(result.has('adj_chainLucky')).toBe(true);
+  });
+
+  test('returns empty when pair is not adjacent (separated by another)', () => {
+    const upgrades = [getUpgrade('chain'), getUpgrade('shield'), getUpgrade('luckyBonus')];
+    const result = getAdjacencyBonuses(upgrades);
+    expect(result.has('adj_chainLucky')).toBe(false);
+  });
+
+  test('multiple adjacent pairs activate multiple flags', () => {
+    const upgrades = [
+      getUpgrade('chain'), getUpgrade('luckyBonus'),
+      getUpgrade('shield'), getUpgrade('bomb'),
+    ];
+    const result = getAdjacencyBonuses(upgrades);
+    expect(result.has('adj_chainLucky')).toBe(true);
+    expect(result.has('adj_shieldBomb')).toBe(true);
+    expect(result.size).toBe(2);
+  });
+
+  test('single upgrade returns no bonuses', () => {
+    const result = getAdjacencyBonuses([getUpgrade('chain')]);
+    expect(result.size).toBe(0);
+  });
+});
+
+// ---- getAdjacencyForPair ----
+describe('getAdjacencyForPair', () => {
+  test('returns entry for matching pair', () => {
+    const result = getAdjacencyForPair('chain', 'luckyBonus');
+    expect(result).not.toBeNull();
+    expect(result.flag).toBe('adj_chainLucky');
+  });
+
+  test('returns entry regardless of argument order', () => {
+    const a = getAdjacencyForPair('luckyBonus', 'chain');
+    const b = getAdjacencyForPair('chain', 'luckyBonus');
+    expect(a).toEqual(b);
+  });
+
+  test('returns null for non-adjacent pair', () => {
+    const result = getAdjacencyForPair('chain', 'shield');
+    expect(result).toBeNull();
+  });
+
+  test('returns null when both IDs are the same', () => {
+    const result = getAdjacencyForPair('chain', 'chain');
+    expect(result).toBeNull();
+  });
+});
+
+// ---- Stackable drawUpgrades ----
+describe('drawUpgrades with stackable upgrades', () => {
+  const allUnlocked = UPGRADES.filter(u => u.tier === 'unlock').map(u => u.id);
+
+  test('non-stackable upgrade excluded when already owned', () => {
+    const pool = drawUpgrades(8, allUnlocked, ['chain']);
+    expect(pool.find(u => u.id === 'chain')).toBeUndefined();
+  });
+
+  test('stackable upgrade (shield) still appears when already owned', () => {
+    const results = [];
+    for (let i = 0; i < 30; i++) {
+      const pool = drawUpgrades(3, allUnlocked, ['shield']);
+      if (pool.find(u => u.id === 'shield')) { results.push(true); break; }
+    }
+    // With 30 draws of 3 from ~12 upgrades, shield should appear at least once
+    expect(results.length).toBeGreaterThan(0);
+  });
+
+  test('bomb (stackable) can appear multiple times in consecutive picks', () => {
+    // Use n=20 (> pool size) to get all available upgrades
+    const pool = drawUpgrades(20, allUnlocked, ['bomb']);
+    expect(pool.find(u => u.id === 'bomb')).toBeDefined();
+  });
+
+  test('slowAll (stackable) can still be drawn when owned', () => {
+    const pool = drawUpgrades(20, allUnlocked, ['slowAll']);
+    expect(pool.find(u => u.id === 'slowAll')).toBeDefined();
+  });
+
+  test('non-stackable non-owned upgrade still appears', () => {
+    const pool = drawUpgrades(8, allUnlocked, ['chain']);
+    expect(pool.find(u => u.id === 'streakBoost')).toBeDefined();
+  });
+});
+
+// ---- Adjacency bonus mechanics ----
+describe('adjacency bonus mechanics (scoring simulation)', () => {
+  test('adj_streakQuick: conflict suppressed when adj active', () => {
+    const adjacencyBonuses = new Set(['adj_streakQuick']);
+    const speedMult = 0.75; // slowAll active
+    const quickBonus = true;
+    const adjStreakQuick = adjacencyBonuses.has('adj_streakQuick');
+    const hasSynSlowQuick = speedMult < 1 && quickBonus && !adjStreakQuick;
+    expect(hasSynSlowQuick ? 750 : 1500).toBe(1500); // not halved
+  });
+
+  test('adj_streakQuick absent: conflict still applies', () => {
+    const adjacencyBonuses = new Set();
+    const speedMult = 0.75;
+    const quickBonus = true;
+    const adjStreakQuick = adjacencyBonuses.has('adj_streakQuick');
+    const hasSynSlowQuick = speedMult < 1 && quickBonus && !adjStreakQuick;
+    expect(hasSynSlowQuick ? 750 : 1500).toBe(750);
+  });
+
+  test('adj_hotReveal: multiplier rises to ×2.5', () => {
+    const adjacencyBonuses = new Set(['adj_hotReveal']);
+    const revealOnHotZone = true;
+    const answerRevealed = true;
+    const hotMult = (revealOnHotZone && answerRevealed)
+      ? (adjacencyBonuses.has('adj_hotReveal') ? 2.5 : 2) : 1.5;
+    expect(hotMult).toBe(2.5);
+  });
+
+  test('adj_hotReveal absent: multiplier stays ×2 with reveal synergy', () => {
+    const adjacencyBonuses = new Set();
+    const revealOnHotZone = true;
+    const answerRevealed = true;
+    const hotMult = (revealOnHotZone && answerRevealed)
+      ? (adjacencyBonuses.has('adj_hotReveal') ? 2.5 : 2) : 1.5;
+    expect(hotMult).toBe(2);
+  });
+
+  test('adj_slowSlow: streak-slow duration 3s (offset from 2s)', () => {
+    const adjacencyBonuses = new Set(['adj_slowSlow']);
+    const speedMult = 0.75;
+    let dur = speedMult < 1 ? 2 : 5;
+    if (dur === 2 && adjacencyBonuses.has('adj_slowSlow')) dur = 3;
+    expect(dur).toBe(3);
+  });
+
+  test('adj_slowSlow absent with conflict: stays 2s', () => {
+    const adjacencyBonuses = new Set();
+    const speedMult = 0.75;
+    let dur = speedMult < 1 ? 2 : 5;
+    if (dur === 2 && adjacencyBonuses.has('adj_slowSlow')) dur = 3;
+    expect(dur).toBe(2);
+  });
+
+  test('adj_chainLucky: chain kills count 2 lucky ticks', () => {
+    const adjacencyBonuses = new Set(['adj_chainLucky']);
+    const ticks = adjacencyBonuses.has('adj_chainLucky') ? 2 : 1;
+    expect(ticks).toBe(2);
+  });
+
+  test('adj_chainLucky absent: chain kills count 1 lucky tick', () => {
+    const adjacencyBonuses = new Set();
+    const ticks = adjacencyBonuses.has('adj_chainLucky') ? 2 : 1;
+    expect(ticks).toBe(1);
   });
 });

@@ -377,8 +377,22 @@ const UI = (() => {
     bar.classList.remove('hidden');
 
     const { positive: synIds, negative: conflictIds } = getActiveSynergySets(state.activeUpgradeIds || []);
+    const adjBonuses = state.adjacencyBonuses || new Set();
 
-    bar.innerHTML = state.activeUpgrades.map(upg => {
+    const parts = [];
+    state.activeUpgrades.forEach((upg, idx) => {
+      // Adjacency connector between consecutive pills
+      if (idx > 0) {
+        const prevId = state.activeUpgrades[idx - 1].id;
+        const hasAdj = adjBonuses.size > 0 && (() => {
+          const adj = getAdjacencyForPair(prevId, upg.id);
+          return adj && adjBonuses.has(adj.flag);
+        })();
+        parts.push(
+          `<span class="upg-bar-connector${hasAdj ? ' upg-bar-connector-active' : ''}">${hasAdj ? '✦' : '·'}</span>`
+        );
+      }
+
       const name = upgradeNameForTheme(upg, state.theme);
       const icon = upg.icon || '★';
 
@@ -409,19 +423,21 @@ const UI = (() => {
         modClass = 'upg-active';
       }
 
-      // Synergy / conflict override (only if not already spent/active)
+      // Synergy / conflict state (only if not already spent/active)
       if (modClass === '') {
         if (conflictIds.has(upg.id))  modClass = 'upg-conflict';
         else if (synIds.has(upg.id))  modClass = 'upg-synergy';
       }
 
-      return `<div class="upg-pill ${modClass}" title="${name}">
+      parts.push(`<div class="upg-pill ${modClass}" title="${name}">
         <span class="upg-icon">${icon}</span>
         <span class="upg-label">${name}</span>
         ${countBadge}
         ${timerBar}
-      </div>`;
-    }).join('');
+      </div>`);
+    });
+
+    bar.innerHTML = parts.join('');
   }
 
   function renderLives(lives, max, theme) {
@@ -725,35 +741,101 @@ const UI = (() => {
   }
 
   // ---- Upgrade Picker ----
-  function showUpgradePicker(options, theme, activeIds, onPick) {
+  // currentUpgrades: the live array of upgrade objects already active
+  // onDone(chosen, newOrder) — chosen may be null if player only reordered
+  function showUpgradePicker(options, theme, currentUpgrades, onDone) {
     const el = document.getElementById('upgrade-picker');
     const optionsEl = document.getElementById('upgrade-options');
     optionsEl.innerHTML = '';
-    options.forEach(upg => {
-      const name = upgradeNameForTheme(upg, theme);
-      const desc = upgradeDescForTheme(upg, theme);
-      // Synergy / conflict hints
-      const hints = getSynergyHintsForUpgrade(upg.id, activeIds, theme);
-      const hintsHtml = hints.map(h => {
-        const cls  = h.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
-        const icon = h.type === 'positive' ? '✦' : '⚠';
-        return `<div class="${cls}">${icon} ${h.type === 'positive' ? 'Synergy' : 'Conflict'} with ${h.partnerName}: ${h.effect}</div>`;
-      }).join('');
-      const synClass = hints.some(h => h.type === 'negative') ? 'upgrade-option-conflict'
-                     : hints.some(h => h.type === 'positive') ? 'upgrade-option-synergy'
-                     : '';
-      const btn = document.createElement('button');
-      btn.className = `upgrade-option ${synClass}`;
-      btn.innerHTML = `
-        <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '★'}</span> ${name}</div>
-        <div class="upgrade-desc">${desc}</div>
-        ${hintsHtml}`;
-      btn.addEventListener('click', () => {
-        el.classList.add('hidden');
-        onPick(upg);
+
+    // Local mutable order — player can swap before picking
+    let orderedUpgrades = currentUpgrades.slice();
+    let selectedIdx = -1;
+
+    // ---- Reorder section ----
+    function buildReorderRow() {
+      const section = document.getElementById('reorder-section');
+      const rowEl   = document.getElementById('reorder-row');
+      if (!section || !rowEl) return;
+      if (orderedUpgrades.length === 0) { section.classList.add('hidden'); return; }
+      section.classList.remove('hidden');
+      rowEl.innerHTML = '';
+
+      const adjBonuses = getAdjacencyBonuses(orderedUpgrades);
+
+      orderedUpgrades.forEach((upg, i) => {
+        if (i > 0) {
+          const prevId = orderedUpgrades[i - 1].id;
+          const adj    = getAdjacencyForPair(prevId, upg.id);
+          const conn   = document.createElement('span');
+          conn.className = adj ? 'reorder-connector reorder-connector-bonus' : 'reorder-connector';
+          conn.textContent = adj ? '✦' : '·';
+          if (adj) conn.title = adj.effect;
+          rowEl.appendChild(conn);
+        }
+        const pill = document.createElement('button');
+        pill.className = 'reorder-pill' + (i === selectedIdx ? ' reorder-selected' : '');
+        pill.title = upgradeNameForTheme(upg, theme);
+        pill.innerHTML = `<span class="reorder-icon">${upg.icon || '★'}</span>`;
+        pill.addEventListener('click', () => {
+          if (selectedIdx === -1) {
+            selectedIdx = i;
+          } else if (selectedIdx === i) {
+            selectedIdx = -1;
+          } else {
+            [orderedUpgrades[selectedIdx], orderedUpgrades[i]] =
+              [orderedUpgrades[i], orderedUpgrades[selectedIdx]];
+            selectedIdx = -1;
+          }
+          buildReorderRow();
+          // Refresh hints on upgrade cards since activeIds may be reused
+          buildPickerCards();
+        });
+        rowEl.appendChild(pill);
       });
-      optionsEl.appendChild(btn);
-    });
+    }
+
+    // ---- Upgrade pick cards ----
+    function buildPickerCards() {
+      optionsEl.innerHTML = '';
+      const activeIds = orderedUpgrades.map(u => u.id);
+      options.forEach(upg => {
+        const name  = upgradeNameForTheme(upg, theme);
+        const desc  = upgradeDescForTheme(upg, theme);
+        const hints = getSynergyHintsForUpgrade(upg.id, activeIds, theme);
+        const hintsHtml = hints.map(h => {
+          const cls  = h.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
+          const icon = h.type === 'positive' ? '✦' : '⚠';
+          return `<div class="${cls}">${icon} ${h.type === 'positive' ? 'Synergy' : 'Conflict'} with ${h.partnerName}: ${h.effect}</div>`;
+        }).join('');
+        const synClass = hints.some(h => h.type === 'negative') ? 'upgrade-option-conflict'
+                       : hints.some(h => h.type === 'positive') ? 'upgrade-option-synergy' : '';
+        const btn = document.createElement('button');
+        btn.className = `upgrade-option ${synClass}`;
+        btn.innerHTML = `
+          <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '★'}</span> ${name}</div>
+          <div class="upgrade-desc">${desc}</div>
+          ${hintsHtml}`;
+        btn.addEventListener('click', () => {
+          el.classList.add('hidden');
+          onDone(upg, orderedUpgrades);
+        });
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    // ---- Skip / Done button (reorder only, no new pick) ----
+    const skipBtn = document.getElementById('btn-skip-upgrade');
+    if (skipBtn) {
+      skipBtn.onclick = () => {
+        el.classList.add('hidden');
+        onDone(null, orderedUpgrades);
+      };
+      skipBtn.classList.toggle('hidden', options.length === 0);
+    }
+
+    buildReorderRow();
+    buildPickerCards();
     el.classList.remove('hidden');
   }
 

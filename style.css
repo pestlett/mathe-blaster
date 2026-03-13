@@ -618,18 +618,18 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .run-ante-chip.hidden { display: none; }
 
-/* Active upgrades bar — left side of game screen */
+/* Active upgrades bar — bottom-left of game screen, horizontal row */
 #active-upgrades-bar {
   position: absolute;
   left: 8px;
-  top: 80px;          /* clears the HUD overlay */
+  top: 80px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   z-index: 10;
   pointer-events: none;
   max-height: calc(100vh - 200px);
-  overflow: hidden;   /* don't spill into input area */
+  overflow: hidden;
 }
 #active-upgrades-bar.hidden { display: none; }
 
@@ -1337,7 +1337,105 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   font-size: 1.3rem;
   font-weight: 700;
   color: #a29bfe;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+}
+.upgrade-picker-subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(162,155,254,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 12px 0 10px;
+}
+
+/* ---- Reorder row inside upgrade picker ---- */
+.reorder-section {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(162,155,254,0.25);
+  border-radius: 10px;
+  padding: 10px 12px 12px;
+  margin-bottom: 4px;
+}
+.reorder-section.hidden { display: none; }
+.reorder-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+}
+.reorder-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 8px;
+}
+.reorder-pill {
+  background: rgba(162,155,254,0.12);
+  border: 2px solid rgba(162,155,254,0.35);
+  border-radius: 10px;
+  padding: 7px 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  font-size: 1.3rem;
+  line-height: 1;
+  min-width: 44px;
+  text-align: center;
+}
+.reorder-pill:hover {
+  border-color: #a29bfe;
+  background: rgba(162,155,254,0.22);
+  transform: translateY(-2px);
+}
+.reorder-pill.reorder-selected {
+  border-color: #f7c948;
+  background: rgba(247,201,72,0.18);
+  box-shadow: 0 0 8px rgba(247,201,72,0.5);
+  transform: translateY(-3px);
+}
+.reorder-icon { pointer-events: none; }
+.reorder-connector {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.2);
+  padding: 0 3px;
+  user-select: none;
+  pointer-events: none;
+}
+.reorder-connector-bonus {
+  color: #f7c948;
+  font-size: 0.9rem;
+  text-shadow: 0 0 6px rgba(247,201,72,0.6);
+  cursor: help;
+  pointer-events: all;
+}
+.btn-skip-upgrade {
+  background: transparent;
+  border: 1px solid rgba(162,155,254,0.3);
+  border-radius: 8px;
+  color: rgba(162,155,254,0.7);
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-skip-upgrade:hover {
+  background: rgba(162,155,254,0.1);
+  color: #a29bfe;
+}
+.btn-skip-upgrade.hidden { display: none; }
+
+/* Adjacency connectors in the active upgrades bar */
+.upg-bar-connector {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.15);
+  align-self: center;
+  padding: 0 1px;
+  user-select: none;
+}
+.upg-bar-connector-active {
+  color: #f7c948;
+  font-size: 0.75rem;
+  text-shadow: 0 0 4px rgba(247,201,72,0.5);
 }
 .upgrade-options {
   display: flex;

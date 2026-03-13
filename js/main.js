@@ -595,6 +595,7 @@ function startGame(settings) {
   state.lastChanceAvailable = false;
   state.lastChanceUsed    = false;
   state.missCount         = 0;
+  state.adjacencyBonuses  = new Set();
 
   state.phase = 'PLAYING';
 
@@ -691,7 +692,13 @@ function update(dt) {
           // Shield absorbs the next miss
           if (state.shieldCharges > 0) {
             state.shieldCharges--;
-            UI.showLevelUp('Shield!', null);
+            // ADJACENCY: Shield + Bomb neighbours → each absorb refunds 1 bomb charge
+            if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb')) {
+              state.bombCharges = (state.bombCharges || 0) + 1;
+            }
+            UI.showLevelUp(
+              (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb'))
+                ? 'Shield! +1 Bomb' : 'Shield!', null);
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
             UI.updateHUD(state);
@@ -733,8 +740,9 @@ function update(dt) {
     state.streakSlowTimer = Math.max(0, state.streakSlowTimer - dt);
   }
   const streakSlowMult = state.streakSlowTimer > 0 ? 0.60 : 1;
+  const clampedSpeedMult = Math.max(0.4, state.speedMult || 1);
   const speed = Math.min(diff.maxSpeed * phoneVoiceMult, rawSpeed * phoneVoiceMult)
-    * (state.speedMult || 1) * streakSlowMult;
+    * clampedSpeedMult * streakSlowMult;
 
   // Boss round: spawn one giant boss on levels that are multiples of 5
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
@@ -1047,7 +1055,9 @@ function submitAnswer() {
     else if (elapsed < 6000) pts += 5;
     // Quick bonus (Warp Strike / Flash Current / Tailwind)
     // CONFLICT: Slow All + Quick Bonus → window halves from 1500ms to 750ms
-    const hasSynSlowQuick = state.speedMult < 1 && state.quickBonus;
+    // ADJACENCY: Streak Boost + Quick Bonus neighbours → conflict suppressed, window stays 1500ms
+    const adjStreakQuick = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_streakQuick');
+    const hasSynSlowQuick = state.speedMult < 1 && state.quickBonus && !adjStreakQuick;
     const quickWindow = hasSynSlowQuick ? 750 : 1500;
     if (state.quickBonus && elapsed < quickWindow) {
       // SYNERGY: Streak Boost + Quick Bonus → +30 instead of +20
@@ -1067,10 +1077,12 @@ function submitAnswer() {
     const hzBottom = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
     const inHotZone = target.y >= canvasH * hzTop && target.y <= canvasH * hzBottom;
     if (inHotZone) {
-      // SYNERGY: Hot Zone Boost + Reveal → ×2 when the answer was revealed
-      const hotMult = (state.revealOnHotZone && target._answerRevealed) ? 2 : 1.5;
+      // SYNERGY: Hot Zone Boost + Reveal → ×2 (or ×2.5 when adjacent) when answer was revealed
+      const adjHotReveal = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_hotReveal');
+      const hotMult = (state.revealOnHotZone && target._answerRevealed)
+        ? (adjHotReveal ? 2.5 : 2) : 1.5;
       pts = Math.round(pts * hotMult);
-      UI.showLevelUp(hotMult >= 2 ? '👁 Precision Lock!' : '🔥 Hot zone!', null);
+      UI.showLevelUp(hotMult >= 2.5 ? '👁✦ Precision Lock+!' : hotMult >= 2 ? '👁 Precision Lock!' : '🔥 Hot zone!', null);
     }
     // Lucky bonus (Nebula Luck / Treasure Drift / Lucky Wind)
     if (state.luckyBonus) {
@@ -1102,9 +1114,11 @@ function submitAnswer() {
         }
       }
       // SYNERGY: Chain + Lucky — each chain kill counts toward the lucky counter
+      // ADJACENCY: Chain + Lucky neighbours → each kill counts as 2 ticks
       if (state.luckyBonus && chainCount > 0) {
+        const chainLuckyTicks = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_chainLucky')) ? 2 : 1;
         for (let i = 0; i < chainCount; i++) {
-          state.luckyBonusCounter = (state.luckyBonusCounter || 0) + 1;
+          state.luckyBonusCounter = (state.luckyBonusCounter || 0) + chainLuckyTicks;
           if (state.luckyBonusCounter % 5 === 0) {
             const luckyMult = 2 + Math.floor(Math.random() * 4);
             state.score += Math.round(pts * luckyMult * 0.5);
@@ -1127,8 +1141,10 @@ function submitAnswer() {
     }
     // Streak slow (Dark Matter / Abyss Pull / Storm Front)
     // CONFLICT: Streak Slow + Slow All → 2s instead of 5s
+    // ADJACENCY: Streak Slow + Slow All neighbours → conflict offset: 2s → 3s
     if (state.streakSlow && state.streak > 0 && state.streak % 5 === 0) {
-      const dur = (state.speedMult < 1) ? 2 : 5;
+      let dur = (state.speedMult < 1) ? 2 : 5;
+      if (dur === 2 && state.adjacencyBonuses && state.adjacencyBonuses.has('adj_slowSlow')) dur = 3;
       state.streakSlowTimer   = dur;
       state.streakSlowDuration = dur;
     }
@@ -1176,11 +1192,23 @@ function submitAnswer() {
           const rp = Progress.getRunProgress();
           const unlockedIds = rp.unlockedUpgrades || [];
           const options = drawUpgrades(3, unlockedIds, state.activeUpgradeIds);
-          if (options.length > 0) {
-            UI.showUpgradePicker(options, state.theme, state.activeUpgradeIds, (chosen) => {
-              chosen.apply(state);
-              state.activeUpgrades.push(chosen);
-              state.activeUpgradeIds.push(chosen.id);
+          if (options.length > 0 || state.activeUpgrades.length > 0) {
+            UI.showUpgradePicker(options, state.theme, state.activeUpgrades, (chosen, newOrder) => {
+              // Apply reordered bar first
+              if (newOrder) {
+                state.activeUpgrades   = newOrder;
+                state.activeUpgradeIds = newOrder.map(u => u.id);
+              }
+              // Apply new upgrade (null if player clicked "Done" without picking)
+              if (chosen) {
+                chosen.apply(state);
+                state.activeUpgrades.push(chosen);
+                state.activeUpgradeIds.push(chosen.id);
+                // Clamp speed floor after stacking Slow All
+                if (state.speedMult !== undefined) state.speedMult = Math.max(0.4, state.speedMult);
+              }
+              // Recompute adjacency bonuses with updated order
+              state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
               Engine.resume();
               state.unpauseFreezeTimer = 1.0;
             });

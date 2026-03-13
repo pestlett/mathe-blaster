@@ -205,7 +205,14 @@
     <!-- Upgrade Picker overlay (run mode) -->
     <div id="upgrade-picker" class="upgrade-picker hidden">
       <div class="upgrade-picker-card">
-        <div class="upgrade-picker-title">Level Up! Choose a power:</div>
+        <div class="upgrade-picker-title">Level Up!</div>
+        <!-- Reorder section: tap pills to swap for adjacency bonuses -->
+        <div id="reorder-section" class="reorder-section hidden">
+          <div class="reorder-label">Tap two powers to swap order:</div>
+          <div id="reorder-row" class="reorder-row"></div>
+          <button id="btn-skip-upgrade" class="btn-skip-upgrade">Keep order ›</button>
+        </div>
+        <div class="upgrade-picker-subtitle">Choose a new power:</div>
         <div class="upgrade-options" id="upgrade-options"></div>
       </div>
     </div>
