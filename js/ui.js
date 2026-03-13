@@ -27,7 +27,7 @@ const UI = (() => {
     const rangeMinVal = document.getElementById('range-min-val');
     const rangeMaxVal = document.getElementById('range-max-val');
     const hintThreshInput = document.getElementById('hint-threshold');
-    const hintThreshDisplay = document.getElementById('hint-threshold-display');
+    const hintLabel = document.getElementById('hint-label');
     const modeNote = document.getElementById('mode-note');
     const btnStart = document.getElementById('btn-start');
 
@@ -68,12 +68,8 @@ const UI = (() => {
 
     function _refreshDynamicOnboarding(mode) {
       modeNote.textContent = I18n.t(mode === 'practice' ? 'modePracticeNote' : 'modeNormalNote');
-      // Refresh single-table note
-      const label = document.getElementById('single-table-label');
-      if (label) {
-        const tableNote = document.getElementById('single-table-note');
-        if (tableNote) tableNote.textContent = I18n.t('singleNote', { table: label.textContent.replace('×', '') });
-      }
+      singleNote.textContent = I18n.t('singleNote', { table: focusSingleTable });
+      hintLabel.textContent  = I18n.t('hintAfter',  { n: hintThreshInput.value });
     }
 
     // Difficulty
@@ -90,7 +86,6 @@ const UI = (() => {
     let focusSingleTable = 10;
     const rangePanel = document.getElementById('tables-range-panel');
     const singlePanel = document.getElementById('tables-single-panel');
-    const singleLabel = document.getElementById('single-table-label');
     const singleNote = document.getElementById('single-table-note');
 
     document.querySelectorAll('.tables-tab').forEach(tab => {
@@ -109,7 +104,6 @@ const UI = (() => {
         document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         focusSingleTable = parseInt(btn.dataset.val);
-        singleLabel.textContent = `${focusSingleTable}×`;
         singleNote.textContent = I18n.t('singleNote', { table: focusSingleTable });
       });
     });
@@ -158,7 +152,6 @@ const UI = (() => {
             document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             focusSingleTable = v;
-            singleLabel.textContent = `${v}×`;
             singleNote.textContent = I18n.t('singleNote', { table: v });
           });
           grid.appendChild(btn);
@@ -170,7 +163,7 @@ const UI = (() => {
     }
 
     hintThreshInput.addEventListener('input', () => {
-      hintThreshDisplay.textContent = hintThreshInput.value;
+      hintLabel.textContent = I18n.t('hintAfter', { n: hintThreshInput.value });
     });
 
     btnStart.addEventListener('click', () => {
@@ -270,7 +263,6 @@ const UI = (() => {
       if (saved.mode)  document.querySelector(`.mode-btn[data-mode="${saved.mode}"]`)?.click();
       if (saved.hintThreshold) {
         hintThreshInput.value = saved.hintThreshold;
-        hintThreshDisplay.textContent = saved.hintThreshold;
       }
       if (saved.tablesMode === 'single') {
         document.querySelector('.tables-tab[data-tab="single"]')?.click();
@@ -282,6 +274,9 @@ const UI = (() => {
         updateRangeDisplay();
       }
     }
+    // Apply all dynamic strings in the current language (must run after settings restore)
+    _refreshDynamicOnboarding(selectedMode);
+    _refreshDailyBtn();
   }
 
   // ---- HUD ----
