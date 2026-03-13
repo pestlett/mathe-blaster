@@ -147,5 +147,16 @@ const Progress = (() => {
     save(d);
   }
 
-  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult };
+  // ---- Settings persistence ----
+  const SETTINGS_KEY = 'multiblaster_settings';
+
+  function saveSettings(s) {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch {}
+  }
+
+  function loadSettings() {
+    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || null; } catch { return null; }
+  }
+
+  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings };
 })();

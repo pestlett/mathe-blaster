@@ -117,6 +117,53 @@ function drawStreakOverlay(ctx, w, h, streak, intensity) {
   ctx.fillRect(0, 0, w, h);
 }
 
+// ---- Hot zone ----
+const HOT_ZONE_TOP    = 0.38;
+const HOT_ZONE_BOTTOM = 0.62;
+
+function drawHotZone(ctx, w, h, t) {
+  const top    = h * HOT_ZONE_TOP;
+  const bottom = h * HOT_ZONE_BOTTOM;
+  const pulse  = 0.09 + 0.04 * Math.sin(t * 2.5);
+  ctx.fillStyle = `rgba(255,200,0,${pulse.toFixed(3)})`;
+  ctx.fillRect(0, top, w, bottom - top);
+  // Feathered top edge
+  const g1 = ctx.createLinearGradient(0, top, 0, top + 18);
+  g1.addColorStop(0, 'rgba(255,200,0,0.22)');
+  g1.addColorStop(1, 'rgba(255,200,0,0)');
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, top - 18, w, 18);
+  // Feathered bottom edge
+  const g2 = ctx.createLinearGradient(0, bottom, 0, bottom + 18);
+  g2.addColorStop(0, 'rgba(255,200,0,0)');
+  g2.addColorStop(1, 'rgba(255,200,0,0.22)');
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, bottom, w, 18);
+}
+
+function drawProgressBar(ctx, target, h) {
+  const crashLine = h - 148;
+  const startY    = -60;
+  const progress  = Math.max(0, Math.min(1, (target.y - startY) / (crashLine - startY)));
+  const bx = target.x + target.wobbleX - 40;
+  const by = target.y - 32;
+  const bw = 80;
+  const bh = 5;
+  // Background track
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 3) : ctx.fillRect(bx, by, bw, bh);
+  ctx.fill();
+  // Filled portion: green → yellow → red based on progress
+  if (progress > 0) {
+    const hue = Math.round((1 - progress) * 110); // 110=green, 0=red
+    ctx.fillStyle = `hsl(${hue},90%,55%)`;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(bx, by, bw * progress, bh, 3) : ctx.fillRect(bx, by, bw * progress, bh);
+    ctx.fill();
+  }
+}
+
 // ---- Voice suggestion pill (module-level so submitAnswer can access it) ----
 let _voiceSuggestionEl = null;
 
@@ -584,11 +631,20 @@ function render(ctx, w, h, t) {
 
   Themes.drawBackground(ctx, w, h, state.theme, t);
 
+  // Hot zone band (behind objects so it doesn't obscure text)
+  if (state.phase === 'PLAYING') drawHotZone(ctx, w, h, t);
+
   for (const obj of state.objects) {
     Themes.drawObject(ctx, obj, state.theme);
   }
 
   const target = Targeting.getTarget();
+
+  // Progress bar on targeted question object
+  if (target && !target.isFreeze && !target.isLifeUp && state.phase === 'PLAYING') {
+    drawProgressBar(ctx, target, h);
+  }
+
   const tx = target ? target.x + target.wobbleX : w / 2;
   const ty = target ? target.y : h / 2;
   Themes.drawWeapon(ctx, w, h, state.theme, tx, ty);
@@ -716,6 +772,13 @@ function submitAnswer() {
     else if (elapsed < 6000) pts += 5;
     const mult = state.streak >= 5 ? 2 : state.streak >= 3 ? 1.5 : 1;
     pts = Math.round(pts * mult);
+    // Hot zone bonus: ×1.5 if answered while object is in the glowing band
+    const canvasH = window.innerHeight;
+    const inHotZone = target.y >= canvasH * HOT_ZONE_TOP && target.y <= canvasH * HOT_ZONE_BOTTOM;
+    if (inHotZone) {
+      pts = Math.round(pts * 1.5);
+      UI.showLevelUp('🔥 Hot zone!', null);
+    }
     state.score += pts;
 
     // Destroy object

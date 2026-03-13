@@ -149,6 +149,11 @@ const UI = (() => {
       }
 
       Progress.saveName(name);
+      Progress.saveSettings({
+        theme: selectedTheme, diff: selectedDiff, mode: selectedMode,
+        tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
+        singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
+      });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single' });
@@ -195,6 +200,31 @@ const UI = (() => {
         minTable: dp.table, maxTable: dp.table, difficulty: dp.difficulty,
         hintThreshold: parseInt(hintThreshInput.value), practiceMode: false, isDaily: true });
     });
+
+    // Restore saved name
+    const savedName = Progress.getAll().player?.name;
+    if (savedName && !nameInput.value) nameInput.value = savedName;
+
+    // Restore saved settings
+    const saved = Progress.loadSettings();
+    if (saved) {
+      if (saved.theme) document.querySelector(`.theme-card[data-theme="${saved.theme}"]`)?.click();
+      if (saved.diff)  document.querySelector(`.diff-btn[data-diff="${saved.diff}"]`)?.click();
+      if (saved.mode)  document.querySelector(`.mode-btn[data-mode="${saved.mode}"]`)?.click();
+      if (saved.hintThreshold) {
+        hintThreshInput.value = saved.hintThreshold;
+        hintThreshDisplay.textContent = saved.hintThreshold;
+      }
+      if (saved.tablesMode === 'single') {
+        document.querySelector('.tables-tab[data-tab="single"]')?.click();
+        if (saved.singleTable)
+          document.querySelector(`.table-num-btn[data-val="${saved.singleTable}"]`)?.click();
+      } else {
+        if (saved.rangeMin) { rangeMin.value = saved.rangeMin; }
+        if (saved.rangeMax) { rangeMax.value = saved.rangeMax; }
+        updateRangeDisplay();
+      }
+    }
   }
 
   // ---- HUD ----
@@ -280,6 +310,7 @@ const UI = (() => {
     const isNumeric = typeof level === 'number';
     const bannerText = isNumeric
       ? I18n.t('levelUpBanner', { n: level })
+      : typeof level === 'string' ? level
       : I18n.t('bossDefeated');
     const starStr = stars !== null ? ' ' + '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
     el.textContent = bannerText + starStr;
