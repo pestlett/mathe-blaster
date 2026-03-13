@@ -79,6 +79,29 @@ window.addEventListener('DOMContentLoaded', () => {
 
   btnFire.addEventListener('click', submitAnswer);
 
+  // ---- Swipe to change target (mobile) ----
+  // Attach to the canvas so swipes on the answer bar don't interfere.
+  const gameCanvas = document.getElementById('game-canvas');
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  const SWIPE_MIN_X   = 40;  // px horizontal to count as a swipe
+  const SWIPE_MAX_Y   = 60;  // px vertical — above this it's a scroll, not a swipe
+
+  gameCanvas.addEventListener('touchstart', e => {
+    swipeStartX = e.changedTouches[0].clientX;
+    swipeStartY = e.changedTouches[0].clientY;
+  }, { passive: true });
+
+  gameCanvas.addEventListener('touchend', e => {
+    if (state.phase !== 'PLAYING') return;
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    const dy = e.changedTouches[0].clientY - swipeStartY;
+    if (Math.abs(dx) < SWIPE_MIN_X) return;       // too short — ignore
+    if (Math.abs(dy) > SWIPE_MAX_Y) return;        // too vertical — ignore
+    if (dx < 0) Targeting.moveLeft(state.objects);
+    else        Targeting.moveRight(state.objects);
+  }, { passive: true });
+
   // Pause / resume
   const btnPause = document.getElementById('btn-pause');
   const btnResume = document.getElementById('btn-resume');
