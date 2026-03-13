@@ -97,6 +97,11 @@ input[type="text"]:focus,
 input[type="number"]:focus {
   border-color: var(--accent);
 }
+input.field-error {
+  border-color: #ff4757;
+  box-shadow: 0 0 10px rgba(255,71,87,0.4);
+  animation: shake 0.4s ease;
+}
 input[type="number"] {
   -moz-appearance: textfield;
 }

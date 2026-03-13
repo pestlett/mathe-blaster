@@ -62,14 +62,30 @@ const UI = (() => {
     rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
 
     btnStart.addEventListener('click', () => {
-      const name = nameInput.value.trim() || 'Player';
-      const age = parseInt(ageInput.value) || null;
+      const name = nameInput.value.trim();
+      const age = parseInt(ageInput.value);
+
+      if (!name) {
+        nameInput.focus();
+        nameInput.classList.add('field-error');
+        return;
+      }
+      if (!age || age < 1 || age > 18) {
+        ageInput.focus();
+        ageInput.classList.add('field-error');
+        return;
+      }
+
       let min = parseInt(rangeMin.value);
       let max = parseInt(rangeMax.value);
       if (min > max) { const t = min; min = max; max = t; }
       Progress.saveName(name);
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff });
     });
+
+    // Clear error highlight on input
+    nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
+    ageInput.addEventListener('input', () => ageInput.classList.remove('field-error'));
 
     // Allow Enter to start
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnStart.click(); });
