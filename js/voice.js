@@ -232,9 +232,6 @@ const Voice = (() => {
   // ---- Final transcript handling ----
   function handleTranscript(alternatives, confidences) {
     if (resultsMuted) return;
-    // Belt-and-suspenders: if TTS is still playing (onend fired early on some
-    // platforms), treat it the same as resultsMuted.
-    if (window.speechSynthesis?.speaking) return;
     const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const cmds = NAV_COMMANDS[lang] || NAV_COMMANDS.en;
 
@@ -314,7 +311,6 @@ const Voice = (() => {
   // is still speaking, giving immediate visual feedback.
   function handleInterim(transcript) {
     if (resultsMuted) return;
-    if (window.speechSynthesis?.speaking) return;
     const text = transcript.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));

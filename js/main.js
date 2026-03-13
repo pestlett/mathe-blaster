@@ -206,6 +206,7 @@ function hideSuggestion() {
 let _lastSpokenTarget = null;
 let _speakTimer       = null;
 let _ttsStartTime     = 0; // tracks when TTS actually started playing (utt.onstart)
+let _ttsSafetyTimer   = null;
 
 function speakQuestion(text) {
   if (!window.speechSynthesis) return;
@@ -214,6 +215,7 @@ function speakQuestion(text) {
     // Unfreeze any previous utterance that may not have fired onend
     state.ttsFreezeActive = false;
     window.speechSynthesis.cancel();
+    clearTimeout(_ttsSafetyTimer);
     // Mute SR results while TTS speaks — SR stays running so there's no
     // restart dead zone. The user can speak the instant TTS finishes.
     Voice.muteResults(true);
@@ -226,7 +228,11 @@ function speakQuestion(text) {
     utt.pitch        = 1.1;
     utt.volume  = 0.72; // slightly reduced to lessen acoustic mic pickup
     utt.onstart = () => { state.ttsFreezeActive = true; _ttsStartTime = Date.now(); };
+    let _resumed = false;
     const resume = () => {
+      if (_resumed) return;
+      _resumed = true;
+      clearTimeout(_ttsSafetyTimer);
       state.ttsFreezeActive = false;
       // Adaptive unmute delay: utt.onend fires before the acoustic echo
       // clears the mic (hardware round-trip is 50–400ms). Wait at least
@@ -241,6 +247,13 @@ function speakQuestion(text) {
     };
     utt.onend   = resume;
     utt.onerror = resume;
+    // Safety: force-unmute if onend/onerror never fire (mobile quirk)
+    _ttsSafetyTimer = setTimeout(() => {
+      if (!_resumed) {
+        console.log('[TTS] safety unmute — onend never fired');
+        resume();
+      }
+    }, 6000);
     window.speechSynthesis.speak(utt);
   }, 120);
 }
@@ -517,6 +530,7 @@ function startGame(settings) {
   cancelAutoSubmit();
   _lastSpokenTarget = null;
   clearTimeout(_speakTimer);
+  clearTimeout(_ttsSafetyTimer);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   Themes.init(state.theme, window.innerWidth, window.innerHeight);
   Audio.setTheme(state.theme);
@@ -937,6 +951,7 @@ function endGame() {
   Engine.stop();
   Voice.stop();
   clearTimeout(_speakTimer);
+  clearTimeout(_ttsSafetyTimer);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   _lastSpokenTarget = null;
   state.phase = 'GAME_OVER';
