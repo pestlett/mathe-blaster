@@ -915,6 +915,16 @@ input[type="number"]::-webkit-outer-spin-button {
   backdrop-filter: blur(8px);
 }
 
+/* Allow long overlay screens to scroll on mobile */
+#screen-gameover,
+#screen-leaderboard,
+#screen-dashboard,
+#screen-achievements {
+  overflow-y: auto;
+  align-items: flex-start;
+  padding: 20px;
+}
+
 .overlay-card {
   background: rgba(13,13,26,0.95);
   border: 1px solid var(--card-border);
@@ -922,6 +932,8 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 40px;
   width: min(480px, 94vw);
   text-align: center;
+  margin: auto;
+  flex-shrink: 0;
 }
 .overlay-card.wide {
   width: min(700px, 94vw);
