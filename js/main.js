@@ -208,25 +208,32 @@ let _speakTimer       = null;
 let _ttsStartTime     = 0; // tracks when TTS actually started playing (utt.onstart)
 let _ttsSafetyTimer   = null;
 
-function speakQuestion(text) {
+function speakQuestion(text, answer) {
   if (!window.speechSynthesis) return;
   clearTimeout(_speakTimer);
   _speakTimer = setTimeout(() => {
-    // Unfreeze any previous utterance that may not have fired onend
     state.ttsFreezeActive = false;
     window.speechSynthesis.cancel();
     clearTimeout(_ttsSafetyTimer);
-    // Mute SR results while TTS speaks — SR stays running so there's no
-    // restart dead zone. The user can speak the instant TTS finishes.
-    Voice.muteResults(true);
     const lang       = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const timesWord  = lang === 'de' ? 'mal' : lang === 'es' ? 'por' : 'times';
     const speakable  = text.replace(/×/, timesWord).replace(/\s+/g, ' ').trim();
+
+    // Targeted echo filter: reject only the operand numbers that TTS will
+    // speak (e.g. 3 and 4 for "3 times 4"), but allow the answer through
+    // so the user can speak it at any time — even while TTS is still playing.
+    // This replaces the old blanket Voice.muteResults(true) approach which
+    // blocked ALL voice input during TTS, causing the "first-speak ignored" bug.
+    const echoNums = speakable.split(/\s+/)
+      .map(t => parseInt(t, 10))
+      .filter(n => !isNaN(n) && n !== answer);
+    Voice.setTTSEchoFilter(echoNums, Date.now() + 15000);
+
     const utt        = new SpeechSynthesisUtterance(speakable);
     utt.lang         = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
     utt.rate         = 0.92;
     utt.pitch        = 1.1;
-    utt.volume  = 0.72; // slightly reduced to lessen acoustic mic pickup
+    utt.volume  = 0.72;
     utt.onstart = () => { state.ttsFreezeActive = true; _ttsStartTime = Date.now(); };
     let _resumed = false;
     const resume = () => {
@@ -234,26 +241,20 @@ function speakQuestion(text) {
       _resumed = true;
       clearTimeout(_ttsSafetyTimer);
       state.ttsFreezeActive = false;
-      // Adaptive unmute delay: utt.onend fires before the acoustic echo
-      // clears the mic (hardware round-trip is 50–400ms). Wait at least
-      // 280ms, or 15% of utterance duration — whichever is larger.
+      // Narrow the echo filter to a short tail window now that TTS finished.
+      // Acoustic echo arrives 50–400ms after onend on most hardware.
       const spokenMs = Date.now() - _ttsStartTime;
       const tailMs   = Math.max(280, Math.round(spokenMs * 0.15));
-      // Tell the echo-tail filter which numbers were spoken so it can reject
-      // them if they arrive within the grace window after unmuting.
-      const echoNums = speakable.split(/\s+/).map(t => parseInt(t, 10)).filter(n => !isNaN(n));
       Voice.setTTSEchoFilter(echoNums, tailMs + 500);
-      setTimeout(() => Voice.muteResults(false), tailMs);
     };
     utt.onend   = resume;
     utt.onerror = resume;
-    // Safety: force-unmute if onend/onerror never fire (mobile quirk)
     _ttsSafetyTimer = setTimeout(() => {
       if (!_resumed) {
-        console.log('[TTS] safety unmute — onend never fired');
+        console.log('[TTS] safety — onend never fired');
         resume();
       }
-    }, 6000);
+    }, 4000);
     window.speechSynthesis.speak(utt);
   }, 120);
 }
@@ -263,7 +264,7 @@ function maybeSpeak() {
   const target = Targeting.getTarget();
   if (target && target !== _lastSpokenTarget) {
     _lastSpokenTarget = target;
-    speakQuestion(target.question);
+    speakQuestion(target.question, target.answer);
   }
 }
 

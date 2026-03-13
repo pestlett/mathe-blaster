@@ -314,7 +314,10 @@ const Voice = (() => {
     const text = transcript.trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));
-    if (n !== null && n >= 0 && n <= 200) callbacks.onInterim?.(n);
+    if (n !== null && n >= 0 && n <= 200) {
+      if (Date.now() < _echoGraceUntil && _echoNums.has(n)) return;
+      callbacks.onInterim?.(n);
+    }
   }
 
   // ---- Watchdog ----
