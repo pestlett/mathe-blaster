@@ -613,25 +613,49 @@ input[type="number"]::-webkit-outer-spin-button {
   transition: border-color 0.2s, background 0.2s, color 0.2s;
   flex-shrink: 0;
 }
+/* State 1 – listening: mic open, waiting for speech (slow red pulse) */
 #btn-mic.listening {
   border-color: #ff4757;
-  background: rgba(255,71,87,0.2);
+  background: rgba(255,71,87,0.15);
   color: #ff4757;
-  animation: micPulse 1.2s ease-in-out infinite;
+  animation: micPulse 1.4s ease-in-out infinite;
+}
+/* State 2 – speaking: engine detected speech (fast green pulse) */
+#btn-mic.speaking {
+  border-color: #2ed573 !important;
+  background: rgba(46,213,115,0.2) !important;
+  color: #2ed573 !important;
+  animation: micSpeak 0.55s ease-in-out infinite !important;
+}
+/* State 3 – processing: speech ended, waiting for cloud result (blue sweep) */
+#btn-mic.processing {
+  border-color: #1e90ff !important;
+  background: rgba(30,144,255,0.15) !important;
+  color: #1e90ff !important;
+  animation: micProcess 0.9s linear infinite !important;
+}
+/* Overlay: ambient sound is being picked up */
+#btn-mic.sound-detected {
+  border-color: #ffd32a !important;
+  color: #ffd32a !important;
+  background: rgba(255,211,42,0.18) !important;
+  animation: micBlip 0.3s ease-in-out infinite !important;
 }
 #btn-mic.denied {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
 }
-#btn-mic.sound-detected {
-  animation: micBlip 0.25s ease-in-out infinite !important;
-  border-color: #ffd32a;
-  color: #ffd32a;
-  background: rgba(255,211,42,0.25);
-}
 @keyframes micPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.4); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.35); }
   50%       { box-shadow: 0 0 0 8px rgba(255,71,87,0); }
+}
+@keyframes micSpeak {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,213,115,0.6); transform: scale(1); }
+  50%       { box-shadow: 0 0 0 12px rgba(46,213,115,0); transform: scale(1.12); }
+}
+@keyframes micProcess {
+  0%   { box-shadow: 0 0 0 0 rgba(30,144,255,0.7); }
+  100% { box-shadow: 0 0 0 14px rgba(30,144,255,0); }
 }
 @keyframes micBlip {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255,211,42,0.6); transform: scale(1); }

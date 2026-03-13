@@ -221,10 +221,10 @@ const Voice = (() => {
 
     // Commands: highest-confidence (first) match wins
     for (const text of texts) {
-      if (cmds.fire.includes(text))     { console.log('[Voice] cmd: fire');     callbacks.onFire?.();     return; }
-      if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     return; }
-      if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); return; }
-      if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    return; }
+      if (cmds.fire.includes(text))     { console.log('[Voice] cmd: fire');     callbacks.onFire?.();     callbacks.onResultDone?.(); return; }
+      if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     callbacks.onResultDone?.(); return; }
+      if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); callbacks.onResultDone?.(); return; }
+      if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    callbacks.onResultDone?.(); return; }
     }
 
     // Numbers: confidence-weighted voting across all alternatives.
@@ -247,6 +247,7 @@ const Voice = (() => {
     const entries = Object.entries(votes);
     if (!entries.length) {
       console.log('[Voice] no match for:', alternatives);
+      callbacks.onResultDone?.();
       return;
     }
 
@@ -272,6 +273,7 @@ const Voice = (() => {
 
     console.log(`[Voice] → ${winner} | weights ${JSON.stringify(votes)} | alts`, alternatives);
     callbacks.onNumber?.(winner);
+    callbacks.onResultDone?.();
   }
 
   // ---- Interim result handler ----
@@ -324,7 +326,18 @@ const Voice = (() => {
     recognition.interimResults = true;   // live input-field population
     recognition.maxAlternatives = 5;
 
-    recognition.onstart = () => resetWatchdog();
+    recognition.onstart = () => {
+      resetWatchdog();
+      callbacks.onStatusChange?.(true);
+    };
+
+    // Sound/speech lifecycle — drives the 4-state mic button UI
+    recognition.onsoundstart  = () => callbacks.onSoundStart?.();
+    recognition.onsoundend    = () => callbacks.onSoundEnd?.();
+    recognition.onspeechstart = () => callbacks.onSpeechStart?.();
+    // onspeechend fires when the engine stops detecting speech but before
+    // the final result arrives — this is the "I heard you, thinking..." gap
+    recognition.onspeechend   = () => callbacks.onSpeechEnd?.();
 
     recognition.onresult = e => {
       resetWatchdog();

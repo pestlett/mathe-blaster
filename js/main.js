@@ -127,26 +127,63 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!Voice.supported) {
     btnMic.style.display = 'none';
   } else {
+    // ---- Mic button state helpers ----
+    // States (applied as CSS classes): listening → speaking → processing → listening
+    // sound-detected can overlay any of the above (ambient audio indicator)
+    let processingClearTimer = null;
+
+    function micState(state) {
+      btnMic.classList.remove('speaking', 'processing', 'sound-detected');
+      if (state === 'listening') btnMic.classList.add('listening');
+      if (state === 'speaking')  { btnMic.classList.add('listening', 'speaking'); }
+      if (state === 'processing'){ btnMic.classList.add('listening', 'processing'); }
+      if (state === 'off')       { btnMic.classList.remove('listening'); }
+    }
+
+    function clearProcessing() {
+      clearTimeout(processingClearTimer);
+      btnMic.classList.remove('processing', 'speaking', 'sound-detected');
+    }
+
     Voice.init({
-      onNext:     () => { if (state.phase === 'PLAYING') Targeting.moveRight(state.objects); },
-      onPrevious: () => { if (state.phase === 'PLAYING') Targeting.moveLeft(state.objects); },
-      onClear:    () => { if (state.phase === 'PLAYING') answerInput.value = ''; },
-      // Interim: show number in input field as user speaks (live feedback)
-      onInterim:  (n) => { if (state.phase === 'PLAYING') answerInput.value = String(n); },
-      // Fire: submit whatever is currently in the input box
-      onFire:     () => { if (state.phase === 'PLAYING') submitAnswer(); },
-      onNumber:   (n) => {
+      onNext:       () => { clearProcessing(); if (state.phase === 'PLAYING') Targeting.moveRight(state.objects); },
+      onPrevious:   () => { clearProcessing(); if (state.phase === 'PLAYING') Targeting.moveLeft(state.objects); },
+      onClear:      () => { clearProcessing(); if (state.phase === 'PLAYING') answerInput.value = ''; },
+      onInterim:    (n) => { if (state.phase === 'PLAYING') answerInput.value = String(n); },
+      onFire:       () => { clearProcessing(); if (state.phase === 'PLAYING') submitAnswer(); },
+      onNumber:     (n) => {
+        clearProcessing();
         if (state.phase !== 'PLAYING') return;
         answerInput.value = String(n);
         submitAnswer();
       },
-      onStatusChange: (active, reason) => {
-        btnMic.classList.toggle('listening', active);
-        btnMic.classList.toggle('denied', reason === 'denied');
-        if (!active) btnMic.classList.remove('sound-detected');
+      onResultDone: () => clearProcessing(),  // no-match or after any result
+
+      // Sound lifecycle → drives mic button states
+      onSoundStart:  () => btnMic.classList.add('sound-detected'),
+      onSoundEnd:    () => btnMic.classList.remove('sound-detected'),
+      onSpeechStart: () => micState('speaking'),
+      onSpeechEnd:   () => {
+        // Speech ended — engine is now processing. Show blue "thinking" state.
+        micState('processing');
+        // Safety: if no result arrives within 2.5s, revert to plain listening
+        clearTimeout(processingClearTimer);
+        processingClearTimer = setTimeout(() => micState('listening'), 2500);
       },
-      onSoundStart: () => { btnMic.classList.add('sound-detected'); },
-      onSoundEnd:   () => { btnMic.classList.remove('sound-detected'); },
+
+      onStatusChange: (active, reason) => {
+        if (active) {
+          micState('listening');
+          btnMic.title = 'Voice active — speak your answer';
+        } else {
+          micState('off');
+          clearTimeout(processingClearTimer);
+          btnMic.title = reason === 'denied'
+            ? 'Microphone access denied'
+            : 'Tap to enable voice input';
+        }
+        btnMic.classList.toggle('denied', reason === 'denied');
+      },
     });
 
     btnMic.addEventListener('click', () => {
