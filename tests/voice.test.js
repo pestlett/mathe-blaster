@@ -98,6 +98,22 @@ describe('parseNumber — German', () => {
   test('"48" in DE context → 48', () => expect(parse(ctx, '48')).toBe(48));
 });
 
+// ── "one hundred" edge cases ────────────────────────────────────────────────
+describe('parseNumber — "one hundred" edge cases', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeVoiceCtx('en'); });
+
+  test('"one hundred" → 100', () => { expect(ctx.Voice.parseNumber('one hundred')).toBe(100); });
+  test('"a hundred" → 100', () => { expect(ctx.Voice.parseNumber('a hundred')).toBe(100); });
+  test('"hundred" → 100', () => { expect(ctx.Voice.parseNumber('hundred')).toBe(100); });
+  test('"1 hundred" → 100', () => { expect(ctx.Voice.parseNumber('1 hundred')).toBe(100); });
+  test('"one hundred and twenty" → 120', () => { expect(ctx.Voice.parseNumber('one hundred and twenty')).toBe(120); });
+  test('"one hundred twenty" → 120', () => { expect(ctx.Voice.parseNumber('one hundred twenty')).toBe(120); });
+  test('"one hundred and forty four" → 144', () => { expect(ctx.Voice.parseNumber('one hundred and forty four')).toBe(144); });
+  test('"one hundred forty four" → 144', () => { expect(ctx.Voice.parseNumber('one hundred forty four')).toBe(144); });
+  test('"2 hundred" → 200', () => { expect(ctx.Voice.parseNumber('2 hundred')).toBe(200); });
+});
+
 // ── Spanish tests ──────────────────────────────────────────────────────────
 describe('parseNumber — Spanish', () => {
   let ctx;
@@ -113,4 +129,116 @@ describe('parseNumber — Spanish', () => {
   test('"noventa y nueve" → 99', () => expect(parse(ctx, 'noventa y nueve')).toBe(99));
   test('"cien" → 100', () => expect(parse(ctx, 'cien')).toBe(100));
   test('"ciento veinte" → 120', () => expect(parse(ctx, 'ciento veinte')).toBe(120));
+});
+
+// ── Trigger word mode ────────────────────────────────────────────────────────
+describe('Trigger word mode', () => {
+  let recInstance = null;
+
+  class FakeRecognition {
+    constructor() {
+      recInstance = this;
+      this.onstart = null;
+      this.onend = null;
+      this.onresult = null;
+      this.onerror = null;
+      this.onsoundstart = null;
+      this.onsoundend = null;
+      this.onspeechstart = null;
+      this.onspeechend = null;
+    }
+
+    start() { this.onstart?.(); }
+    stop() { this.onend?.(); }
+    abort() { this.onend?.(); }
+
+    emitFinal(transcripts, confidences = []) {
+      const finalResult = { isFinal: true, length: transcripts.length };
+      transcripts.forEach((transcript, i) => {
+        finalResult[i] = {
+          transcript,
+          confidence: confidences[i] ?? 0.9,
+        };
+      });
+      this.onresult?.({
+        resultIndex: 0,
+        results: [finalResult],
+      });
+    }
+  }
+
+  function makeTriggerHarness(lang = 'en') {
+    recInstance = null;
+    const { makeContext, loadModule } = require('./helpers/context');
+    const ctx = makeContext({
+      window: {
+        SpeechRecognition: FakeRecognition,
+        webkitSpeechRecognition: null,
+        speechSynthesis: null,
+      },
+    });
+    ctx.I18n = { getLang: () => lang };
+    loadModule(ctx, 'voice.js');
+
+    const numbers = [];
+    const fires = [];
+    ctx.Voice.init({
+      onNumber: n => numbers.push(n),
+      onFire: () => fires.push(true),
+      onStatusChange: () => {},
+      onResultDone: () => {},
+    });
+    ctx.Voice.start();
+
+    return { ctx, get rec() { return recInstance; }, numbers, fires };
+  }
+
+  test('with trigger mode off — plain number fires', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(false, '');
+    recInstance.emitFinal(['39'], [0.9]);
+    expect(numbers).toEqual([39]);
+  });
+
+  test('with trigger mode off — "fire 39" fires 39', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(false, '');
+    recInstance.emitFinal(['fire 39'], [0.9]);
+    expect(numbers).toEqual([39]);
+  });
+
+  test('with trigger mode on — plain "39" does NOT fire', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(true, '');
+    recInstance.emitFinal(['39'], [0.9]);
+    expect(numbers).toEqual([]);
+  });
+
+  test('with trigger mode on — "fire 39" fires 39', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(true, '');
+    recInstance.emitFinal(['fire 39'], [0.9]);
+    expect(numbers).toEqual([39]);
+  });
+
+  test('with trigger mode on — "fire forty eight" fires 48', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(true, '');
+    recInstance.emitFinal(['fire forty eight'], [0.9]);
+    expect(numbers).toEqual([48]);
+  });
+
+  test('with trigger mode on — "fire" alone triggers onFire', () => {
+    const { ctx, fires } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(true, '');
+    recInstance.emitFinal(['fire'], [0.9]);
+    expect(fires).toEqual([true]);
+  });
+
+  test('with trigger mode on — custom word "go" triggers number', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(true, 'go');
+    recInstance.emitFinal(['go 39'], [0.9]);
+    expect(numbers).toEqual([39]);
+  });
 });

@@ -27,6 +27,9 @@ const Voice = (() => {
   let _pendingFire    = null;
   let _pendingCommand = null;
 
+  let _triggerMode = false;
+  let _triggerWord = '';  // user's preferred word (empty = use cmds.fire list)
+
   function cancelPending() {
     if (_pendingFire) { clearTimeout(_pendingFire.timer); _pendingFire = null; }
   }
@@ -355,6 +358,11 @@ const Voice = (() => {
     },
   };
 
+  function setTriggerMode(enabled, word) {
+    _triggerMode = !!enabled;
+    _triggerWord = (word || '').trim().toLowerCase();
+  }
+
   // ---- Final transcript handling ----
   function handleTranscript(alternatives, confidences) {
     if (resultsMuted) return;
@@ -405,6 +413,17 @@ const Voice = (() => {
       if (lastWord && lastWord !== text && tryCommand(lastWord)) return;
     }
 
+    // In trigger-word mode: only proceed to number voting if a fire-cmd word
+    // appears in the transcript. "fire 39" fires 39; "39" alone is ignored.
+    if (_triggerMode) {
+      const trigWords = _triggerWord ? [_triggerWord, ...cmds.fire] : cmds.fire;
+      const hasTrigger = texts.some(t => t.split(/\s+/).some(w => trigWords.includes(w)));
+      if (!hasTrigger) {
+        callbacks.onResultDone?.();
+        return;
+      }
+    }
+
     // Numbers: confidence-weighted voting across all alternatives.
     // Falls back to position-based weight (1/rank) when confidence scores are
     // all zero (common on some engines/platforms).
@@ -415,11 +434,20 @@ const Voice = (() => {
       // Candidate order (tried in sequence, first successful parse wins):
       //   1. raw text
       //   2. noise-stripped text
-      //   3. first non-command parseable token — fixes "44 fire for" → 44 (vs lastToken "for"→4)
-      //   4. last token — catches "here six" → 6, "2 x 9 18" → 18
+      //   3. command-words-stripped text — fixes "fire forty eight" → "forty eight" → 48
+      //   4. first non-command parseable token — fixes "44 fire for" → 44 (vs lastToken "for"→4)
+      //   5. last token — catches "here six" → 6, "2 x 9 18" → 18
       const lastToken = text.split(/\s+/).filter(Boolean).pop() || '';
       const firstNumNonCmd = text.split(/\s+/).filter(t => t && !allCmdWords.has(t) && parseAtomicToken(t) !== null)[0] || '';
-      const candidates = [text, stripNoise(text), firstNumNonCmd, lastToken].filter((t, i, arr) => t && arr.indexOf(t) === i);
+      // Strip any command words from the text so "fire forty eight" → "forty eight" → 48.
+      // Build a regex from all command words in this language.
+      const allCmdList = Object.values(cmds).flat();
+      const allCmdRe   = new RegExp(
+        `\\b(${allCmdList.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi'
+      );
+      const textNoCmd  = text.replace(allCmdRe, '').replace(/\s+/g, ' ').trim();
+      const candidates = [text, stripNoise(text), textNoCmd, firstNumNonCmd, lastToken]
+        .filter((t, i, arr) => t && arr.indexOf(t) === i);
       for (const t of candidates) {
         const n = parseNumber(t);
         if (n !== null && n >= 0 && n <= 200) {
@@ -660,5 +688,5 @@ const Voice = (() => {
 
   function muteResults(v) { resultsMuted = v; }
 
-  return { supported, init, start, stop, muteResults, setTTSEchoFilter, setActiveQuestion, parseNumber };
+  return { supported, init, start, stop, muteResults, setTTSEchoFilter, setActiveQuestion, parseNumber, setTriggerMode };
 })();

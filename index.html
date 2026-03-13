@@ -115,6 +115,20 @@
         <input type="range" id="hint-threshold" min="1" max="5" value="3" class="range-slider" style="max-width:200px">
         <span class="setting-note" data-i18n="hintNote">Shows a dot-grid picture when stuck</span>
       </div>
+      <div class="form-group" id="voice-trigger-group">
+        <label data-i18n="voiceTriggerMode">Voice trigger word mode</label>
+        <div class="mode-btns" id="voice-trigger-btns">
+          <button type="button" class="mode-btn active" id="voice-trigger-off" data-i18n="voiceTriggerOff">Off — any spoken number fires</button>
+          <button type="button" class="mode-btn" id="voice-trigger-on" data-i18n="voiceTriggerOn">On — say "fire [answer]"</button>
+        </div>
+        <div id="voice-trigger-word-row" style="display:none; margin-top:6px">
+          <label data-i18n="voiceTriggerWord" style="font-size:0.85rem">Trigger word</label>
+          <input type="text" id="voice-trigger-word" maxlength="20"
+                 style="width:100px; margin-left:8px; padding:4px 8px; border-radius:6px; border:1px solid #555; background:#333; color:#fff; font-size:0.9rem"
+                 placeholder="fire">
+          <span class="setting-note" data-i18n="voiceTriggerNote">Speak this word before your answer</span>
+        </div>
+      </div>
       <!-- Help / How to Play -->
       <details class="help-section">
         <summary data-i18n="helpTitle">❓ How to Play</summary>
@@ -135,6 +149,7 @@
           <p class="help-subhead" data-i18n="helpVoiceTitle">🎤 Voice input</p>
           <ul>
             <li data-i18n="helpVoiceNumber"><strong>Say the answer</strong> — it submits automatically (e.g. "forty-eight" or "48")</li>
+            <li data-i18n="helpVoiceTrigger"><strong>Trigger mode</strong> — enable it to require "fire 48" format (reduces accidental fires)</li>
             <li data-i18n="helpVoiceFire"><strong>fire / shoot</strong> — submit a typed answer by voice</li>
             <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
             <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>

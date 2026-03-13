@@ -558,6 +558,7 @@ function startGame(settings) {
   UI.updateHUD(state);
   UI.showScreen('game');
   Engine.start();
+  Voice.setTriggerMode(settings.triggerMode || false, settings.triggerWord || '');
   Voice.start();
 }
 

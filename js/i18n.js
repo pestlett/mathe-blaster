@@ -52,10 +52,17 @@ const I18n = (() => {
       helpEndless:      'The game gets faster each level — it\'s a high-score challenge, not a race to the finish!',
       helpVoiceTitle:   '🎤 Voice input',
       helpVoiceNumber:  'Say the answer — it submits automatically (e.g. "forty-eight" or "48")',
+      helpVoiceTrigger: 'Trigger mode — enable it to require "fire 48" format (reduces accidental fires)',
       helpVoiceFire:    'fire / shoot — submit a typed answer by voice',
       helpVoiceNext:    'next / forward — switch to the next problem',
       helpVoiceBack:    'back / previous — switch to the previous problem',
       helpVoiceClear:   'clear / delete — clear the answer box',
+
+      voiceTriggerMode: 'Voice trigger word mode',
+      voiceTriggerOn:   'On — say "fire [answer]"',
+      voiceTriggerOff:  'Off — any spoken number fires',
+      voiceTriggerWord: 'Trigger word',
+      voiceTriggerNote: 'Speak this word before your answer (e.g. "fire 48")',
 
       // HUD
       levelLabel:        'Level ',
@@ -194,10 +201,17 @@ const I18n = (() => {
       helpEndless:      'Das Spiel wird mit jedem Level schneller — es geht ums Highscore-Jagen!',
       helpVoiceTitle:   '🎤 Spracheingabe',
       helpVoiceNumber:  'Zahl sagen — wird automatisch abgeschickt (z.B. "achtundvierzig" oder "48")',
+      helpVoiceTrigger: 'Auslösewort-Modus — aktivieren, um "feuer 48"-Format zu erfordern (verhindert Versehentliches)',
       helpVoiceFire:    'feuer / schießen — eingetippte Antwort per Sprache absenden',
       helpVoiceNext:    'weiter / vor — zur nächsten Aufgabe',
       helpVoiceBack:    'zurück — zur vorherigen Aufgabe',
       helpVoiceClear:   'löschen — Eingabefeld leeren',
+
+      voiceTriggerMode: 'Stimmbefehlswort-Modus',
+      voiceTriggerOn:   'An — "[Befehl] [Antwort]" sagen',
+      voiceTriggerOff:  'Aus — jede Zahl wird gewertet',
+      voiceTriggerWord: 'Stimmbefehl',
+      voiceTriggerNote: 'Dieses Wort vor der Antwort sprechen (z. B. "feuer 48")',
 
       // HUD
       levelLabel:        'Level ',
@@ -329,10 +343,17 @@ const I18n = (() => {
       helpEndless:      '¡El juego se acelera cada nivel — es un reto de puntuación sin final!',
       helpVoiceTitle:   '🎤 Entrada de voz',
       helpVoiceNumber:  'Di el número — se envía automáticamente (p.ej. "cuarenta y ocho" o "48")',
+      helpVoiceTrigger: 'Modo activador — actívalo para requerir el formato "fuego 48" (reduce disparos accidentales)',
       helpVoiceFire:    'fuego / disparar — envía por voz una respuesta ya escrita',
       helpVoiceNext:    'siguiente / adelante — pasar al siguiente problema',
       helpVoiceBack:    'atrás / anterior — volver al problema anterior',
       helpVoiceClear:   'borrar / limpiar — vaciar el cuadro de respuesta',
+
+      voiceTriggerMode: 'Modo de palabra activadora',
+      voiceTriggerOn:   'Activado — di "[orden] [respuesta]"',
+      voiceTriggerOff:  'Desactivado — cualquier número funciona',
+      voiceTriggerWord: 'Palabra activadora',
+      voiceTriggerNote: 'Di esta palabra antes de la respuesta (p. ej. "fuego 48")',
 
       // HUD
       levelLabel:        'Nivel ',
