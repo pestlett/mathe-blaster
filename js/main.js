@@ -222,6 +222,7 @@ function speakQuestion(text) {
     const lang       = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const timesWord  = lang === 'de' ? 'mal' : lang === 'es' ? 'por' : 'times';
     const speakable  = text.replace(/×/, timesWord).replace(/\s+/g, ' ').trim();
+    const operands   = (text.match(/\d+/g) || []).map(n => parseInt(n, 10)).filter(n => !isNaN(n)).slice(0, 2);
     const utt        = new SpeechSynthesisUtterance(speakable);
     utt.lang         = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
     utt.rate         = 0.92;
@@ -239,10 +240,16 @@ function speakQuestion(text) {
       // 280ms, or 15% of utterance duration — whichever is larger.
       const spokenMs = Date.now() - _ttsStartTime;
       const tailMs   = Math.max(280, Math.round(spokenMs * 0.15));
-      // Tell the echo-tail filter which numbers were spoken so it can reject
-      // them if they arrive within the grace window after unmuting.
-      const echoNums = speakable.split(/\s+/).map(t => parseInt(t, 10)).filter(n => !isNaN(n));
-      Voice.setTTSEchoFilter(echoNums, tailMs + 500);
+      // Keep a very short operand-number guard (prevents raw "6"/"8" echo),
+      // plus a longer phrase-pattern guard for "6 times 8"/"68" echoes.
+      // This avoids blocking fast legitimate answers (e.g. 1×7 => "7").
+      Voice.setTTSEchoFilter({
+        nums: operands,
+        operands,
+        lang,
+        numberGraceMs: tailMs + 180,   // ~180ms after unmute
+        phraseGraceMs: tailMs + 1200,  // ~1.2s after unmute
+      });
       setTimeout(() => Voice.muteResults(false), tailMs);
     };
     utt.onend   = resume;
@@ -261,6 +268,7 @@ function speakQuestion(text) {
 function maybeSpeak() {
   if (state.phase !== 'PLAYING') return;
   const target = Targeting.getTarget();
+  Voice.setActiveQuestion(target?.key || '');
   if (target && target !== _lastSpokenTarget) {
     _lastSpokenTarget = target;
     speakQuestion(target.question);
