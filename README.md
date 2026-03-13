@@ -1,5 +1,6 @@
 # Multiplication Blaster 🚀
 
+[![Tests](https://github.com/pestlett/multiplication-blaster/actions/workflows/tests.yml/badge.svg)](https://github.com/pestlett/multiplication-blaster/actions/workflows/tests.yml)
 [![Deploy](https://github.com/pestlett/multiplication-blaster/actions/workflows/deploy.yml/badge.svg)](https://github.com/pestlett/multiplication-blaster/actions/workflows/deploy.yml)
 [![Site](https://img.shields.io/website?url=https%3A%2F%2Fmultiply.jewell-colicheo.com&label=site&up_message=online&down_message=offline)](https://multiply.jewell-colicheo.com)
 
