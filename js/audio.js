@@ -135,6 +135,10 @@ const Audio = (() => {
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
         [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'triangle', t + i * 0.1, 0.15, 0.12));
+      },
+      freeze() {
+        const c = getCtx(); const t = c.currentTime;
+        [1200, 1000, 800, 1400].forEach((f, i) => playTone(f, 'sine', t + i * 0.06, 0.1, 0.1));
       }
     },
     ocean: {
@@ -164,6 +168,10 @@ const Audio = (() => {
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
         [300, 400, 500, 600, 700].forEach((f, i) => playTone(f, 'sine', t + i * 0.1, 0.12, 0.1));
+      },
+      freeze() {
+        const c = getCtx(); const t = c.currentTime;
+        [1000, 800, 600, 1200].forEach((f, i) => playTone(f, 'sine', t + i * 0.07, 0.1, 0.1));
       }
     },
     sky: {
@@ -193,6 +201,10 @@ const Audio = (() => {
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
         [659, 784, 880, 1047, 1319].forEach((f, i) => playTone(f, 'triangle', t + i * 0.09, 0.12, 0.1));
+      },
+      freeze() {
+        const c = getCtx(); const t = c.currentTime;
+        [1200, 1000, 800, 1400].forEach((f, i) => playTone(f, 'triangle', t + i * 0.06, 0.1, 0.1));
       }
     }
   };

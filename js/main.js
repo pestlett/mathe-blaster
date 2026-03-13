@@ -31,6 +31,8 @@ let state = {
   missedList: [],
   wrongQueue: [],   // questions answered incorrectly this session
   lifeUpTimer: 0,   // accumulates seconds toward next life-up spawn
+  freezeTimer: 0,   // accumulates seconds toward next freeze spawn
+  freezeActive: 0,  // seconds remaining on active freeze
   answerStartTime: 0,
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
 };
@@ -140,6 +142,8 @@ function startGame(settings) {
   state.missedList = [];
   state.wrongQueue = [];
   state.lifeUpTimer = 0;
+  state.freezeTimer = 0;
+  state.freezeActive = 0;
   state.answerStartTime = Date.now();
   state.phase = 'PLAYING';
 
@@ -160,9 +164,19 @@ function startGame(settings) {
 function update(dt) {
   if (state.phase !== 'PLAYING' && state.phase !== 'ENDING') return;
 
+  // Tick down active freeze
+  if (state.freezeActive > 0) {
+    state.freezeActive = Math.max(0, state.freezeActive - dt);
+  }
+
+  // Speed multiplier: 0.25× while freeze is active
+  const freezeMult = state.freezeActive > 0 ? 0.25 : 1;
+
   // Update all objects (keep animating during ENDING)
   for (const obj of state.objects) {
-    Objects.update(obj, dt, window.innerHeight - 148);
+    // Apply freeze slowdown to non-special objects
+    const effectiveDt = (obj.isFreeze || obj.isLifeUp) ? dt : dt * freezeMult;
+    Objects.update(obj, effectiveDt, window.innerHeight - 148);
 
     // Detect first frame of dying (object hit bottom)
     if (obj.dying && !obj._dieHandled) {
@@ -194,6 +208,22 @@ function update(dt) {
   const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0);
   const speed = Math.min(diff.maxSpeed, diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1));
 
+  // Spawn freeze item — at most one on screen, every ~30s
+  const hasFreeze = state.objects.some(o => o.isFreeze && !o.dead && !o.dying && !o.destroyed);
+  if (!hasFreeze && state.freezeActive <= 0) {
+    state.freezeTimer += dt;
+    if (state.freezeTimer >= 30) {
+      state.freezeTimer = 0;
+      const stats = Progress.getStats();
+      const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
+      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      state.objects.push(Objects.createFreeze(q, window.innerWidth, speed, liveX));
+    }
+  } else if (hasFreeze) {
+    state.freezeTimer = 0;
+  }
+
   // Spawn life-up item — at most one on screen, only when injured, every ~20s
   const hasLifeUp = state.objects.some(o => o.isLifeUp && !o.dead && !o.dying && !o.destroyed);
   if (!hasLifeUp && state.lives < MAX_LIVES) {
@@ -211,7 +241,7 @@ function update(dt) {
   }
 
   // Spawn new question objects
-  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp).length;
+  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze).length;
   if (aliveCount < maxObj) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
@@ -236,7 +266,9 @@ function update(dt) {
   // Update input placeholder — hint when a life-up is targeted
   const currentTarget = Targeting.getTarget();
   const inp = document.getElementById('answer-input');
-  inp.placeholder = (currentTarget && currentTarget.isLifeUp) ? 'Answer for +1 life!' : 'Answer...';
+  inp.placeholder = (currentTarget && currentTarget.isLifeUp) ? 'Answer for +1 life!'
+    : (currentTarget && currentTarget.isFreeze) ? 'Answer to freeze!'
+    : 'Answer...';
 }
 
 // ---- RENDER ----
@@ -254,6 +286,11 @@ function render(ctx, w, h, t) {
   const tx = target ? target.x + target.wobbleX : w / 2;
   const ty = target ? target.y : h / 2;
   Themes.drawWeapon(ctx, w, h, state.theme, tx, ty);
+
+  // Freeze overlay
+  if (state.freezeActive > 0) {
+    Themes.drawFreezeOverlay(ctx, w, h, state.freezeActive);
+  }
 }
 
 // ---- ANSWER SUBMISSION ----
@@ -266,6 +303,26 @@ function submitAnswer() {
 
   const val = parseInt(input.value.trim());
   if (isNaN(val)) { input.focus(); return; }
+
+  // Freeze: correct answer slows all objects for 5s
+  if (target.isFreeze) {
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#00d4ff');
+      state.freezeActive = 5;
+      UI.updateHUD(state);
+      Audio.play('freeze');
+      input.value = '';
+      input.placeholder = 'Answer...';
+      Targeting.syncTarget(state.objects);
+    } else {
+      Audio.play('wrong');
+      UI.shakeInput();
+      UI.showTryAgain();
+      input.value = '';
+    }
+    input.focus();
+    return;
+  }
 
   // Life-up: correct answer earns a life, wrong answer just shakes
   if (target.isLifeUp) {

@@ -175,17 +175,18 @@ const Themes = (() => {
         ctx.save();
         ctx.globalAlpha = 1 - obj.destroyTimer * 2;
         if (obj.isLifeUp) drawLifeUp(ctx, obj, false);
+        else if (obj.isFreeze) drawFreezeItem(ctx, obj, false);
         else drawThemeObject(ctx, obj, theme, false);
         ctx.restore();
       }
       return;
     }
     if (obj.dying) {
-      if (obj.isLifeUp) {
-        // Life-up just fades when it hits the bottom — no missed-question treatment
+      if (obj.isLifeUp || obj.isFreeze) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, 1 - obj.dieTimer / 1.2);
-        drawLifeUp(ctx, obj, false);
+        if (obj.isLifeUp) drawLifeUp(ctx, obj, false);
+        else drawFreezeItem(ctx, obj, false);
         ctx.restore();
       } else {
         drawDyingObject(ctx, obj, theme);
@@ -193,6 +194,7 @@ const Themes = (() => {
       return;
     }
     if (obj.isLifeUp) drawLifeUp(ctx, obj, true);
+    else if (obj.isFreeze) drawFreezeItem(ctx, obj, true);
     else drawThemeObject(ctx, obj, theme, true);
   }
 
@@ -543,6 +545,78 @@ const Themes = (() => {
   }
 
   // ========================
+  //  FREEZE ITEM
+  // ========================
+
+  function drawFreezeItem(ctx, obj, showLabel) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y;
+    const pulse = 0.75 + 0.25 * Math.sin(Date.now() * 0.006);
+    const targeted = obj.isTargeted;
+
+    ctx.save();
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = targeted ? 55 : 30;
+
+    // Outer ring
+    const ringR = 36 + (targeted ? 6 * pulse : 0);
+    ctx.strokeStyle = targeted ? '#ffffff' : '#00d4ff';
+    ctx.lineWidth = targeted ? 4 : 2.5;
+    ctx.globalAlpha = targeted ? (0.55 + 0.45 * pulse) : 0.7;
+    ctx.beginPath();
+    ctx.arc(x, y, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Body
+    ctx.globalAlpha = 0.88;
+    const bg = ctx.createRadialGradient(x - 8, y - 8, 2, x, y, 30);
+    bg.addColorStop(0, '#a8f0ff');
+    bg.addColorStop(0.6, '#00d4ff');
+    bg.addColorStop(1, '#0077aa');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Snowflake ❄
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 18px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('❄', x, y - 15);
+
+    if (showLabel) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Segoe UI, sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 5;
+      ctx.fillText(obj.question, x, y + 2);
+      ctx.fillStyle = targeted ? '#fff' : '#b0eeff';
+      ctx.font = 'bold 10px Segoe UI, sans-serif';
+      ctx.fillText('freeze 5s', x, y + 20);
+    }
+
+    ctx.restore();
+  }
+
+  // Blue tint overlay drawn when freeze is active
+  function drawFreezeOverlay(ctx, w, h, secondsLeft) {
+    const alpha = Math.min(0.18, secondsLeft * 0.04);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#00aaff';
+    ctx.fillRect(0, 0, w, h);
+    // Ice crystal border effect
+    ctx.globalAlpha = Math.min(0.6, secondsLeft * 0.12);
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, w - 6, h - 6);
+    ctx.restore();
+  }
+
+  // ========================
   //  WEAPON RENDERERS
   // ========================
 
@@ -746,5 +820,5 @@ const Themes = (() => {
     return `rgb(${r},${g},${b})`;
   }
 
-  return { init, drawBackground, drawObject, drawWeapon, particleColorForTheme };
+  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, particleColorForTheme };
 })();

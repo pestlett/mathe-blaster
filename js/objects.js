@@ -100,6 +100,32 @@ const Objects = (() => {
     }
   }
 
+  function createFreeze(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
+    return {
+      isFreeze: true,
+      question: question.display,
+      answer: question.answer,
+      key: question.key,
+      x,
+      y: -80,
+      speed: speed * 0.6,
+      isTargeted: false,
+      wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0,
+      age: 0,
+      dying: false,
+      dieTimer: 0,
+      dead: false,
+      destroyTimer: 0,
+      destroyed: false,
+      particles: [],
+      spawnTime: Date.now(),
+      wrongAttempts: 0,
+      hintActive: false
+    };
+  }
+
   function createLifeUp(question, canvasWidth, speed, existingXPositions = []) {
     const x = pickX(canvasWidth, existingXPositions);
     return {
@@ -124,5 +150,5 @@ const Objects = (() => {
     };
   }
 
-  return { create, createLifeUp, update, triggerDestruction };
+  return { create, createFreeze, createLifeUp, update, triggerDestruction };
 })();
