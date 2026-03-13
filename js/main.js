@@ -59,6 +59,36 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   btnFire.addEventListener('click', submitAnswer);
+
+  // ---- Voice setup ----
+  const btnMic = document.getElementById('btn-mic');
+  if (!Voice.supported) {
+    btnMic.style.display = 'none';
+  } else {
+    Voice.init({
+      onNext:     () => { if (state.phase === 'PLAYING') Targeting.moveRight(state.objects); },
+      onPrevious: () => { if (state.phase === 'PLAYING') Targeting.moveLeft(state.objects); },
+      onClear:    () => { if (state.phase === 'PLAYING') answerInput.value = ''; },
+      onNumber:   (n) => {
+        if (state.phase !== 'PLAYING') return;
+        answerInput.value = String(n);
+        submitAnswer();
+      },
+      onStatusChange: (active, reason) => {
+        btnMic.classList.toggle('listening', active);
+        btnMic.classList.toggle('denied', reason === 'denied');
+      },
+    });
+
+    btnMic.addEventListener('click', () => {
+      if (btnMic.classList.contains('denied')) return;
+      if (btnMic.classList.contains('listening')) {
+        Voice.stop();
+      } else {
+        Voice.start();
+      }
+    });
+  }
 });
 
 function startGame(settings) {
@@ -91,6 +121,7 @@ function startGame(settings) {
   UI.updateHUD(state);
   UI.showScreen('game');
   Engine.start();
+  Voice.start();
 }
 
 
@@ -233,6 +264,7 @@ function submitAnswer() {
 function endGame() {
   Audio.stopMusic();
   Engine.stop();
+  Voice.stop();
   state.phase = 'GAME_OVER';
 
   const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 0;
