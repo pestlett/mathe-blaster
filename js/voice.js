@@ -87,22 +87,27 @@ const Voice = (() => {
 
       // Navigation commands
       if (['next', 'next one', 'next question'].includes(text)) {
+        console.log('[Voice] command: next');
         callbacks.onNext?.(); return;
       }
       if (['previous', 'prev', 'back', 'previous one', 'go back'].includes(text)) {
+        console.log('[Voice] command: previous');
         callbacks.onPrevious?.(); return;
       }
       if (['clear', 'delete', 'reset', 'cancel', 'erase'].includes(text)) {
+        console.log('[Voice] command: clear');
         callbacks.onClear?.(); return;
       }
 
       // Number answer
       const num = parseNumber(text);
       if (num !== null && num >= 0 && num <= 200) {
+        console.log(`[Voice] command: number ${num} (from "${text}")`);
         callbacks.onNumber?.(num);
         return;
       }
     }
+    console.log('[Voice] no match for:', alternatives);
   }
 
   function init(cbs) {
@@ -124,7 +129,10 @@ const Voice = (() => {
           }
         }
       }
-      if (alternatives.length) handleTranscript(alternatives);
+      if (alternatives.length) {
+        console.log('[Voice] heard:', alternatives);
+        handleTranscript(alternatives);
+      }
     };
 
     recognition.onend = () => {
