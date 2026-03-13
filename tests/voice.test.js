@@ -193,52 +193,42 @@ describe('Trigger word mode', () => {
     return { ctx, get rec() { return recInstance; }, numbers, fires };
   }
 
-  test('with trigger mode off — plain number fires', () => {
-    const { ctx, numbers } = makeTriggerHarness('en');
-    ctx.Voice.setTriggerMode(false, '');
-    recInstance.emitFinal(['39'], [0.9]);
-    expect(numbers).toEqual([39]);
-  });
-
-  test('with trigger mode off — "fire 39" fires 39', () => {
-    const { ctx, numbers } = makeTriggerHarness('en');
-    ctx.Voice.setTriggerMode(false, '');
-    recInstance.emitFinal(['fire 39'], [0.9]);
-    expect(numbers).toEqual([39]);
-  });
-
-  test('with trigger mode on — plain "39" does NOT fire', () => {
-    const { ctx, numbers } = makeTriggerHarness('en');
-    ctx.Voice.setTriggerMode(true, '');
+  // Trigger mode is always on — only the trigger word is configurable.
+  test('plain "39" (no trigger word) does NOT fire', () => {
+    const { numbers } = makeTriggerHarness('en');
     recInstance.emitFinal(['39'], [0.9]);
     expect(numbers).toEqual([]);
   });
 
-  test('with trigger mode on — "fire 39" fires 39', () => {
-    const { ctx, numbers } = makeTriggerHarness('en');
-    ctx.Voice.setTriggerMode(true, '');
+  test('"fire 39" fires 39', () => {
+    const { numbers } = makeTriggerHarness('en');
     recInstance.emitFinal(['fire 39'], [0.9]);
     expect(numbers).toEqual([39]);
   });
 
-  test('with trigger mode on — "fire forty eight" fires 48', () => {
-    const { ctx, numbers } = makeTriggerHarness('en');
-    ctx.Voice.setTriggerMode(true, '');
+  test('"fire forty eight" fires 48 (compound number after trigger word)', () => {
+    const { numbers } = makeTriggerHarness('en');
     recInstance.emitFinal(['fire forty eight'], [0.9]);
     expect(numbers).toEqual([48]);
   });
 
-  test('with trigger mode on — "fire" alone triggers onFire', () => {
-    const { ctx, fires } = makeTriggerHarness('en');
-    ctx.Voice.setTriggerMode(true, '');
+  test('"fire" alone triggers onFire (submit current answer)', () => {
+    const { fires } = makeTriggerHarness('en');
     recInstance.emitFinal(['fire'], [0.9]);
     expect(fires).toEqual([true]);
   });
 
-  test('with trigger mode on — custom word "go" triggers number', () => {
+  test('custom word "go" — "go 39" fires 39', () => {
     const { ctx, numbers } = makeTriggerHarness('en');
     ctx.Voice.setTriggerMode(true, 'go');
     recInstance.emitFinal(['go 39'], [0.9]);
     expect(numbers).toEqual([39]);
+  });
+
+  test('custom word "go" — plain "39" still does not fire', () => {
+    const { ctx, numbers } = makeTriggerHarness('en');
+    ctx.Voice.setTriggerMode(true, 'go');
+    recInstance.emitFinal(['39'], [0.9]);
+    expect(numbers).toEqual([]);
   });
 });

@@ -27,8 +27,8 @@ const Voice = (() => {
   let _pendingFire    = null;
   let _pendingCommand = null;
 
-  let _triggerMode = false;
-  let _triggerWord = '';  // user's preferred word (empty = use cmds.fire list)
+  let _triggerMode = true;   // always on — only the trigger word is configurable
+  let _triggerWord = '';     // empty = use full cmds.fire list as triggers
 
   function cancelPending() {
     if (_pendingFire) { clearTimeout(_pendingFire.timer); _pendingFire = null; }

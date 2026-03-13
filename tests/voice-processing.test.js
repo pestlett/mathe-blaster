@@ -66,16 +66,16 @@ describe('Voice processing regressions', () => {
     const { ctx, rec, numbers } = makeVoiceHarness('en');
 
     ctx.Voice.setActiveQuestion('2x6');
-    rec.emitFinal(['12'], [0.9]);
-    rec.emitFinal(['12'], [0.9]);
+    rec.emitFinal(['fire 12'], [0.9]);
+    rec.emitFinal(['fire 12'], [0.9]);
     expect(numbers).toEqual([12]); // same question -> deduped
 
     ctx.Voice.setActiveQuestion('3x4');
-    rec.emitFinal(['12'], [0.9]);
+    rec.emitFinal(['fire 12'], [0.9]);
     expect(numbers).toEqual([12, 12]); // new question -> accepted
   });
 
-  test('filters concatenated question echo but keeps real answer', () => {
+  test('bare echo does not fire (no trigger word); explicit "fire N" fires', () => {
     const { ctx, rec, numbers } = makeVoiceHarness('en');
 
     ctx.Voice.setActiveQuestion('6x8');
@@ -87,10 +87,12 @@ describe('Voice processing regressions', () => {
       phraseGraceMs: 2000,
     });
 
-    rec.emitFinal(['68'], [0.9]); // common echo of "6 times 8"
+    // TTS acoustic echo ("68") has no trigger word → trigger mode blocks it automatically
+    rec.emitFinal(['68'], [0.9]);
     expect(numbers).toEqual([]);
 
-    rec.emitFinal(['48'], [0.9]); // real answer must still pass
+    // User explicitly says "fire 48" → fires (trigger word present, not an echo)
+    rec.emitFinal(['fire 48'], [0.9]);
     expect(numbers).toEqual([48]);
   });
 });

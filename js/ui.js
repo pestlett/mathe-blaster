@@ -166,27 +166,14 @@ const UI = (() => {
       hintLabel.textContent = I18n.t('hintAfter', { n: hintThreshInput.value });
     });
 
-    // ---- Voice trigger word mode ----
-    const triggerGroup  = document.getElementById('voice-trigger-group');
-    const triggerOff    = document.getElementById('voice-trigger-off');
-    const triggerOn     = document.getElementById('voice-trigger-on');
-    const triggerWdRow  = document.getElementById('voice-trigger-word-row');
+    // ---- Voice trigger word ----
+    const triggerGroup   = document.getElementById('voice-trigger-group');
     const triggerWdInput = document.getElementById('voice-trigger-word');
 
     // Hide if voice not supported
     if (!Voice.supported) {
       if (triggerGroup) triggerGroup.style.display = 'none';
     }
-
-    let _triggerModeOn = false;
-    function _setTriggerMode(on) {
-      _triggerModeOn = on;
-      triggerOff.classList.toggle('active', !on);
-      triggerOn.classList.toggle('active', on);
-      triggerWdRow.style.display = on ? '' : 'none';
-    }
-    triggerOff?.addEventListener('click', () => _setTriggerMode(false));
-    triggerOn?.addEventListener('click',  () => _setTriggerMode(true));
 
     btnStart.addEventListener('click', () => {
       const name = nameInput.value.trim();
@@ -210,12 +197,12 @@ const UI = (() => {
         tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
-        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
+        triggerWord: triggerWdInput?.value?.trim(),
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
-        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
+        triggerWord: triggerWdInput?.value?.trim() || '' });
     });
 
     nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
@@ -260,7 +247,7 @@ const UI = (() => {
       onStart({ name, age, theme: selectedTheme,
         minTable: dp.table, maxTable: dp.table, difficulty: dp.difficulty,
         hintThreshold: parseInt(hintThreshInput.value), practiceMode: false, isDaily: true,
-        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
+        triggerWord: triggerWdInput?.value?.trim() || '' });
     });
 
     // Restore saved name + age, then activate player data for that identity
@@ -298,7 +285,6 @@ const UI = (() => {
         if (saved.rangeMax) { rangeMax.value = saved.rangeMax; }
         updateRangeDisplay();
       }
-      if (saved.triggerMode) _setTriggerMode(true);
       if (saved.triggerWord && triggerWdInput) triggerWdInput.value = saved.triggerWord;
     }
     // Apply all dynamic strings in the current language (must run after settings restore)
