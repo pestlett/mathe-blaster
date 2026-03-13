@@ -394,6 +394,7 @@ const Voice = (() => {
     lastFiredQuestionKey = activeQuestionKey || '';
 
     console.log(`[Voice] → ${winner} | weights ${JSON.stringify(votes)} | alts`, alternatives);
+    _tlog('onNumber', `→ ${winner}`);
     callbacks.onNumber?.(winner);
     callbacks.onResultDone?.();
   }
@@ -406,6 +407,30 @@ const Voice = (() => {
     const text = normalizeSpeechText(transcript);
     const n = parseNumber(text) ?? parseNumber(stripNoise(text));
     if (n !== null && n >= 0 && n <= 200) callbacks.onInterim?.(n);
+  }
+
+  // ---- Timing trace (leave enabled — helps diagnose voice lag on mobile) ----
+  const _perf = (typeof performance !== 'undefined') ? performance : { now: () => Date.now() };
+  let _t = {};
+  function _tlog(label, extra = '') {
+    const now = _perf.now();
+    const abs = Math.round(now);
+    if (!_t.sound) {
+      console.log(`[Voice:t] ${label} @${abs}ms${extra ? ' ' + extra : ''}`);
+      return;
+    }
+    const fromSound   = Math.round(now - _t.sound);
+    const fromPrev    = _t.prev ? Math.round(now - _t.prev) : 0;
+    const prevLabel   = _t.prevLabel || '?';
+    console.log(`[Voice:t] ${label} | +${fromPrev}ms since ${prevLabel} | ${fromSound}ms since sound${extra ? ' | ' + extra : ''}`);
+    _t.prev = now;
+    _t.prevLabel = label;
+  }
+  function _tmark(label) {
+    const now = _perf.now();
+    _t[label] = now;
+    _t.prev = now;
+    _t.prevLabel = label;
   }
 
   // ---- Watchdog ----
@@ -454,12 +479,12 @@ const Voice = (() => {
     };
 
     // Sound/speech lifecycle — drives the 4-state mic button UI
-    recognition.onsoundstart  = () => callbacks.onSoundStart?.();
-    recognition.onsoundend    = () => callbacks.onSoundEnd?.();
-    recognition.onspeechstart = () => callbacks.onSpeechStart?.();
+    recognition.onsoundstart  = () => { _t = {}; _tmark('sound'); _tlog('soundstart'); callbacks.onSoundStart?.(); };
+    recognition.onsoundend    = () => { _tlog('soundend'); callbacks.onSoundEnd?.(); };
+    recognition.onspeechstart = () => { _tmark('speech'); _tlog('speechstart'); callbacks.onSpeechStart?.(); };
     // onspeechend fires when the engine stops detecting speech but before
     // the final result arrives — this is the "I heard you, thinking..." gap
-    recognition.onspeechend   = () => callbacks.onSpeechEnd?.();
+    recognition.onspeechend   = () => { _tmark('speechend'); _tlog('speechend'); callbacks.onSpeechEnd?.(); };
 
     recognition.onresult = e => {
       resetWatchdog();
@@ -472,10 +497,15 @@ const Voice = (() => {
             alts.push(result[j].transcript);
             confs.push(result[j].confidence);
           }
+          _tlog('final', `"${alts[0]?.trim()}" conf=${confs[0]?.toFixed(2)}`);
           console.log('[Voice] final:', alts, '| conf:', confs);
           handleTranscript(alts, confs);
         } else {
           // Interim: pre-populate input field
+          if (!_t.firstInterim) {
+            _t.firstInterim = true;
+            _tlog('interim', `"${result[0].transcript.trim()}"`);
+          }
           handleInterim(result[0].transcript);
         }
       }
