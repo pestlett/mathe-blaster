@@ -29,6 +29,8 @@ let state = {
   totalCorrect: 0,
   totalAttempts: 0,
   streak: 0,
+  maxStreak: 0,
+  bossesDefeated: 0,
   objects: [],
   missedList: [],
   wrongQueue: [],   // questions answered incorrectly this session
@@ -142,6 +144,8 @@ function startGame(settings) {
   state.totalCorrect = 0;
   state.totalAttempts = 0;
   state.streak = 0;
+  state.maxStreak = 0;
+  state.bossesDefeated = 0;
   state.objects = [];
   state.missedList = [];
   state.wrongQueue = [];
@@ -343,6 +347,8 @@ function submitAnswer() {
       state.score += 50;
       state.totalCorrect++;
       state.streak++;
+      state.maxStreak = Math.max(state.maxStreak, state.streak);
+      state.bossesDefeated++;
       Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
       Audio.play('levelUp');
@@ -412,6 +418,7 @@ function submitAnswer() {
     // Correct!
     state.totalCorrect++;
     state.streak++;
+    state.maxStreak = Math.max(state.maxStreak, state.streak);
     state.correctThisLevel++;
 
     Progress.recordAttempt(target.key, true, elapsed);
@@ -484,13 +491,17 @@ function endGame() {
     level: state.level,
     accuracy,
     theme: state.theme,
-    levelStars: state.levelStars
+    levelStars: state.levelStars,
+    maxStreak: state.maxStreak || 0,
+    bossesDefeated: state.bossesDefeated || 0,
+    missCount: state.missedList.length
   };
-  Progress.saveSession(session);
+  const newAchievements = Progress.saveSession(session);
 
   UI.showGameOver(
     session,
     state.missedList,
+    newAchievements,
     () => { UI.showScreen('onboarding'); },
     () => UI.showLeaderboard(() => UI.showScreen('onboarding'))
   );

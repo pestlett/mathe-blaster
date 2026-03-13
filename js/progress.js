@@ -3,11 +3,26 @@
 const Progress = (() => {
   const STORAGE_KEY = 'multiblaster_v1';
 
+  const ACHIEVEMENTS = [
+    { id: 'first_correct',  label: 'First Blood',       desc: 'Get your first correct answer',        check: (d) => d.totalCorrect >= 1 },
+    { id: 'streak_3',       label: 'On Fire',            desc: 'Hit a 3× streak',                      check: (d) => d.maxStreak >= 3 },
+    { id: 'streak_5',       label: 'Unstoppable',        desc: 'Hit a 5× streak',                      check: (d) => d.maxStreak >= 5 },
+    { id: 'streak_10',      label: 'Legendary',          desc: 'Hit a 10× streak',                     check: (d) => d.maxStreak >= 10 },
+    { id: 'level_5',        label: 'Climber',            desc: 'Reach level 5',                        check: (d) => d.maxLevel >= 5 },
+    { id: 'level_10',       label: 'High Flyer',         desc: 'Reach level 10',                       check: (d) => d.maxLevel >= 10 },
+    { id: 'boss_slay',      label: 'Boss Slayer',        desc: 'Defeat your first boss round',         check: (d) => d.bossesDefeated >= 1 },
+    { id: 'accuracy_90',    label: 'Sharp Mind',         desc: 'Finish a game with ≥90% accuracy',     check: (d) => d.bestAccuracy >= 0.9 },
+    { id: 'score_500',      label: 'Half-Millennium',    desc: 'Score 500 points in one game',         check: (d) => d.bestScore >= 500 },
+    { id: 'score_1000',     label: 'Thousand Club',      desc: 'Score 1000 points in one game',        check: (d) => d.bestScore >= 1000 },
+    { id: 'no_miss',        label: 'Flawless',           desc: 'Finish a game without missing a question', check: (d) => d.flawlessGames >= 1 },
+    { id: 'sessions_5',     label: 'Regular',            desc: 'Play 5 sessions',                      check: (d) => (d.sessionsPlayed || 0) >= 5 },
+  ];
+
   function load() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { player: {}, stats: {}, sessions: [] };
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { player: {}, stats: {}, sessions: [], achievements: {}, lifetime: {} };
     } catch {
-      return { player: {}, stats: {}, sessions: [] };
+      return { player: {}, stats: {}, sessions: [], achievements: {}, lifetime: {} };
     }
   }
 
@@ -51,11 +66,36 @@ const Progress = (() => {
     return load().stats;
   }
 
-  // Save a completed session
+  // Check and unlock new achievements; returns array of newly unlocked
+  function checkAchievements(d) {
+    const newly = [];
+    if (!d.achievements) d.achievements = {};
+    for (const a of ACHIEVEMENTS) {
+      if (!d.achievements[a.id] && a.check(d.lifetime || {})) {
+        d.achievements[a.id] = Date.now();
+        newly.push(a);
+      }
+    }
+    return newly;
+  }
+
+  // Save a completed session; returns array of newly unlocked achievements
   function saveSession(session) {
     const d = load();
+    if (!d.lifetime) d.lifetime = {};
+    const lt = d.lifetime;
+    lt.totalCorrect = (lt.totalCorrect || 0) + Math.round(session.accuracy * 100); // approx
+    lt.maxLevel = Math.max(lt.maxLevel || 0, session.level);
+    lt.bestScore = Math.max(lt.bestScore || 0, session.score);
+    lt.bestAccuracy = Math.max(lt.bestAccuracy || 0, session.accuracy);
+    lt.maxStreak = Math.max(lt.maxStreak || 0, session.maxStreak || 0);
+    lt.bossesDefeated = (lt.bossesDefeated || 0) + (session.bossesDefeated || 0);
+    lt.sessionsPlayed = (lt.sessionsPlayed || 0) + 1;
+    if (session.missCount === 0) lt.flawlessGames = (lt.flawlessGames || 0) + 1;
     d.sessions.push({ ...session, date: new Date().toISOString() });
+    const newlyUnlocked = checkAchievements(d);
     save(d);
+    return newlyUnlocked;
   }
 
   function getSessions() {
@@ -71,5 +111,10 @@ const Progress = (() => {
     return (last.accuracy - prev.accuracy) >= 0.10;
   }
 
-  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved };
+  function getAchievements() {
+    const d = load();
+    return ACHIEVEMENTS.map(a => ({ ...a, unlocked: !!d.achievements?.[a.id], unlockedAt: d.achievements?.[a.id] }));
+  }
+
+  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS };
 })();

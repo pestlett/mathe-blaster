@@ -5,7 +5,8 @@ const UI = (() => {
     onboarding: document.getElementById('screen-onboarding'),
     game: document.getElementById('screen-game'),
     gameover: document.getElementById('screen-gameover'),
-    leaderboard: document.getElementById('screen-leaderboard')
+    leaderboard: document.getElementById('screen-leaderboard'),
+    achievements: document.getElementById('screen-achievements')
   };
 
   function showScreen(name) {
@@ -191,7 +192,7 @@ const UI = (() => {
   }
 
 // ---- Game Over ----
-  function showGameOver(session, missedList, onPlayAgain, onLeaderboard) {
+  function showGameOver(session, missedList, newAchievements, onPlayAgain, onLeaderboard) {
     const starsHtml = session.levelStars && session.levelStars.length > 0
       ? `<div class="stars-row">${session.levelStars.map((s, i) =>
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
@@ -210,8 +211,18 @@ const UI = (() => {
     } else {
       missedEl.textContent = 'No missed questions!';
     }
+    // New achievements
+    const achEl = document.getElementById('gameover-achievements');
+    if (newAchievements && newAchievements.length > 0) {
+      achEl.innerHTML = '<div class="ach-title">🏆 New Achievements!</div>' +
+        newAchievements.map(a => `<div class="ach-badge"><strong>${a.label}</strong> — ${a.desc}</div>`).join('');
+    } else {
+      achEl.innerHTML = '';
+    }
+
     document.getElementById('btn-play-again').onclick = onPlayAgain;
     document.getElementById('btn-leaderboard').onclick = onLeaderboard;
+    document.getElementById('btn-achievements').onclick = () => showAchievements(() => showScreen('onboarding'));
     showScreen('gameover');
   }
 
@@ -241,5 +252,18 @@ const UI = (() => {
     showScreen('leaderboard');
   }
 
-  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showLevelUp, showGameOver, showLeaderboard };
+  function showAchievements(onBack) {
+    const all = Progress.getAchievements();
+    const tbody = document.getElementById('achievements-body');
+    tbody.innerHTML = all.map(a => `
+      <tr class="${a.unlocked ? 'ach-unlocked' : 'ach-locked'}">
+        <td>${a.unlocked ? '🏆' : '🔒'}</td>
+        <td><strong>${a.label}</strong><br><small>${a.desc}</small></td>
+        <td>${a.unlocked ? new Date(a.unlockedAt).toLocaleDateString() : '—'}</td>
+      </tr>`).join('');
+    document.getElementById('btn-back-achievements').onclick = onBack;
+    showScreen('achievements');
+  }
+
+  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showLevelUp, showGameOver, showLeaderboard, showAchievements };
 })();
