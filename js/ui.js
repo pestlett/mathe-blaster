@@ -35,6 +35,18 @@ const UI = (() => {
     let selectedDiff = 'medium';
     let selectedMode = 'normal';
 
+    // Language switcher
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        I18n.setLang(btn.dataset.lang);
+        // Re-apply dynamic strings that data-i18n doesn't cover
+        _refreshDynamicOnboarding(selectedMode);
+        _refreshDailyBtn();
+      });
+    });
+    // Apply saved language on load
+    I18n.applyToDOM();
+
     // Theme cards
     document.querySelectorAll('.theme-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -50,11 +62,19 @@ const UI = (() => {
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedMode = btn.dataset.mode;
-        modeNote.textContent = selectedMode === 'practice'
-          ? 'No lives — answer at your own pace'
-          : 'Lose lives when objects hit the bottom';
+        _refreshDynamicOnboarding(selectedMode);
       });
     });
+
+    function _refreshDynamicOnboarding(mode) {
+      modeNote.textContent = I18n.t(mode === 'practice' ? 'modePracticeNote' : 'modeNormalNote');
+      // Refresh single-table note
+      const label = document.getElementById('single-table-label');
+      if (label) {
+        const tableNote = document.getElementById('single-table-note');
+        if (tableNote) tableNote.textContent = I18n.t('singleNote', { table: label.textContent.replace('×', '') });
+      }
+    }
 
     // Difficulty
     document.querySelectorAll('.diff-btn').forEach(btn => {
@@ -66,11 +86,12 @@ const UI = (() => {
     });
 
     // Tables tab switcher
-    let tablesMode = 'range'; // 'range' | 'single'
+    let tablesMode = 'range';
     let focusSingleTable = 10;
     const rangePanel = document.getElementById('tables-range-panel');
     const singlePanel = document.getElementById('tables-single-panel');
     const singleLabel = document.getElementById('single-table-label');
+    const singleNote = document.getElementById('single-table-note');
 
     document.querySelectorAll('.tables-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -89,10 +110,11 @@ const UI = (() => {
         btn.classList.add('active');
         focusSingleTable = parseInt(btn.dataset.val);
         singleLabel.textContent = `${focusSingleTable}×`;
+        singleNote.textContent = I18n.t('singleNote', { table: focusSingleTable });
       });
     });
 
-    // Range sliders — clamp so min ≤ max at all times
+    // Range sliders
     const updateRangeDisplay = () => {
       rangeMinVal.textContent = rangeMin.value;
       rangeMaxVal.textContent = rangeMax.value;
@@ -114,17 +136,8 @@ const UI = (() => {
     btnStart.addEventListener('click', () => {
       const name = nameInput.value.trim();
       const age = parseInt(ageInput.value);
-
-      if (!name) {
-        nameInput.focus();
-        nameInput.classList.add('field-error');
-        return;
-      }
-      if (!age || age < 1 || age > 132) {
-        ageInput.focus();
-        ageInput.classList.add('field-error');
-        return;
-      }
+      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
+      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
 
       let min, max;
       if (tablesMode === 'single') {
@@ -132,26 +145,32 @@ const UI = (() => {
       } else {
         min = parseInt(rangeMin.value);
         max = parseInt(rangeMax.value);
-        if (min > max) { const t = min; min = max; max = t; }
+        if (min > max) { const tmp = min; min = max; max = tmp; }
       }
 
       Progress.saveName(name);
-      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max, difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value), practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single' });
+      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
+        difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
+        practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single' });
     });
 
-    // Clear error highlight on input
     nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
     ageInput.addEventListener('input', () => ageInput.classList.remove('field-error'));
-
-    // Allow Enter to start
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnStart.click(); });
 
     // Daily challenge button
     const btnDaily = document.getElementById('btn-daily');
-    const dp = Progress.getDailyParams();
-    const existing = Progress.getDailyResult();
-    btnDaily.textContent = existing ? `⚡ Daily Challenge ✓ (${dp.table}× • ${dp.difficulty})` : `⚡ Daily Challenge — ${dp.table}× table • ${dp.difficulty}`;
-    if (existing) btnDaily.classList.add('daily-done');
+
+    function _refreshDailyBtn() {
+      const dp = Progress.getDailyParams();
+      const existing = Progress.getDailyResult();
+      const diff = I18n.diffLabel(dp.difficulty);
+      btnDaily.textContent = existing
+        ? I18n.t('dailyDone', { table: dp.table, diff })
+        : I18n.t('dailyNew', { table: dp.table, diff });
+      btnDaily.classList.toggle('daily-done', !!existing);
+    }
+    _refreshDailyBtn();
 
     document.getElementById('btn-dashboard').addEventListener('click', () => {
       showDashboard(() => showScreen('onboarding'));
@@ -162,28 +181,24 @@ const UI = (() => {
       const age = parseInt(ageInput.value);
       if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
       if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      const dp = Progress.getDailyParams();
       Progress.saveName(name);
-      onStart({
-        name, age,
-        theme: selectedTheme,
-        minTable: dp.table, maxTable: dp.table,
-        difficulty: dp.difficulty,
-        hintThreshold: parseInt(hintThreshInput.value),
-        practiceMode: false,
-        isDaily: true
-      });
+      onStart({ name, age, theme: selectedTheme,
+        minTable: dp.table, maxTable: dp.table, difficulty: dp.difficulty,
+        hintThreshold: parseInt(hintThreshInput.value), practiceMode: false, isDaily: true });
     });
   }
 
   // ---- HUD ----
   function updateHUD(state) {
-    document.getElementById('hud-name').textContent = `Hi ${state.name}!`;
+    document.getElementById('hud-name').textContent = I18n.t('hiPlayer', { name: state.name });
     document.getElementById('score-val').textContent = state.score;
     document.getElementById('level-val').textContent = state.level;
     const tableLabel = state.minTable === state.maxTable
-      ? `${state.minTable}× table`
-      : `${state.minTable}–${state.maxTable} tables`;
-    document.getElementById('hud-tables').textContent = tableLabel + (state.practiceMode ? ' · Practice' : '');
+      ? I18n.t('tablesFocus', { table: state.minTable })
+      : I18n.t('tablesRange', { min: state.minTable, max: state.maxTable });
+    document.getElementById('hud-tables').textContent =
+      tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
     renderLives(state.lives, state.maxLives, state.theme);
   }
 
@@ -202,7 +217,7 @@ const UI = (() => {
     const el = document.getElementById('combo-display');
     if (streak >= 3) {
       const mult = streak >= 5 ? '×2' : '×1.5';
-      el.textContent = `${streak} streak! ${mult}`;
+      el.textContent = I18n.t('streakDisplay', { streak, mult });
       el.style.opacity = '1';
     } else {
       el.textContent = '';
@@ -213,7 +228,7 @@ const UI = (() => {
   let tryAgainTimer = null;
   function showTryAgain() {
     const el = document.getElementById('try-again-msg');
-    el.textContent = 'Try again!';
+    el.textContent = I18n.t('tryAgain');
     if (tryAgainTimer) clearTimeout(tryAgainTimer);
     tryAgainTimer = setTimeout(() => { el.textContent = ''; }, 500);
   }
@@ -222,7 +237,7 @@ const UI = (() => {
   function shakeInput() {
     const inp = document.getElementById('answer-input');
     inp.classList.remove('shake');
-    void inp.offsetWidth; // reflow
+    void inp.offsetWidth;
     inp.classList.add('shake');
     setTimeout(() => inp.classList.remove('shake'), 500);
   }
@@ -231,8 +246,12 @@ const UI = (() => {
   let levelUpTimer = null;
   function showLevelUp(level, stars = null) {
     const el = document.getElementById('level-up-banner');
+    const isNumeric = typeof level === 'number';
+    const bannerText = isNumeric
+      ? I18n.t('levelUpBanner', { n: level })
+      : I18n.t('bossDefeated');
     const starStr = stars !== null ? ' ' + '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
-    el.textContent = `Level ${level}!${starStr}`;
+    el.textContent = bannerText + starStr;
     el.classList.remove('show');
     void el.offsetWidth;
     el.classList.add('show');
@@ -240,33 +259,37 @@ const UI = (() => {
     levelUpTimer = setTimeout(() => el.classList.remove('show'), 1700);
   }
 
-// ---- Game Over ----
+  // ---- Game Over ----
   function showGameOver(session, missedList, newAchievements, onPlayAgain, onLeaderboard) {
     const starsHtml = session.levelStars && session.levelStars.length > 0
       ? `<div class="stars-row">${session.levelStars.map((s, i) =>
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
         ).join('')}</div>`
       : '';
-    const dailyBadge = session.dailyBadge ? '<div class="daily-complete-badge">⚡ Daily Challenge Complete!</div>' : '';
+    const dailyBadge = session.dailyBadge
+      ? `<div class="daily-complete-badge">${I18n.t('dailyComplete')}</div>` : '';
     document.getElementById('gameover-stats').innerHTML = `
       ${dailyBadge}
-      <div>Score: <strong>${session.score}</strong></div>
-      <div>Level reached: <strong>${session.level}</strong></div>
-      <div>Accuracy: <strong>${Math.round(session.accuracy * 100)}%</strong></div>
-      <div>Theme: <strong>${session.theme}</strong></div>
+      <div>${I18n.t('goScore')}<strong>${session.score}</strong></div>
+      <div>${I18n.t('goLevel')}<strong>${session.level}</strong></div>
+      <div>${I18n.t('goAccuracy')}<strong>${Math.round(session.accuracy * 100)}%</strong></div>
+      <div>${I18n.t('goTheme')}<strong>${session.theme}</strong></div>
       ${starsHtml}
     `;
     const missedEl = document.getElementById('gameover-missed');
     if (missedList.length > 0) {
-      missedEl.innerHTML = `<strong>Missed:</strong> ${missedList.map(m => `${m.question} = ${m.answer}`).join(', ')}`;
+      missedEl.innerHTML = `<strong>${I18n.t('goMissed')}</strong> ${missedList.map(m => `${m.question} = ${m.answer}`).join(', ')}`;
     } else {
-      missedEl.textContent = 'No missed questions!';
+      missedEl.textContent = I18n.t('goNoMissed');
     }
-    // New achievements
+
     const achEl = document.getElementById('gameover-achievements');
     if (newAchievements && newAchievements.length > 0) {
-      achEl.innerHTML = '<div class="ach-title">🏆 New Achievements!</div>' +
-        newAchievements.map(a => `<div class="ach-badge"><strong>${a.label}</strong> — ${a.desc}</div>`).join('');
+      achEl.innerHTML = `<div class="ach-title">${I18n.t('newAchievements')}</div>` +
+        newAchievements.map(a => {
+          const txt = I18n.achText(a.id);
+          return `<div class="ach-badge"><strong>${txt.label}</strong> — ${txt.desc}</div>`;
+        }).join('');
     } else {
       achEl.innerHTML = '';
     }
@@ -282,13 +305,13 @@ const UI = (() => {
     const sessions = Progress.getSessions();
     const improved = Progress.isMostImproved();
     document.getElementById('leaderboard-badge').textContent =
-      improved ? 'Most Improved! Great job this session!' : '';
+      improved ? I18n.t('mostImproved') : '';
 
     const sorted = [...sessions].sort((a, b) => b.score - a.score);
     const bestScore = sorted.length > 0 ? sorted[0].score : -1;
 
     const tbody = document.getElementById('leaderboard-body');
-    tbody.innerHTML = sessions.slice().reverse().map((s, i) => {
+    tbody.innerHTML = sessions.slice().reverse().map(s => {
       const isBest = s.score === bestScore;
       return `<tr class="${isBest ? 'best-row' : ''}">
         <td>${new Date(s.date).toLocaleDateString()}</td>
@@ -303,29 +326,27 @@ const UI = (() => {
     showScreen('leaderboard');
   }
 
+  // ---- Parent Dashboard ----
   function showDashboard(onBack) {
     const data = Progress.getAll();
     const stats = data.stats || {};
     const sessions = data.sessions || [];
     const playerName = data.player?.name || 'Player';
 
-    // Summary stats
     const totalSessions = sessions.length;
     const bestScore = sessions.length > 0 ? Math.max(...sessions.map(s => s.score)) : 0;
     const avgAcc = sessions.length > 0
-      ? Math.round(sessions.reduce((a, s) => a + s.accuracy, 0) / sessions.length * 100)
-      : 0;
+      ? Math.round(sessions.reduce((a, s) => a + s.accuracy, 0) / sessions.length * 100) : 0;
 
     document.getElementById('dashboard-player').innerHTML =
-      `<div class="dash-player">Progress for <strong>${playerName}</strong></div>`;
+      `<div class="dash-player">${I18n.t('dashProgress', { name: playerName })}</div>`;
     document.getElementById('dashboard-summary').innerHTML = `
       <div class="dash-stats">
-        <div class="dash-stat"><span>${totalSessions}</span>Sessions</div>
-        <div class="dash-stat"><span>${bestScore}</span>Best Score</div>
-        <div class="dash-stat"><span>${avgAcc}%</span>Avg Accuracy</div>
+        <div class="dash-stat"><span>${totalSessions}</span>${I18n.t('dashSessions')}</div>
+        <div class="dash-stat"><span>${bestScore}</span>${I18n.t('dashBestScore')}</div>
+        <div class="dash-stat"><span>${avgAcc}%</span>${I18n.t('dashAvgAcc')}</div>
       </div>`;
 
-    // Build per-table accuracy data
     const tables = [];
     for (let t = 1; t <= 12; t++) {
       let attempts = 0, correct = 0;
@@ -338,7 +359,6 @@ const UI = (() => {
       tables.push({ table: t, attempts, acc: attempts > 0 ? correct / attempts : null });
     }
 
-    // Draw bar chart on canvas
     const canvas = document.getElementById('dashboard-chart');
     const cw = Math.min(620, window.innerWidth - 80);
     const ch = 160;
@@ -346,33 +366,23 @@ const UI = (() => {
     canvas.height = ch;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, cw, ch);
-
     const barW = Math.floor((cw - 40) / 12) - 4;
     const maxH = ch - 40;
 
-    tables.forEach(({ table, attempts, acc }, i) => {
+    tables.forEach(({ table, acc }, i) => {
       const bx = 20 + i * (barW + 4);
       const fillH = acc !== null ? Math.max(4, acc * maxH) : 0;
       const by = ch - 24 - fillH;
-
-      // Bar background
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
       ctx.fillRect(bx, ch - 24 - maxH, barW, maxH);
-
-      // Bar fill — colour by accuracy
       if (acc !== null) {
-        const hue = Math.round(acc * 120); // red(0) → green(120)
-        ctx.fillStyle = `hsl(${hue},80%,55%)`;
+        ctx.fillStyle = `hsl(${Math.round(acc * 120)},80%,55%)`;
         ctx.fillRect(bx, by, barW, fillH);
       }
-
-      // Table label
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.font = '11px Segoe UI, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`${table}×`, bx + barW / 2, ch - 6);
-
-      // Accuracy %
       if (acc !== null) {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 10px Segoe UI, sans-serif';
@@ -380,43 +390,43 @@ const UI = (() => {
       }
     });
 
-    // Label
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.font = '11px Segoe UI, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('Accuracy per table (grey = not yet attempted)', 20, 14);
+    ctx.fillText(I18n.t('dashChartLabel'), 20, 14);
 
-    // Weak spots table
-    const weak = tables
-      .filter(t => t.acc !== null && t.acc < 0.7)
-      .sort((a, b) => a.acc - b.acc)
-      .slice(0, 5);
+    const weak = tables.filter(t => t.acc !== null && t.acc < 0.7).sort((a, b) => a.acc - b.acc).slice(0, 5);
     const detailEl = document.getElementById('dashboard-table-detail');
     if (weak.length > 0) {
-      detailEl.innerHTML = '<div class="dash-weak-title">Needs practice:</div>' +
-        weak.map(t => `<span class="dash-weak-badge">${t.table}× table — ${Math.round(t.acc * 100)}%</span>`).join('');
+      detailEl.innerHTML = `<div class="dash-weak-title">${I18n.t('dashNeedsPractice')}</div>` +
+        weak.map(t => `<span class="dash-weak-badge">${I18n.t('dashWeakBadge', { table: t.table, acc: Math.round(t.acc * 100) })}</span>`).join('');
     } else if (tables.some(t => t.attempts > 0)) {
-      detailEl.innerHTML = '<div class="dash-weak-title" style="color:#2ed573">All attempted tables are ≥70% — great work!</div>';
+      detailEl.innerHTML = `<div class="dash-weak-title" style="color:#2ed573">${I18n.t('dashAllGood')}</div>`;
     } else {
-      detailEl.innerHTML = '<div class="dash-weak-title">No data yet — play some games first!</div>';
+      detailEl.innerHTML = `<div class="dash-weak-title">${I18n.t('dashNoData')}</div>`;
     }
 
     document.getElementById('btn-back-dashboard').onclick = onBack;
     showScreen('dashboard');
   }
 
+  // ---- Achievements ----
   function showAchievements(onBack) {
     const all = Progress.getAchievements();
     const tbody = document.getElementById('achievements-body');
-    tbody.innerHTML = all.map(a => `
-      <tr class="${a.unlocked ? 'ach-unlocked' : 'ach-locked'}">
-        <td>${a.unlocked ? '🏆' : '🔒'}</td>
-        <td><strong>${a.label}</strong><br><small>${a.desc}</small></td>
-        <td>${a.unlocked ? new Date(a.unlockedAt).toLocaleDateString() : '—'}</td>
-      </tr>`).join('');
+    tbody.innerHTML = all.map(a => {
+      const txt = I18n.achText(a.id);
+      return `
+        <tr class="${a.unlocked ? 'ach-unlocked' : 'ach-locked'}">
+          <td>${a.unlocked ? '🏆' : '🔒'}</td>
+          <td><strong>${txt.label}</strong><br><small>${txt.desc}</small></td>
+          <td>${a.unlocked ? new Date(a.unlockedAt).toLocaleDateString() : '—'}</td>
+        </tr>`;
+    }).join('');
     document.getElementById('btn-back-achievements').onclick = onBack;
     showScreen('achievements');
   }
 
-  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showLevelUp, showGameOver, showLeaderboard, showAchievements, showDashboard };
+  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
+    shakeInput, showLevelUp, showGameOver, showLeaderboard, showAchievements, showDashboard };
 })();

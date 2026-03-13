@@ -249,7 +249,7 @@ function update(dt) {
     UI.updateHUD(state);
     const currentTarget = Targeting.getTarget();
     const inp = document.getElementById('answer-input');
-    inp.placeholder = (currentTarget && currentTarget.isBoss) ? 'Defeat the boss!' : 'Answer...';
+    inp.placeholder = (currentTarget && currentTarget.isBoss) ? I18n.t('bossPlaceholder') : I18n.t('answerPlaceholder');
     return;
   }
 
@@ -311,9 +311,9 @@ function update(dt) {
   // Update input placeholder — hint when a life-up is targeted
   const currentTarget = Targeting.getTarget();
   const inp = document.getElementById('answer-input');
-  inp.placeholder = (currentTarget && currentTarget.isLifeUp) ? 'Answer for +1 life!'
-    : (currentTarget && currentTarget.isFreeze) ? 'Answer to freeze!'
-    : 'Answer...';
+  inp.placeholder = (currentTarget && currentTarget.isLifeUp) ? I18n.t('lifeUpPlaceholder')
+    : (currentTarget && currentTarget.isFreeze) ? I18n.t('freezePlaceholder')
+    : I18n.t('answerPlaceholder');
 }
 
 // ---- RENDER ----
@@ -365,7 +365,7 @@ function submitAnswer() {
       UI.showLevelUp('Boss!', null);
       UI.updateHUD(state);
       input.value = '';
-      input.placeholder = 'Answer...';
+      input.placeholder = I18n.t('answerPlaceholder');
       state.answerStartTime = Date.now();
       Targeting.syncTarget(state.objects);
     } else {
@@ -388,7 +388,7 @@ function submitAnswer() {
       UI.updateHUD(state);
       Audio.play('freeze');
       input.value = '';
-      input.placeholder = 'Answer...';
+      input.placeholder = I18n.t('answerPlaceholder');
       Targeting.syncTarget(state.objects);
     } else {
       Audio.play('wrong');
@@ -408,7 +408,7 @@ function submitAnswer() {
       UI.updateHUD(state);
       Audio.play('levelUp');
       input.value = '';
-      input.placeholder = 'Answer...';
+      input.placeholder = I18n.t('answerPlaceholder');
       Targeting.syncTarget(state.objects);
     } else {
       Audio.play('wrong');

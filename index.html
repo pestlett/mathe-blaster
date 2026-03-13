@@ -10,42 +10,53 @@
   <!-- Onboarding Screen -->
   <div id="screen-onboarding" class="screen active">
     <div class="onboarding-card">
-      <h1 class="game-title">Multiplication<br><span class="title-accent">Blaster!</span></h1>
+      <!-- Language switcher -->
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="de">DE</button>
+        <button class="lang-btn" data-lang="es">ES</button>
+      </div>
+
+      <h1 class="game-title">
+        <span data-i18n="gameTitle">Multiplication</span><br>
+        <span class="title-accent" data-i18n="gameTitleAccent">Blaster!</span>
+      </h1>
+
       <div class="form-group">
-        <label for="input-name">Your Name</label>
-        <input type="text" id="input-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
+        <label for="input-name" data-i18n="yourName">Your Name</label>
+        <input type="text" id="input-name" data-i18n-ph="namePlaceholder" placeholder="Enter your name" maxlength="20" autocomplete="off">
       </div>
       <div class="form-group">
-        <label for="input-age">Your Age</label>
-        <input type="number" id="input-age" placeholder="Age" min="1" max="132" style="width:100px">
+        <label for="input-age" data-i18n="yourAge">Your Age</label>
+        <input type="number" id="input-age" data-i18n-ph="agePlaceholder" placeholder="Age" min="1" max="132" style="width:100px">
       </div>
       <div class="form-group">
-        <label>Choose Your Theme</label>
+        <label data-i18n="chooseTheme">Choose Your Theme</label>
         <div class="theme-cards">
           <div class="theme-card active" data-theme="space">
             <div class="theme-preview space-preview"></div>
-            <span>Space</span>
+            <span data-i18n="themeSpace">Space</span>
           </div>
           <div class="theme-card" data-theme="ocean">
             <div class="theme-preview ocean-preview"></div>
-            <span>Ocean</span>
+            <span data-i18n="themeOcean">Ocean</span>
           </div>
           <div class="theme-card" data-theme="sky">
             <div class="theme-preview sky-preview"></div>
-            <span>Sky</span>
+            <span data-i18n="themeSky">Sky</span>
           </div>
         </div>
       </div>
       <div class="form-group">
-        <label>Tables</label>
+        <label data-i18n="tables">Tables</label>
         <div class="tables-tabs">
-          <button class="tables-tab active" data-tab="range">Range</button>
-          <button class="tables-tab" data-tab="single">One Table</button>
+          <button class="tables-tab active" data-tab="range" data-i18n="tabRange">Range</button>
+          <button class="tables-tab" data-tab="single" data-i18n="tabSingle">One Table</button>
         </div>
         <div id="tables-range-panel">
           <div class="range-values">
-            <span>From <strong id="range-min-val">1</strong></span>
-            <span>To <strong id="range-max-val">10</strong></span>
+            <span><span data-i18n="rangeFrom">From</span> <strong id="range-min-val">1</strong></span>
+            <span><span data-i18n="rangeTo">To</span> <strong id="range-max-val">10</strong></span>
           </div>
           <div class="range-container">
             <input type="range" id="range-min" min="1" max="12" value="1" class="range-slider">
@@ -71,37 +82,41 @@
             <button class="table-num-btn" data-val="11">11</button>
             <button class="table-num-btn" data-val="12">12</button>
           </div>
-          <div class="setting-note" style="margin-top:8px">Only questions from the <span id="single-table-label">10×</span> table</div>
+          <div class="setting-note" id="single-table-note" style="margin-top:8px">
+            Only questions from the <span id="single-table-label">10×</span> table
+          </div>
         </div>
-        <!-- hidden inputs kept for JS compatibility -->
         <input type="hidden" id="focus-mode-toggle" value="0">
         <input type="hidden" id="focus-table" value="10">
       </div>
       <div class="form-group">
-        <label>Mode</label>
+        <label data-i18n="mode">Mode</label>
         <div class="mode-btns">
-          <button class="mode-btn active" data-mode="normal">Normal</button>
-          <button class="mode-btn" data-mode="practice">Practice</button>
+          <button class="mode-btn active" data-mode="normal" data-i18n="modeNormal">Normal</button>
+          <button class="mode-btn" data-mode="practice" data-i18n="modePractice">Practice</button>
         </div>
-        <span class="setting-note" id="mode-note">Lose lives when objects hit the bottom</span>
+        <span class="setting-note" id="mode-note" data-i18n="modeNormalNote">Lose lives when objects hit the bottom</span>
       </div>
       <div class="form-group">
-        <label>Difficulty</label>
+        <label data-i18n="difficulty">Difficulty</label>
         <div class="difficulty-btns">
-          <button class="diff-btn" data-diff="easy">Easy</button>
-          <button class="diff-btn active" data-diff="medium">Medium</button>
-          <button class="diff-btn" data-diff="hard">Hard</button>
+          <button class="diff-btn" data-diff="easy" data-i18n="diffEasy">Easy</button>
+          <button class="diff-btn active" data-diff="medium" data-i18n="diffMedium">Medium</button>
+          <button class="diff-btn" data-diff="hard" data-i18n="diffHard">Hard</button>
         </div>
       </div>
       <div class="form-group">
-        <label>Hint after <span id="hint-threshold-display">3</span> wrong tries</label>
+        <label id="hint-label">Hint after <span id="hint-threshold-display">3</span> <span data-i18n="hintWrongTries">wrong tries</span></label>
         <input type="range" id="hint-threshold" min="1" max="5" value="3" class="range-slider" style="max-width:200px">
-        <span class="setting-note">Shows a dot-grid picture when stuck</span>
+        <span class="setting-note" data-i18n="hintNote">Shows a dot-grid picture when stuck</span>
       </div>
-      <button id="btn-start" class="btn-primary">Let's Go!</button>
+      <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
-      <button id="btn-dashboard" class="btn-secondary" style="width:100%;margin-top:8px">📊 Parent Dashboard</button>
+      <button id="btn-dashboard" class="btn-secondary" style="width:100%;margin-top:8px" data-i18n="parentDashboard">📊 Parent Dashboard</button>
     </div>
+    <footer class="game-footer">
+      Made with ❤️ &amp; 🐱 for <strong>Emma Jewell Colicheo</strong> by her Daddy (and Claude Code)
+    </footer>
   </div>
 
   <!-- Game Screen -->
@@ -110,10 +125,10 @@
     <div id="hud-overlay">
       <div id="hud-left">
         <div id="hud-name"></div>
-        <div id="hud-score">Score: <span id="score-val">0</span></div>
+        <div id="hud-score"><span data-i18n="goScore">Score: </span><span id="score-val">0</span></div>
       </div>
       <div id="hud-center">
-        <div id="hud-level">Level <span id="level-val">1</span></div>
+        <div id="hud-level"><span data-i18n="levelLabel">Level </span><span id="level-val">1</span></div>
         <div id="hud-tables"></div>
       </div>
       <div id="hud-right">
@@ -124,17 +139,17 @@
     <div id="level-up-banner"></div>
     <div id="pause-overlay">
       <div class="pause-card">
-        <div class="pause-title">Paused</div>
-        <button id="btn-resume" class="btn-primary">Resume</button>
-        <button id="btn-pause-menu" class="btn-secondary">Back to Menu</button>
+        <div class="pause-title" data-i18n="paused">Paused</div>
+        <button id="btn-resume" class="btn-primary" data-i18n="resume">Resume</button>
+        <button id="btn-pause-menu" class="btn-secondary" data-i18n="backToMenu">Back to Menu</button>
       </div>
     </div>
     <div id="answer-area">
       <div id="combo-display"></div>
       <div id="input-wrapper">
-        <input type="number" id="answer-input" placeholder="Answer..." autocomplete="off" inputmode="numeric">
+        <input type="number" id="answer-input" data-i18n-ph="answerPlaceholder" placeholder="Answer..." autocomplete="off" inputmode="numeric">
         <button id="btn-mic" title="Voice input" aria-label="Toggle voice input">🎤</button>
-        <button id="btn-fire">Fire!</button>
+        <button id="btn-fire" data-i18n="fireBtnLabel">Fire!</button>
       </div>
       <div id="try-again-msg"></div>
     </div>
@@ -143,14 +158,14 @@
   <!-- Game Over Screen -->
   <div id="screen-gameover" class="screen">
     <div class="overlay-card">
-      <h2>Game Over!</h2>
+      <h2 data-i18n="gameOver">Game Over!</h2>
       <div id="gameover-stats"></div>
       <div id="gameover-missed"></div>
       <div id="gameover-achievements"></div>
       <div class="overlay-btns">
-        <button id="btn-play-again" class="btn-primary">Play Again</button>
-        <button id="btn-leaderboard" class="btn-secondary">Leaderboard</button>
-        <button id="btn-achievements" class="btn-secondary">Achievements</button>
+        <button id="btn-play-again" class="btn-primary" data-i18n="playAgain">Play Again</button>
+        <button id="btn-leaderboard" class="btn-secondary" data-i18n="leaderboard">Leaderboard</button>
+        <button id="btn-achievements" class="btn-secondary" data-i18n="achievementsBtn">Achievements</button>
       </div>
     </div>
   </div>
@@ -158,24 +173,24 @@
   <!-- Leaderboard Screen -->
   <div id="screen-leaderboard" class="screen">
     <div class="overlay-card wide">
-      <h2>Leaderboard</h2>
+      <h2 data-i18n="leaderboardTitle">Leaderboard</h2>
       <div id="leaderboard-badge"></div>
       <div id="leaderboard-table-wrap">
         <table id="leaderboard-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Score</th>
-              <th>Level</th>
-              <th>Accuracy</th>
-              <th>Theme</th>
+              <th data-i18n="colDate">Date</th>
+              <th data-i18n="colScore">Score</th>
+              <th data-i18n="colLevel">Level</th>
+              <th data-i18n="colAccuracy">Accuracy</th>
+              <th data-i18n="colTheme">Theme</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body"></tbody>
         </table>
       </div>
       <div class="overlay-btns">
-        <button id="btn-play-again-lb" class="btn-primary">Play Again</button>
+        <button id="btn-play-again-lb" class="btn-primary" data-i18n="playAgain">Play Again</button>
       </div>
     </div>
   </div>
@@ -183,7 +198,7 @@
   <!-- Parent Dashboard Screen -->
   <div id="screen-dashboard" class="screen">
     <div class="overlay-card wide">
-      <h2>Parent Dashboard</h2>
+      <h2 data-i18n="dashboardTitle">Parent Dashboard</h2>
       <div id="dashboard-player"></div>
       <div id="dashboard-summary"></div>
       <div id="dashboard-chart-wrap">
@@ -191,7 +206,7 @@
       </div>
       <div id="dashboard-table-detail"></div>
       <div class="overlay-btns">
-        <button id="btn-back-dashboard" class="btn-primary">Back</button>
+        <button id="btn-back-dashboard" class="btn-primary" data-i18n="back">Back</button>
       </div>
     </div>
   </div>
@@ -199,18 +214,19 @@
   <!-- Achievements Screen -->
   <div id="screen-achievements" class="screen">
     <div class="overlay-card wide">
-      <h2>Achievements</h2>
+      <h2 data-i18n="achievementsTitle">Achievements</h2>
       <div id="leaderboard-table-wrap">
         <table id="achievements-table">
           <tbody id="achievements-body"></tbody>
         </table>
       </div>
       <div class="overlay-btns">
-        <button id="btn-back-achievements" class="btn-primary">Back</button>
+        <button id="btn-back-achievements" class="btn-primary" data-i18n="back">Back</button>
       </div>
     </div>
   </div>
 
+  <script src="js/i18n.js"></script>
   <script src="js/voice.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/audio.js"></script>

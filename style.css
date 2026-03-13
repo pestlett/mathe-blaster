@@ -44,6 +44,16 @@ html, body {
   overflow-y: auto;
   align-items: flex-start;
   padding: 20px;
+  flex-direction: column;
+}
+
+.game-footer {
+  width: min(520px, 100%);
+  margin: 16px auto 8px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: rgba(240, 240, 255, 0.45);
+  letter-spacing: 0.01em;
 }
 
 .onboarding-card {
@@ -54,6 +64,32 @@ html, body {
   width: min(520px, 100%);
   margin: auto;
   backdrop-filter: blur(20px);
+}
+
+/* Language switcher */
+.lang-switcher {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.lang-btn {
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.lang-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.35); }
+.lang-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(247,201,72,0.1);
 }
 
 .game-title {
