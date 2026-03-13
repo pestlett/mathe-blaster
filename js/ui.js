@@ -70,7 +70,7 @@ const UI = (() => {
         nameInput.classList.add('field-error');
         return;
       }
-      if (!age || age < 1 || age > 18) {
+      if (!age || age < 1 || age > 132) {
         ageInput.focus();
         ageInput.classList.add('field-error');
         return;
