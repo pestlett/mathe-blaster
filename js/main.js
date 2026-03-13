@@ -121,10 +121,21 @@ function drawStreakOverlay(ctx, w, h, streak, intensity) {
 // ---- Hot zone ----
 const HOT_ZONE_TOP    = 0.38;
 const HOT_ZONE_BOTTOM = 0.62;
+// Widened hot zone (Event Horizon / Whirlpool / Thermal Lift upgrade)
+const HOT_ZONE_TOP_WIDE    = 0.275;
+const HOT_ZONE_BOTTOM_WIDE = 0.725;
 
-function drawHotZone(ctx, w, h, t) {
-  const top    = h * HOT_ZONE_TOP;
-  const bottom = h * HOT_ZONE_BOTTOM;
+// ---- Ante targets for run mode ----
+// anteTarget(ante) → minimum score to advance from that ante's 3 levels
+function anteTarget(ante) {
+  const base = [0, 150, 350, 650, 1050];
+  if (ante <= 4) return base[ante] || 0;
+  return 1050 + (ante - 4) * 450;
+}
+
+function drawHotZone(ctx, w, h, t, hzTop = HOT_ZONE_TOP, hzBottom = HOT_ZONE_BOTTOM) {
+  const top    = h * hzTop;
+  const bottom = h * hzBottom;
   const pulse  = 0.09 + 0.04 * Math.sin(t * 2.5);
   ctx.fillStyle = `rgba(255,200,0,${pulse.toFixed(3)})`;
   ctx.fillRect(0, top, w, bottom - top);
@@ -326,8 +337,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowLeft') { e.preventDefault(); hideSuggestion(); Targeting.moveLeft(state.objects); }
     if (e.key === 'ArrowRight') { e.preventDefault(); hideSuggestion(); Targeting.moveRight(state.objects); }
     if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
+    if (e.key === ' ' && state.bombCharges > 0) {
+      e.preventDefault();
+      useBomb();
+    }
     // Keep input focused on desktop
-    if (!['ArrowLeft','ArrowRight','Enter','Tab'].includes(e.key)) {
+    if (!['ArrowLeft','ArrowRight','Enter','Tab',' '].includes(e.key)) {
       focusAnswerInput();
     }
   });
@@ -486,6 +501,20 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function useBomb() {
+  if (state.bombCharges <= 0 || state.phase !== 'PLAYING') return;
+  // Find the lowest (highest Y) live non-special object
+  const candidates = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isFreeze && !o.isLifeUp && !o.isBoss);
+  if (candidates.length === 0) return;
+  const lowest = candidates.reduce((best, o) => o.y > best.y ? o : best, candidates[0]);
+  const particleColor = Themes.particleColorForTheme(state.theme);
+  Objects.triggerDestruction(lowest, particleColor);
+  state.bombCharges--;
+  Audio.play('correct');
+  vibrate(60);
+  UI.updateHUD(state);
+}
+
 function togglePause() {
   if (state.phase !== 'PLAYING' && !Engine.isPaused()) return;
   if (Engine.isPaused()) {
@@ -512,6 +541,7 @@ function startGame(settings) {
   state.hintThreshold = settings.hintThreshold || 3;
   state.practiceMode = settings.practiceMode || false;
   state.isDaily = settings.isDaily || false;
+  state.runMode = settings.runMode || false;
   state.score = 0;
   state.level = 1;
   state.lives = MAX_LIVES;
@@ -541,6 +571,32 @@ function startGame(settings) {
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
   state.answerStartTime = Date.now();
+
+  // Run mode state
+  state.currentAnte = 1;
+  state.anteStartScore = 0;
+  state.activeUpgrades = [];
+  state.activeUpgradeIds = [];
+  // Upgrade flags (all off by default)
+  state.chainAnswer       = false;
+  state.streakBoost       = false;
+  state.shieldCharges     = 0;
+  state.speedMult         = 1;
+  state.bombCharges       = 0;
+  state.hotZoneBoost      = false;
+  state.luckyBonus        = false;
+  state.luckyBonusCounter = 0;
+  state.quickBonus        = false;
+  state.commutativePair   = false;
+  state.streakSlow        = false;
+  state.streakSlowTimer   = 0;
+  state.streakSlowDuration = 5;
+  state.revealOnHotZone   = false;
+  state.lastChanceAvailable = false;
+  state.lastChanceUsed    = false;
+  state.missCount         = 0;
+  state.adjacencyBonuses  = new Set();
+
   state.phase = 'PLAYING';
 
   Targeting.reset();
@@ -621,15 +677,42 @@ function update(dt) {
           Progress.recordAttempt(obj.key, false, Date.now() - obj.spawnTime);
         }
         if (!state.practiceMode) {
-          state.lives = Math.max(0, state.lives - 1);
-          state.missedList.push({ question: obj.question, answer: obj.answer });
-          UI.showMissFlash(obj.question, obj.answer);
-          Audio.play('lifeLost');
-          vibrate(200);
-          UI.updateHUD(state);
-          if (state.lives <= 0 && state.phase === 'PLAYING') {
-            state.phase = 'ENDING';
-            setTimeout(() => endGame(), 1400);
+          state.missCount = (state.missCount || 0) + 1;
+          // Last Chance / Supernova / Tsunami / Cyclone: on 4th miss, destroy all objects
+          if (state.lastChanceAvailable && !state.lastChanceUsed && state.missCount >= 4) {
+            state.lastChanceUsed = true;
+            const particleColor = Themes.particleColorForTheme(state.theme);
+            for (const o of state.objects) {
+              if (!o.dead && !o.dying && !o.destroyed) {
+                Objects.triggerDestruction(o, particleColor);
+              }
+            }
+            UI.showLevelUp('Last Chance!', null);
+          }
+          // Shield absorbs the next miss
+          if (state.shieldCharges > 0) {
+            state.shieldCharges--;
+            // ADJACENCY: Shield + Bomb neighbours → each absorb refunds 1 bomb charge
+            if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb')) {
+              state.bombCharges = (state.bombCharges || 0) + 1;
+            }
+            UI.showLevelUp(
+              (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb'))
+                ? 'Shield! +1 Bomb' : 'Shield!', null);
+            state.missedList.push({ question: obj.question, answer: obj.answer });
+            UI.showMissFlash(obj.question, obj.answer);
+            UI.updateHUD(state);
+          } else {
+            state.lives = Math.max(0, state.lives - 1);
+            state.missedList.push({ question: obj.question, answer: obj.answer });
+            UI.showMissFlash(obj.question, obj.answer);
+            Audio.play('lifeLost');
+            vibrate(200);
+            UI.updateHUD(state);
+            if (state.lives <= 0 && state.phase === 'PLAYING') {
+              state.phase = 'ENDING';
+              setTimeout(() => endGame(), 1400);
+            }
           }
         } else {
           // Practice mode: track missed but no life loss
@@ -652,7 +735,14 @@ function update(dt) {
   const maxObj = diff.maxObjects + (state.level > 5 ? 1 : 0) - (isPhoneVoice ? 1 : 0);
   const rawSpeed = diff.baseSpeed * Math.pow(1 + SPEED_INCREASE_PER_LEVEL, state.level - 1);
   const phoneVoiceMult = isPhoneVoice ? 0.65 : 1;
-  const speed = Math.min(diff.maxSpeed * phoneVoiceMult, rawSpeed * phoneVoiceMult);
+  // Apply streak-slow timer (Dark Matter / Abyss Pull / Storm Front)
+  if (state.streakSlowTimer > 0) {
+    state.streakSlowTimer = Math.max(0, state.streakSlowTimer - dt);
+  }
+  const streakSlowMult = state.streakSlowTimer > 0 ? 0.60 : 1;
+  const clampedSpeedMult = Math.max(0.4, state.speedMult || 1);
+  const speed = Math.min(diff.maxSpeed * phoneVoiceMult, rawSpeed * phoneVoiceMult)
+    * clampedSpeedMult * streakSlowMult;
 
   // Boss round: spawn one giant boss on levels that are multiples of 5
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
@@ -743,8 +833,22 @@ function update(dt) {
   maybeSpeak();
 
   // Update hint visibility
+  const hzTopN    = state.hotZoneBoost ? HOT_ZONE_TOP_WIDE    : HOT_ZONE_TOP;
+  const hzBottomN = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
   for (const obj of state.objects) {
     if (!obj.isLifeUp) obj.hintActive = obj.wrongAttempts >= state.hintThreshold;
+    // Pulsar / Sonar Ping / Radar Sweep: reveal answer when lowest enters hot zone
+    if (state.revealOnHotZone && !obj.isFreeze && !obj.isLifeUp && !obj.isBoss) {
+      const inZone = obj.y >= window.innerHeight * hzTopN && obj.y <= window.innerHeight * hzBottomN;
+      if (inZone && !obj._revealTimer) {
+        obj._revealTimer = 1; // show for 1s
+        obj._answerRevealed = true;
+      }
+    }
+    if (obj._revealTimer > 0) {
+      obj._revealTimer = Math.max(0, obj._revealTimer - dt);
+      if (obj._revealTimer <= 0) obj._answerRevealed = false;
+    }
   }
 
   UI.updateHUD(state);
@@ -775,7 +879,11 @@ function render(ctx, w, h, t) {
   Themes.drawBackground(ctx, w, h, state.theme, t);
 
   // Hot zone band (behind objects so it doesn't obscure text)
-  if (state.phase === 'PLAYING') drawHotZone(ctx, w, h, t);
+  if (state.phase === 'PLAYING') {
+    const hzTop    = state.hotZoneBoost ? HOT_ZONE_TOP_WIDE    : HOT_ZONE_TOP;
+    const hzBottom = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
+    drawHotZone(ctx, w, h, t, hzTop, hzBottom);
+  }
 
   for (const obj of state.objects) {
     Themes.drawObject(ctx, obj, state.theme);
@@ -945,14 +1053,45 @@ function submitAnswer() {
     let pts = 10;
     if (elapsed < 3000) pts += 10;
     else if (elapsed < 6000) pts += 5;
-    const mult = state.streak >= 5 ? 2 : state.streak >= 3 ? 1.5 : 1;
+    // Quick bonus (Warp Strike / Flash Current / Tailwind)
+    // CONFLICT: Slow All + Quick Bonus → window halves from 1500ms to 750ms
+    // ADJACENCY: Streak Boost + Quick Bonus neighbours → conflict suppressed, window stays 1500ms
+    const adjStreakQuick = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_streakQuick');
+    const hasSynSlowQuick = state.speedMult < 1 && state.quickBonus && !adjStreakQuick;
+    const quickWindow = hasSynSlowQuick ? 750 : 1500;
+    if (state.quickBonus && elapsed < quickWindow) {
+      // SYNERGY: Streak Boost + Quick Bonus → +30 instead of +20
+      pts += (state.streakBoost && state.streak >= 3) ? 30 : 20;
+    }
+    // Streak multiplier — boosted by Solar Flare / Tidal Surge / Jet Stream
+    let mult;
+    if (state.streakBoost) {
+      mult = state.streak >= 8 ? 4 : state.streak >= 5 ? 3 : state.streak >= 3 ? 2 : 1;
+    } else {
+      mult = state.streak >= 5 ? 2 : state.streak >= 3 ? 1.5 : 1;
+    }
     pts = Math.round(pts * mult);
-    // Hot zone bonus: ×1.5 if answered while object is in the glowing band
+    // Hot zone bonus: ×1.5 (or ×2 with reveal synergy) if in the glowing band
     const canvasH = window.innerHeight;
-    const inHotZone = target.y >= canvasH * HOT_ZONE_TOP && target.y <= canvasH * HOT_ZONE_BOTTOM;
+    const hzTop    = state.hotZoneBoost ? HOT_ZONE_TOP_WIDE    : HOT_ZONE_TOP;
+    const hzBottom = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
+    const inHotZone = target.y >= canvasH * hzTop && target.y <= canvasH * hzBottom;
     if (inHotZone) {
-      pts = Math.round(pts * 1.5);
-      UI.showLevelUp('🔥 Hot zone!', null);
+      // SYNERGY: Hot Zone Boost + Reveal → ×2 (or ×2.5 when adjacent) when answer was revealed
+      const adjHotReveal = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_hotReveal');
+      const hotMult = (state.revealOnHotZone && target._answerRevealed)
+        ? (adjHotReveal ? 2.5 : 2) : 1.5;
+      pts = Math.round(pts * hotMult);
+      UI.showLevelUp(hotMult >= 2.5 ? '👁✦ Precision Lock+!' : hotMult >= 2 ? '👁 Precision Lock!' : '🔥 Hot zone!', null);
+    }
+    // Lucky bonus (Nebula Luck / Treasure Drift / Lucky Wind)
+    if (state.luckyBonus) {
+      state.luckyBonusCounter = (state.luckyBonusCounter || 0) + 1;
+      if (state.luckyBonusCounter % 5 === 0) {
+        const luckyMult = 2 + Math.floor(Math.random() * 4); // ×2–×5
+        pts = Math.round(pts * luckyMult);
+        UI.showLevelUp(`Lucky ×${luckyMult}!`, null);
+      }
     }
     state.score += pts;
 
@@ -961,6 +1100,54 @@ function submitAnswer() {
     Objects.triggerDestruction(target, particleColor);
     Audio.play('correct');
     vibrate(40);
+
+    // Chain-answer (Gravity Well / Riptide / Lightning Strike)
+    if (state.chainAnswer) {
+      let chainCount = 0;
+      for (const obj of state.objects) {
+        if (obj !== target && !obj.dying && !obj.dead && !obj.destroyed &&
+            !obj.isFreeze && !obj.isLifeUp && !obj.isBoss &&
+            obj.answer === target.answer) {
+          Objects.triggerDestruction(obj, particleColor);
+          state.score += Math.round(pts * 0.5);
+          chainCount++;
+        }
+      }
+      // SYNERGY: Chain + Lucky — each chain kill counts toward the lucky counter
+      // ADJACENCY: Chain + Lucky neighbours → each kill counts as 2 ticks
+      if (state.luckyBonus && chainCount > 0) {
+        const chainLuckyTicks = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_chainLucky')) ? 2 : 1;
+        for (let i = 0; i < chainCount; i++) {
+          state.luckyBonusCounter = (state.luckyBonusCounter || 0) + chainLuckyTicks;
+          if (state.luckyBonusCounter % 5 === 0) {
+            const luckyMult = 2 + Math.floor(Math.random() * 4);
+            state.score += Math.round(pts * luckyMult * 0.5);
+            UI.showLevelUp(`Chain Lucky ×${luckyMult}!`, null);
+          }
+        }
+      }
+    }
+    // Commutative pair (Twin Stars / Echo Wave / Harmonic)
+    if (state.commutativePair) {
+      const mirror = state.objects.find(o =>
+        !o.dying && !o.dead && !o.destroyed &&
+        !o.isFreeze && !o.isLifeUp && !o.isBoss &&
+        o !== target && o.a === target.b && o.b === target.a
+      );
+      if (mirror) {
+        Objects.triggerDestruction(mirror, particleColor);
+        state.score += Math.round(pts * 0.5);
+      }
+    }
+    // Streak slow (Dark Matter / Abyss Pull / Storm Front)
+    // CONFLICT: Streak Slow + Slow All → 2s instead of 5s
+    // ADJACENCY: Streak Slow + Slow All neighbours → conflict offset: 2s → 3s
+    if (state.streakSlow && state.streak > 0 && state.streak % 5 === 0) {
+      let dur = (state.speedMult < 1) ? 2 : 5;
+      if (dur === 2 && state.adjacencyBonuses && state.adjacencyBonuses.has('adj_slowSlow')) dur = 3;
+      state.streakSlowTimer   = dur;
+      state.streakSlowDuration = dur;
+    }
 
     // Streak flash at ×1.5 (streak 3+) and ×2 (streak 5+)
     if (state.streak >= 3) {
@@ -977,6 +1164,7 @@ function submitAnswer() {
       const stars = levelAcc >= 0.9 ? 3 : levelAcc >= 0.7 ? 2 : 1;
       state.levelStars.push(stars);
 
+      const prevLevel = state.level;
       state.level++;
       state.correctThisLevel = 0;
       state.attemptsThisLevel = 0;
@@ -985,6 +1173,50 @@ function submitAnswer() {
       state.levelTransitionTimer = 1.0;
       state.confetti = spawnConfetti(window.innerWidth);
       UI.showLevelUp(state.level, stars);
+
+      // Run mode: every 3 levels — pause, check ante, show upgrade picker
+      if (state.runMode && prevLevel % 3 === 0) {
+        // Ante check: did player meet the score target?
+        const target = anteTarget(state.currentAnte);
+        const scoreGained = state.score - state.anteStartScore;
+        if (scoreGained < target) {
+          // Missed ante — run ends
+          state.phase = 'ENDING';
+          setTimeout(() => endGame(), 1400);
+        } else {
+          // Advance ante
+          state.currentAnte++;
+          state.anteStartScore = state.score;
+          // Show upgrade picker
+          Engine.pause();
+          const rp = Progress.getRunProgress();
+          const unlockedIds = rp.unlockedUpgrades || [];
+          const options = drawUpgrades(3, unlockedIds, state.activeUpgradeIds);
+          if (options.length > 0 || state.activeUpgrades.length > 0) {
+            UI.showUpgradePicker(options, state.theme, state.activeUpgrades, (chosen, newOrder) => {
+              // Apply reordered bar first
+              if (newOrder) {
+                state.activeUpgrades   = newOrder;
+                state.activeUpgradeIds = newOrder.map(u => u.id);
+              }
+              // Apply new upgrade (null if player clicked "Done" without picking)
+              if (chosen) {
+                chosen.apply(state);
+                state.activeUpgrades.push(chosen);
+                state.activeUpgradeIds.push(chosen.id);
+                // Clamp speed floor after stacking Slow All
+                if (state.speedMult !== undefined) state.speedMult = Math.max(0.4, state.speedMult);
+              }
+              // Recompute adjacency bonuses with updated order
+              state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
+              Engine.resume();
+              state.unpauseFreezeTimer = 1.0;
+            });
+          } else {
+            Engine.resume();
+          }
+        }
+      }
     }
 
     input.value = '';
@@ -1041,6 +1273,29 @@ function endGame() {
     Progress.saveDailyResult({ score: state.score, level: state.level, accuracy });
     session.dailyBadge = true;
   }
+
+  // Run mode: save result and check unlocks
+  let runData = null;
+  if (state.runMode) {
+    const prevRunProgress = Progress.getRunProgress();
+    const prevBest = prevRunProgress.bestAnte || 0;
+    Progress.saveRunResult({
+      ante: state.currentAnte,
+      upgrades: state.activeUpgradeIds,
+      bossesDefeated: state.bossesDefeated,
+      maxStreak: state.maxStreak,
+    });
+    const newUnlocks = Progress.checkRunUnlocks();
+    runData = {
+      runMode: true,
+      ante: state.currentAnte,
+      isNewBest: state.currentAnte > prevBest,
+      activeUpgrades: state.activeUpgrades,
+      newUnlocks,
+      theme: state.theme,
+    };
+  }
+
   const masteryData = Progress.getMastery(state.minTable, state.maxTable);
 
   UI.showGameOver(
@@ -1049,6 +1304,7 @@ function endGame() {
     newAchievements,
     masteryData,
     () => { UI.showScreen('onboarding'); },
-    () => UI.showLeaderboard(() => UI.showScreen('onboarding'))
+    () => UI.showLeaderboard(() => UI.showScreen('onboarding')),
+    runData
   );
 }

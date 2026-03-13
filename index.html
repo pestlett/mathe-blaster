@@ -153,6 +153,7 @@
 
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
+      <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
       <div class="home-btns">
         <button id="btn-leaderboard-home" class="btn-secondary" data-i18n="leaderboard">🏅 Leaderboard</button>
         <button id="btn-achievements-home" class="btn-secondary" data-i18n="achievementsBtn">🏆 Achievements</button>
@@ -176,6 +177,7 @@
       <div id="hud-center">
         <div id="hud-level"><span data-i18n="levelLabel">Level </span><span id="level-val">1</span></div>
         <div id="hud-tables"></div>
+        <div id="run-ante-chip" class="run-ante-chip hidden"></div>
       </div>
       <div id="hud-right">
         <div id="hud-lives"></div>
@@ -189,6 +191,22 @@
         <div class="pause-title" data-i18n="paused">Paused</div>
         <button id="btn-resume" class="btn-primary" data-i18n="resume">Resume</button>
         <button id="btn-pause-menu" class="btn-secondary" data-i18n="backToMenu">Back to Menu</button>
+      </div>
+    </div>
+    <!-- Active upgrades bar (run mode only) -->
+    <div id="active-upgrades-bar" class="hidden"></div>
+    <!-- Upgrade Picker overlay (run mode) -->
+    <div id="upgrade-picker" class="upgrade-picker hidden">
+      <div class="upgrade-picker-card">
+        <div class="upgrade-picker-title">Level Up!</div>
+        <!-- Reorder section: tap pills to swap for adjacency bonuses -->
+        <div id="reorder-section" class="reorder-section hidden">
+          <div class="reorder-label">Tap two powers to swap order:</div>
+          <div id="reorder-row" class="reorder-row"></div>
+          <button id="btn-skip-upgrade" class="btn-skip-upgrade">Keep order ›</button>
+        </div>
+        <div class="upgrade-picker-subtitle">Choose a new power:</div>
+        <div class="upgrade-options" id="upgrade-options"></div>
       </div>
     </div>
     <div id="miss-flash-container"></div>
@@ -211,7 +229,8 @@
       <div id="gameover-stats"></div>
       <div id="gameover-missed"></div>
       <div id="gameover-achievements"></div>
-      <div id="gameover-mastery"></div>
+      <div id="gameover-run"></div>
+    <div id="gameover-mastery"></div>
       <div class="overlay-btns">
         <button id="btn-play-again" class="btn-primary" data-i18n="playAgain">Play Again</button>
         <button id="btn-leaderboard" class="btn-secondary" data-i18n="leaderboard">Leaderboard</button>
@@ -278,6 +297,7 @@
   </div>
 
   <script src="js/version.js"></script>
+  <script src="js/upgrades.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/voice.js"></script>
   <script src="js/progress.js"></script>

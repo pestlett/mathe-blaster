@@ -209,6 +209,42 @@ const UI = (() => {
     ageInput.addEventListener('input', () => ageInput.classList.remove('field-error'));
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnStart.click(); });
 
+    // Run Mode button
+    const btnRunMode = document.getElementById('btn-run-mode');
+    const runSubtitle = document.getElementById('run-mode-subtitle');
+    function _refreshRunBtn() {
+      const rp = Progress.getRunProgress();
+      runSubtitle.textContent = rp.bestAnte > 0 ? ` · Best: Ante ${rp.bestAnte}` : ' · New!';
+    }
+    _refreshRunBtn();
+    btnRunMode.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      const age = parseInt(ageInput.value);
+      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
+      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      let min, max;
+      if (tablesMode === 'single') {
+        min = focusSingleTable; max = focusSingleTable;
+      } else {
+        min = parseInt(rangeMin.value);
+        max = parseInt(rangeMax.value);
+        if (min > max) { const tmp = min; min = max; max = tmp; }
+      }
+      Progress.setPlayer(name, age);
+      Progress.saveName(name);
+      Progress.saveSettings({
+        theme: selectedTheme, diff: selectedDiff, mode: selectedMode,
+        tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
+        singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
+        lastPlayer: name, lastAge: age,
+        triggerWord: triggerWdInput?.value?.trim(),
+      });
+      onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
+        difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
+        practiceMode: false, runMode: true,
+        triggerWord: triggerWdInput?.value?.trim() || '' });
+    });
+
     // Daily challenge button
     const btnDaily = document.getElementById('btn-daily');
 
@@ -302,7 +338,92 @@ const UI = (() => {
       : I18n.t('tablesRange', { min: state.minTable, max: state.maxTable });
     document.getElementById('hud-tables').textContent =
       tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
+
+    // Run-mode ante chip
+    const anteChip = document.getElementById('run-ante-chip');
+    if (state.runMode) {
+      anteChip.textContent = `⚔ Ante ${state.currentAnte}`;
+      anteChip.classList.remove('hidden');
+    } else {
+      anteChip.classList.add('hidden');
+    }
+
+    // Run-mode active upgrades bar
+    _updateUpgradesBar(state);
+
     renderLives(state.lives, state.maxLives, state.theme);
+  }
+
+  function _updateUpgradesBar(state) {
+    const bar = document.getElementById('active-upgrades-bar');
+    if (!state.runMode || !state.activeUpgrades || state.activeUpgrades.length === 0) {
+      bar.classList.add('hidden');
+      return;
+    }
+    bar.classList.remove('hidden');
+
+    const { positive: synIds, negative: conflictIds } = getActiveSynergySets(state.activeUpgradeIds || []);
+    const adjBonuses = state.adjacencyBonuses || new Set();
+
+    const parts = [];
+    state.activeUpgrades.forEach((upg, idx) => {
+      // Adjacency connector between consecutive pills
+      if (idx > 0) {
+        const prevId = state.activeUpgrades[idx - 1].id;
+        const hasAdj = adjBonuses.size > 0 && (() => {
+          const adj = getAdjacencyForPair(prevId, upg.id);
+          return adj && adjBonuses.has(adj.flag);
+        })();
+        parts.push(
+          `<span class="upg-bar-connector${hasAdj ? ' upg-bar-connector-active' : ''}">${hasAdj ? '✦' : '·'}</span>`
+        );
+      }
+
+      const name = upgradeNameForTheme(upg, state.theme);
+      const icon = upg.icon || '★';
+
+      // Count badge for consumables
+      let countBadge = '';
+      let modClass = '';
+      if (upg.id === 'shield') {
+        const n = state.shieldCharges || 0;
+        countBadge = `<span class="upg-count">${n}</span>`;
+        if (n === 0) modClass = 'upg-spent';
+      } else if (upg.id === 'bomb') {
+        const n = state.bombCharges || 0;
+        countBadge = `<span class="upg-count">${n}</span>`;
+        if (n === 0) modClass = 'upg-spent';
+      } else if (upg.id === 'lastChance') {
+        modClass = state.lastChanceUsed ? 'upg-spent' : 'upg-ready';
+        countBadge = state.lastChanceUsed
+          ? '<span class="upg-count">✗</span>'
+          : '<span class="upg-count">✓</span>';
+      }
+
+      // Timer bar for streak-slow when active
+      let timerBar = '';
+      if (upg.id === 'streakSlow' && state.streakSlowTimer > 0) {
+        const maxDur = state.streakSlowDuration || 5;
+        const pct = Math.round((state.streakSlowTimer / maxDur) * 100);
+        timerBar = `<div class="upg-timer-bar"><div class="upg-timer-fill" style="width:${pct}%"></div></div>`;
+        modClass = 'upg-active';
+      }
+
+      // Synergy / conflict state (only if not already spent/active)
+      if (modClass === '') {
+        if (conflictIds.has(upg.id))  modClass = 'upg-conflict';
+        else if (synIds.has(upg.id))  modClass = 'upg-synergy';
+      }
+
+      parts.push(`<div class="upg-pill ${modClass}" title="${name}">
+        <span class="upg-icon">${icon}</span>
+        <span class="upg-label">${name}</span>
+        ${countBadge}
+        ${timerBar}
+      </div>`);
+    });
+
+    bar.innerHTML = parts.join('');
   }
 
   function renderLives(lives, max, theme) {
@@ -421,7 +542,7 @@ const UI = (() => {
   }
 
   // ---- Game Over ----
-  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard) {
+  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard, runData) {
     const starsHtml = session.levelStars && session.levelStars.length > 0
       ? `<div class="stars-row">${session.levelStars.map((s, i) =>
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
@@ -456,6 +577,30 @@ const UI = (() => {
         }).join('');
     } else {
       achEl.innerHTML = '';
+    }
+
+    // Run mode section
+    const runEl = document.getElementById('gameover-run');
+    if (runData && runData.runMode) {
+      const newBest = runData.isNewBest ? '<span class="run-new-best"> New best!</span>' : '';
+      const badgeHtml = (runData.activeUpgrades || []).map(upg => {
+        const name = upgradeNameForTheme(upg, runData.theme);
+        return `<span class="run-upgrade-badge">${name}</span>`;
+      }).join('');
+      const newUnlocksHtml = (runData.newUnlocks || []).length > 0
+        ? `<div class="run-new-unlocks">New upgrades unlocked: ${runData.newUnlocks.map(id => {
+            const u = (typeof UPGRADES !== 'undefined' ? UPGRADES : []).find(u => u.id === id);
+            return u ? upgradeNameForTheme(u, runData.theme) : id;
+          }).join(', ')}</div>`
+        : '';
+      runEl.innerHTML = `
+        <div class="run-summary">
+          <div class="run-ante">Run ended at Ante ${runData.ante}${newBest}</div>
+          ${badgeHtml ? `<div class="run-upgrades-row">${badgeHtml}</div>` : ''}
+          ${newUnlocksHtml}
+        </div>`;
+    } else {
+      runEl.innerHTML = '';
     }
 
     document.getElementById('gameover-mastery').innerHTML =
@@ -581,6 +726,104 @@ const UI = (() => {
     showScreen('dashboard');
   }
 
+  // ---- Upgrade Picker ----
+  // currentUpgrades: the live array of upgrade objects already active
+  // onDone(chosen, newOrder) — chosen may be null if player only reordered
+  function showUpgradePicker(options, theme, currentUpgrades, onDone) {
+    const el = document.getElementById('upgrade-picker');
+    const optionsEl = document.getElementById('upgrade-options');
+    optionsEl.innerHTML = '';
+
+    // Local mutable order — player can swap before picking
+    let orderedUpgrades = currentUpgrades.slice();
+    let selectedIdx = -1;
+
+    // ---- Reorder section ----
+    function buildReorderRow() {
+      const section = document.getElementById('reorder-section');
+      const rowEl   = document.getElementById('reorder-row');
+      if (!section || !rowEl) return;
+      if (orderedUpgrades.length === 0) { section.classList.add('hidden'); return; }
+      section.classList.remove('hidden');
+      rowEl.innerHTML = '';
+
+      orderedUpgrades.forEach((upg, i) => {
+        if (i > 0) {
+          const prevId = orderedUpgrades[i - 1].id;
+          const adj    = getAdjacencyForPair(prevId, upg.id);
+          const conn   = document.createElement('span');
+          conn.className = adj ? 'reorder-connector reorder-connector-bonus' : 'reorder-connector';
+          conn.textContent = adj ? '✦' : '·';
+          if (adj) conn.title = adj.effect;
+          rowEl.appendChild(conn);
+        }
+        const pill = document.createElement('button');
+        pill.className = 'reorder-pill' + (i === selectedIdx ? ' reorder-selected' : '');
+        pill.title = upgradeNameForTheme(upg, theme);
+        pill.innerHTML = `<span class="reorder-icon">${upg.icon || '★'}</span>`;
+        pill.addEventListener('click', () => {
+          if (selectedIdx === -1) {
+            selectedIdx = i;
+          } else if (selectedIdx === i) {
+            selectedIdx = -1;
+          } else {
+            [orderedUpgrades[selectedIdx], orderedUpgrades[i]] =
+              [orderedUpgrades[i], orderedUpgrades[selectedIdx]];
+            selectedIdx = -1;
+          }
+          buildReorderRow();
+          // Refresh hints on upgrade cards since activeIds may be reused
+          buildPickerCards();
+        });
+        rowEl.appendChild(pill);
+      });
+    }
+
+    // ---- Upgrade pick cards ----
+    function buildPickerCards() {
+      optionsEl.innerHTML = '';
+      const activeIds = orderedUpgrades.map(u => u.id);
+      options.forEach(upg => {
+        const name  = upgradeNameForTheme(upg, theme);
+        const desc  = upgradeDescForTheme(upg, theme);
+        const hints = getSynergyHintsForUpgrade(upg.id, activeIds, theme);
+        const hintsHtml = hints.map(h => {
+          const cls  = h.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
+          const icon = h.type === 'positive' ? '✦' : '⚠';
+          return `<div class="${cls}">${icon} ${h.type === 'positive' ? 'Synergy' : 'Conflict'} with ${h.partnerName}: ${h.effect}</div>`;
+        }).join('');
+        const synClass = hints.some(h => h.type === 'negative') ? 'upgrade-option-conflict'
+                       : hints.some(h => h.type === 'positive') ? 'upgrade-option-synergy' : '';
+        const btn = document.createElement('button');
+        btn.className = `upgrade-option ${synClass}`;
+        btn.innerHTML = `
+          <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '★'}</span> ${name}</div>
+          <div class="upgrade-desc">${desc}</div>
+          ${hintsHtml}`;
+        btn.addEventListener('click', () => {
+          el.classList.add('hidden');
+          onDone(upg, orderedUpgrades);
+        });
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    // ---- Skip / Done button (reorder only, no new pick) ----
+    const skipBtn = document.getElementById('btn-skip-upgrade');
+    if (skipBtn) {
+      skipBtn.onclick = () => {
+        el.classList.add('hidden');
+        onDone(null, orderedUpgrades);
+      };
+      skipBtn.textContent = options.length > 0 ? 'Keep order ›' : 'Done ›';
+      skipBtn.classList.remove('hidden');
+    }
+
+    buildReorderRow();
+    buildPickerCards();
+    el.classList.remove('hidden');
+  }
+
   // ---- Achievements ----
   function showAchievements(onBack) {
     const all = Progress.getAchievements();
@@ -599,5 +842,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker };
 })();

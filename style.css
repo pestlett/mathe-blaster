@@ -604,6 +604,113 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 1.5rem;
 }
 
+/* Run-mode ante chip in HUD center */
+.run-ante-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a29bfe;
+  background: rgba(162,155,254,0.18);
+  border: 1px solid rgba(162,155,254,0.45);
+  border-radius: 20px;
+  padding: 2px 10px;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+.run-ante-chip.hidden { display: none; }
+
+/* Active upgrades bar — bottom-left of game screen, horizontal row */
+#active-upgrades-bar {
+  position: absolute;
+  left: 8px;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 10;
+  pointer-events: none;
+  max-height: calc(100vh - 200px);
+  overflow: hidden;
+}
+#active-upgrades-bar.hidden { display: none; }
+
+/* Individual upgrade pill */
+.upg-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 10px;
+  padding: 5px 6px 4px;
+  min-width: 54px;
+  max-width: 60px;
+  text-align: center;
+  transition: border-color 0.3s, background 0.3s, opacity 0.3s;
+}
+.upg-pill.upg-spent {
+  opacity: 0.35;
+  border-color: rgba(255,255,255,0.15);
+}
+.upg-pill.upg-ready {
+  border-color: #f7c948;
+  background: rgba(247,201,72,0.1);
+}
+.upg-pill.upg-active {
+  border-color: #74b9ff;
+  background: rgba(116,185,255,0.15);
+  animation: upg-pulse 0.8s ease-in-out infinite alternate;
+}
+/* Synergy pair — gold glow */
+.upg-pill.upg-synergy {
+  border-color: #f7c948;
+  background: rgba(247,201,72,0.12);
+  box-shadow: 0 0 6px rgba(247,201,72,0.45);
+}
+/* Conflict pair — orange glow */
+.upg-pill.upg-conflict {
+  border-color: #fd79a8;
+  background: rgba(253,121,168,0.1);
+  box-shadow: 0 0 6px rgba(253,121,168,0.4);
+}
+@keyframes upg-pulse {
+  from { box-shadow: 0 0 4px rgba(116,185,255,0.3); }
+  to   { box-shadow: 0 0 10px rgba(116,185,255,0.7); }
+}
+.upg-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.upg-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.1;
+  word-break: break-word;
+  max-width: 54px;
+}
+.upg-count {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #f7c948;
+  line-height: 1;
+}
+/* Shrinking timer bar inside the streakSlow pill */
+.upg-timer-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin-top: 2px;
+  overflow: hidden;
+}
+.upg-timer-fill {
+  height: 100%;
+  background: #74b9ff;
+  border-radius: 2px;
+  transition: width 0.25s linear;
+}
+
 /* Level-up banner */
 #level-up-banner {
   position: absolute;
@@ -1183,6 +1290,244 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
 }
 .btn-daily:hover { background: rgba(247,201,72,0.12); transform: translateY(-2px); }
 .btn-daily.daily-done { border-color: #2ed573; color: #2ed573; }
+
+/* Run Mode button on onboarding */
+.btn-run-mode {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #a29bfe;
+  background: transparent;
+  color: #a29bfe;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s, transform 0.15s;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-run-mode:hover { background: rgba(162,155,254,0.12); transform: translateY(-2px); }
+.run-mode-subtitle { font-size: 0.8rem; font-weight: 400; opacity: 0.8; }
+
+/* Upgrade picker overlay */
+.upgrade-picker {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+.upgrade-picker.hidden { display: none; }
+.upgrade-picker-card {
+  background: #1a1a2e;
+  border: 2px solid #a29bfe;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 460px;
+  width: 92%;
+  text-align: center;
+}
+.upgrade-picker-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #a29bfe;
+  margin-bottom: 14px;
+}
+.upgrade-picker-subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(162,155,254,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 12px 0 10px;
+}
+
+/* ---- Reorder row inside upgrade picker ---- */
+.reorder-section {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(162,155,254,0.25);
+  border-radius: 10px;
+  padding: 10px 12px 12px;
+  margin-bottom: 4px;
+}
+.reorder-section.hidden { display: none; }
+.reorder-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+}
+.reorder-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 8px;
+}
+.reorder-pill {
+  background: rgba(162,155,254,0.12);
+  border: 2px solid rgba(162,155,254,0.35);
+  border-radius: 10px;
+  padding: 7px 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  font-size: 1.3rem;
+  line-height: 1;
+  min-width: 44px;
+  text-align: center;
+}
+.reorder-pill:hover {
+  border-color: #a29bfe;
+  background: rgba(162,155,254,0.22);
+  transform: translateY(-2px);
+}
+.reorder-pill.reorder-selected {
+  border-color: #f7c948;
+  background: rgba(247,201,72,0.18);
+  box-shadow: 0 0 8px rgba(247,201,72,0.5);
+  transform: translateY(-3px);
+}
+.reorder-icon { pointer-events: none; }
+.reorder-connector {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.2);
+  padding: 0 3px;
+  user-select: none;
+  pointer-events: none;
+}
+.reorder-connector-bonus {
+  color: #f7c948;
+  font-size: 0.9rem;
+  text-shadow: 0 0 6px rgba(247,201,72,0.6);
+  cursor: help;
+  pointer-events: all;
+}
+.btn-skip-upgrade {
+  background: transparent;
+  border: 1px solid rgba(162,155,254,0.3);
+  border-radius: 8px;
+  color: rgba(162,155,254,0.7);
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-skip-upgrade:hover {
+  background: rgba(162,155,254,0.1);
+  color: #a29bfe;
+}
+.btn-skip-upgrade.hidden { display: none; }
+
+/* Adjacency connectors in the active upgrades bar */
+.upg-bar-connector {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.15);
+  align-self: center;
+  padding: 0 1px;
+  user-select: none;
+}
+.upg-bar-connector-active {
+  color: #f7c948;
+  font-size: 0.75rem;
+  text-shadow: 0 0 4px rgba(247,201,72,0.5);
+}
+.upgrade-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.upgrade-option {
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.upgrade-option:hover {
+  background: rgba(162,155,254,0.2);
+  border-color: #a29bfe;
+  transform: translateY(-2px);
+}
+/* Synergy highlight on picker card */
+.upgrade-option-synergy {
+  border-color: rgba(247,201,72,0.6);
+  background: rgba(247,201,72,0.07);
+}
+.upgrade-option-synergy:hover {
+  border-color: #f7c948;
+  background: rgba(247,201,72,0.15);
+}
+/* Conflict highlight on picker card */
+.upgrade-option-conflict {
+  border-color: rgba(253,121,168,0.5);
+  background: rgba(253,121,168,0.06);
+}
+.upgrade-option-conflict:hover {
+  border-color: #fd79a8;
+  background: rgba(253,121,168,0.14);
+}
+.upgrade-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.upgrade-icon-sm { font-size: 1.1rem; }
+.upgrade-desc {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+/* Synergy / conflict hint lines inside picker card */
+.syn-hint-positive {
+  font-size: 0.75rem;
+  color: #f7c948;
+  margin-top: 5px;
+  line-height: 1.3;
+}
+.syn-hint-negative {
+  font-size: 0.75rem;
+  color: #fd79a8;
+  margin-top: 5px;
+  line-height: 1.3;
+}
+
+/* Run mode game-over section */
+.run-summary {
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.run-ante {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #a29bfe;
+  margin-bottom: 8px;
+}
+.run-new-best { color: #f7c948; margin-left: 6px; }
+.run-upgrades-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.run-upgrade-badge {
+  background: rgba(162,155,254,0.18);
+  border: 1px solid rgba(162,155,254,0.5);
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 0.8rem;
+  color: #c8c5ff;
+}
+.run-new-unlocks { font-size: 0.85rem; color: #2ed573; font-weight: 600; }
 .daily-complete-badge {
   background: rgba(247,201,72,0.15);
   border: 1px solid rgba(247,201,72,0.4);

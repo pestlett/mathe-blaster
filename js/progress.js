@@ -229,5 +229,58 @@ const Progress = (() => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || null; } catch { return null; }
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, getStats, getMastery, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked };
+  // ---- Run Mode persistence ----
+  // Milestone thresholds for unlocking new upgrades
+  const RUN_MILESTONES = [
+    { id: 'commutative', check: (m) => m.runsCompleted >= 3 },
+    { id: 'streakSlow',  check: (m) => m.maxStreak >= 8 },
+    { id: 'reveal',      check: (m) => m.bossesDefeated >= 5 },
+    { id: 'lastChance',  check: (m) => m.runsCompleted >= 10 },
+  ];
+
+  function getRunProgress() {
+    const d = load();
+    return d.run || {
+      bestAnte: 0,
+      runsCompleted: 0,
+      unlockedUpgrades: [],
+      milestones: { bossesDefeated: 0, runsCompleted: 0, maxStreak: 0 },
+    };
+  }
+
+  function saveRunResult({ ante, upgrades, bossesDefeated, maxStreak }) {
+    const d = load();
+    if (!d.run) d.run = { bestAnte: 0, runsCompleted: 0, unlockedUpgrades: [], milestones: { bossesDefeated: 0, runsCompleted: 0, maxStreak: 0 } };
+    const run = d.run;
+    run.bestAnte = Math.max(run.bestAnte || 0, ante);
+    run.runsCompleted = (run.runsCompleted || 0) + 1;
+    const m = run.milestones;
+    m.bossesDefeated = (m.bossesDefeated || 0) + (bossesDefeated || 0);
+    m.runsCompleted  = run.runsCompleted;
+    m.maxStreak      = Math.max(m.maxStreak || 0, maxStreak || 0);
+    save(d);
+  }
+
+  // Returns array of newly unlocked upgrade IDs (from milestones)
+  function checkRunUnlocks() {
+    const d = load();
+    if (!d.run) return [];
+    const run = d.run;
+    const already = run.unlockedUpgrades || [];
+    const m = run.milestones || {};
+    const newlyUnlocked = [];
+    for (const milestone of RUN_MILESTONES) {
+      if (!already.includes(milestone.id) && milestone.check(m)) {
+        already.push(milestone.id);
+        newlyUnlocked.push(milestone.id);
+      }
+    }
+    if (newlyUnlocked.length > 0) {
+      run.unlockedUpgrades = already;
+      save(d);
+    }
+    return newlyUnlocked;
+  }
+
+  return { setPlayer, getAll, saveName, recordAttempt, getStats, getMastery, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks };
 })();
