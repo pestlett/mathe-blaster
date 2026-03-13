@@ -138,8 +138,9 @@
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
       <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="btn-leaderboard-home" class="btn-secondary" style="flex:1" data-i18n="leaderboard">🏅 Leaderboard</button>
         <button id="btn-achievements-home" class="btn-secondary" style="flex:1" data-i18n="achievementsBtn">🏆 Achievements</button>
-        <button id="btn-dashboard" class="btn-secondary" style="flex:1" data-i18n="parentDashboard">📊 Parent Dashboard</button>
+        <button id="btn-dashboard" class="btn-secondary" style="flex:1" data-i18n="parentDashboard">📊 Dashboard</button>
       </div>
     </div>
     <footer class="game-footer">
@@ -210,18 +211,17 @@
         <table id="leaderboard-table">
           <thead>
             <tr>
-              <th data-i18n="colDate">Date</th>
+              <th data-i18n="colName">Name</th>
+              <th data-i18n="colAge">Age</th>
               <th data-i18n="colScore">Score</th>
-              <th data-i18n="colLevel">Level</th>
-              <th data-i18n="colAccuracy">Accuracy</th>
-              <th data-i18n="colTheme">Theme</th>
+              <th data-i18n="colDate">Date</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body"></tbody>
         </table>
       </div>
       <div class="overlay-btns">
-        <button id="btn-play-again-lb" class="btn-primary" data-i18n="playAgain">Play Again</button>
+        <button id="btn-lb-back" class="btn-primary" data-i18n="back">Back</button>
       </div>
     </div>
   </div>

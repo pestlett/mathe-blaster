@@ -172,6 +172,10 @@ const UI = (() => {
     }
     _refreshDailyBtn();
 
+    document.getElementById('btn-leaderboard-home').addEventListener('click', () => {
+      showLeaderboard(() => showScreen('onboarding'));
+    });
+
     document.getElementById('btn-achievements-home').addEventListener('click', () => {
       showAchievements(() => showScreen('onboarding'));
     });
@@ -319,7 +323,7 @@ const UI = (() => {
   }
 
   // ---- Leaderboard ----
-  function showLeaderboard(onPlayAgain) {
+  function showLeaderboard(onBack) {
     const sessions = Progress.getSessions();
     const improved = Progress.isMostImproved();
     document.getElementById('leaderboard-badge').textContent =
@@ -331,16 +335,18 @@ const UI = (() => {
     const tbody = document.getElementById('leaderboard-body');
     tbody.innerHTML = sessions.slice().reverse().map(s => {
       const isBest = s.score === bestScore;
+      const name = s.name || '—';
+      const age  = s.age  != null ? s.age : '—';
+      const date = s.date ? new Date(s.date).toLocaleDateString() : '—';
       return `<tr class="${isBest ? 'best-row' : ''}">
-        <td>${new Date(s.date).toLocaleDateString()}</td>
+        <td>${name}</td>
+        <td>${age}</td>
         <td>${s.score}</td>
-        <td>${s.level}</td>
-        <td>${Math.round(s.accuracy * 100)}%</td>
-        <td>${s.theme}</td>
+        <td>${date}</td>
       </tr>`;
     }).join('');
 
-    document.getElementById('btn-play-again-lb').onclick = onPlayAgain;
+    document.getElementById('btn-lb-back').onclick = onBack;
     showScreen('leaderboard');
   }
 

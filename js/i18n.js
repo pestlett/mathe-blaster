@@ -91,6 +91,8 @@ const I18n = (() => {
 
       // Leaderboard
       leaderboardTitle:  'Leaderboard',
+      colName:           'Name',
+      colAge:            'Age',
       colDate:           'Date',
       colScore:          'Score',
       colLevel:          'Level',
@@ -214,6 +216,8 @@ const I18n = (() => {
       achievementsBtn:   'Erfolge',
 
       leaderboardTitle:  'Bestenliste',
+      colName:           'Name',
+      colAge:            'Alter',
       colDate:           'Datum',
       colScore:          'Punkte',
       colLevel:          'Level',
@@ -334,6 +338,8 @@ const I18n = (() => {
       achievementsBtn:   'Logros',
 
       leaderboardTitle:  'Clasificación',
+      colName:           'Nombre',
+      colAge:            'Edad',
       colDate:           'Fecha',
       colScore:          'Puntos',
       colLevel:          'Nivel',

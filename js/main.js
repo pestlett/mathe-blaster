@@ -618,6 +618,8 @@ function endGame() {
 
   const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 0;
   const session = {
+    name: state.name,
+    age:  state.age,
     score: state.score,
     level: state.level,
     accuracy,
