@@ -209,10 +209,10 @@ let _speakTimer       = null;
 function speakQuestion(text) {
   if (!window.speechSynthesis) return;
   clearTimeout(_speakTimer);
-  // Cancel smoothly: let current speech finish its current phoneme (~80ms),
-  // then cancel and speak the new question after a short gap.
   _speakTimer = setTimeout(() => {
     window.speechSynthesis.cancel();
+    // Mute the mic so TTS output isn't picked up as voice input
+    Voice.stop();
     const lang       = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const timesWord  = lang === 'de' ? 'mal' : lang === 'es' ? 'por' : 'times';
     const speakable  = text.replace(/×/, timesWord).replace(/\s+/g, ' ').trim();
@@ -220,6 +220,9 @@ function speakQuestion(text) {
     utt.lang         = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
     utt.rate         = 0.92;
     utt.pitch        = 1.1;
+    const resume = () => { if (state.phase === 'PLAYING' && !Engine.isPaused()) Voice.start(); };
+    utt.onend   = resume;
+    utt.onerror = resume;
     window.speechSynthesis.speak(utt);
   }, 120);
 }
