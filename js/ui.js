@@ -179,11 +179,12 @@ const UI = (() => {
 
   // ---- Level Up ----
   let levelUpTimer = null;
-  function showLevelUp(level) {
+  function showLevelUp(level, stars = null) {
     const el = document.getElementById('level-up-banner');
-    el.textContent = `Level ${level}!`;
+    const starStr = stars !== null ? ' ' + '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
+    el.textContent = `Level ${level}!${starStr}`;
     el.classList.remove('show');
-    void el.offsetWidth; // reflow to restart animation
+    void el.offsetWidth;
     el.classList.add('show');
     if (levelUpTimer) clearTimeout(levelUpTimer);
     levelUpTimer = setTimeout(() => el.classList.remove('show'), 1700);
@@ -191,11 +192,17 @@ const UI = (() => {
 
 // ---- Game Over ----
   function showGameOver(session, missedList, onPlayAgain, onLeaderboard) {
+    const starsHtml = session.levelStars && session.levelStars.length > 0
+      ? `<div class="stars-row">${session.levelStars.map((s, i) =>
+          `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
+        ).join('')}</div>`
+      : '';
     document.getElementById('gameover-stats').innerHTML = `
       <div>Score: <strong>${session.score}</strong></div>
       <div>Level reached: <strong>${session.level}</strong></div>
       <div>Accuracy: <strong>${Math.round(session.accuracy * 100)}%</strong></div>
       <div>Theme: <strong>${session.theme}</strong></div>
+      ${starsHtml}
     `;
     const missedEl = document.getElementById('gameover-missed');
     if (missedList.length > 0) {

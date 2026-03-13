@@ -24,6 +24,8 @@ let state = {
   lives: MAX_LIVES,
   maxLives: MAX_LIVES,
   correctThisLevel: 0,
+  attemptsThisLevel: 0,
+  levelStars: [],       // stars earned per level [0]=level1 etc.
   totalCorrect: 0,
   totalAttempts: 0,
   streak: 0,
@@ -135,6 +137,8 @@ function startGame(settings) {
   state.lives = MAX_LIVES;
   state.maxLives = MAX_LIVES;
   state.correctThisLevel = 0;
+  state.attemptsThisLevel = 0;
+  state.levelStars = [];
   state.totalCorrect = 0;
   state.totalAttempts = 0;
   state.streak = 0;
@@ -346,6 +350,7 @@ function submitAnswer() {
 
   const elapsed = Date.now() - state.answerStartTime;
   state.totalAttempts++;
+  state.attemptsThisLevel++;
 
   if (val === target.answer) {
     // Correct!
@@ -375,10 +380,16 @@ function submitAnswer() {
 
     // Level up check
     if (state.correctThisLevel >= CORRECT_PER_LEVEL) {
+      // Award stars based on level accuracy (correct / attempts this level)
+      const levelAcc = state.attemptsThisLevel > 0 ? state.correctThisLevel / state.attemptsThisLevel : 1;
+      const stars = levelAcc >= 0.9 ? 3 : levelAcc >= 0.7 ? 2 : 1;
+      state.levelStars.push(stars);
+
       state.level++;
       state.correctThisLevel = 0;
+      state.attemptsThisLevel = 0;
       Audio.play('levelUp');
-      UI.showLevelUp(state.level);
+      UI.showLevelUp(state.level, stars);
     }
 
     input.value = '';
@@ -416,7 +427,8 @@ function endGame() {
     score: state.score,
     level: state.level,
     accuracy,
-    theme: state.theme
+    theme: state.theme,
+    levelStars: state.levelStars
   };
   Progress.saveSession(session);
 
