@@ -119,6 +119,18 @@ window.addEventListener('DOMContentLoaded', () => {
     else        Targeting.moveRight(state.objects);
   }, { passive: true });
 
+  // Mute toggle
+  const btnMute = document.getElementById('btn-mute');
+  let _muted = false;
+  btnMute.addEventListener('click', () => {
+    _muted = !_muted;
+    Audio.setMuted(_muted);
+    if (!_muted) Audio.playMusic(state.theme);
+    btnMute.textContent = _muted ? '🔇' : '🔊';
+    btnMute.classList.toggle('muted', _muted);
+    btnMute.title = _muted ? 'Unmute music' : 'Mute music';
+  });
+
   // Pause / resume
   const btnPause = document.getElementById('btn-pause');
   const btnResume = document.getElementById('btn-resume');
