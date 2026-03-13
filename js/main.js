@@ -119,9 +119,16 @@ window.addEventListener('DOMContentLoaded', () => {
     else        Targeting.moveRight(state.objects);
   }, { passive: true });
 
-  // Mute toggle
+  // Mute toggle — phones default to muted so mic picks up clearly
   const btnMute = document.getElementById('btn-mute');
-  let _muted = false;
+  const isPhone = window.innerWidth < 640;
+  let _muted = isPhone;
+  if (_muted) {
+    Audio.setMuted(true);
+    btnMute.textContent = '🔇';
+    btnMute.classList.add('muted');
+    btnMute.title = 'Unmute music';
+  }
   btnMute.addEventListener('click', () => {
     _muted = !_muted;
     Audio.setMuted(_muted);
