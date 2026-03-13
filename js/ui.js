@@ -6,7 +6,8 @@ const UI = (() => {
     game: document.getElementById('screen-game'),
     gameover: document.getElementById('screen-gameover'),
     leaderboard: document.getElementById('screen-leaderboard'),
-    achievements: document.getElementById('screen-achievements')
+    achievements: document.getElementById('screen-achievements'),
+    dashboard: document.getElementById('screen-dashboard')
   };
 
   function showScreen(name) {
@@ -131,6 +132,10 @@ const UI = (() => {
     const existing = Progress.getDailyResult();
     btnDaily.textContent = existing ? `⚡ Daily Challenge ✓ (${dp.table}× • ${dp.difficulty})` : `⚡ Daily Challenge — ${dp.table}× table • ${dp.difficulty}`;
     if (existing) btnDaily.classList.add('daily-done');
+
+    document.getElementById('btn-dashboard').addEventListener('click', () => {
+      showDashboard(() => showScreen('onboarding'));
+    });
 
     btnDaily.addEventListener('click', () => {
       const name = nameInput.value.trim();
@@ -278,6 +283,108 @@ const UI = (() => {
     showScreen('leaderboard');
   }
 
+  function showDashboard(onBack) {
+    const data = Progress.getAll();
+    const stats = data.stats || {};
+    const sessions = data.sessions || [];
+    const playerName = data.player?.name || 'Player';
+
+    // Summary stats
+    const totalSessions = sessions.length;
+    const bestScore = sessions.length > 0 ? Math.max(...sessions.map(s => s.score)) : 0;
+    const avgAcc = sessions.length > 0
+      ? Math.round(sessions.reduce((a, s) => a + s.accuracy, 0) / sessions.length * 100)
+      : 0;
+
+    document.getElementById('dashboard-player').innerHTML =
+      `<div class="dash-player">Progress for <strong>${playerName}</strong></div>`;
+    document.getElementById('dashboard-summary').innerHTML = `
+      <div class="dash-stats">
+        <div class="dash-stat"><span>${totalSessions}</span>Sessions</div>
+        <div class="dash-stat"><span>${bestScore}</span>Best Score</div>
+        <div class="dash-stat"><span>${avgAcc}%</span>Avg Accuracy</div>
+      </div>`;
+
+    // Build per-table accuracy data
+    const tables = [];
+    for (let t = 1; t <= 12; t++) {
+      let attempts = 0, correct = 0;
+      for (let b = 1; b <= 12; b++) {
+        const s = stats[`${t}x${b}`];
+        if (s) { attempts += s.attempts; correct += s.correct; }
+        const s2 = stats[`${b}x${t}`];
+        if (s2 && b !== t) { attempts += s2.attempts; correct += s2.correct; }
+      }
+      tables.push({ table: t, attempts, acc: attempts > 0 ? correct / attempts : null });
+    }
+
+    // Draw bar chart on canvas
+    const canvas = document.getElementById('dashboard-chart');
+    const cw = Math.min(620, window.innerWidth - 80);
+    const ch = 160;
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, cw, ch);
+
+    const barW = Math.floor((cw - 40) / 12) - 4;
+    const maxH = ch - 40;
+
+    tables.forEach(({ table, attempts, acc }, i) => {
+      const bx = 20 + i * (barW + 4);
+      const fillH = acc !== null ? Math.max(4, acc * maxH) : 0;
+      const by = ch - 24 - fillH;
+
+      // Bar background
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(bx, ch - 24 - maxH, barW, maxH);
+
+      // Bar fill — colour by accuracy
+      if (acc !== null) {
+        const hue = Math.round(acc * 120); // red(0) → green(120)
+        ctx.fillStyle = `hsl(${hue},80%,55%)`;
+        ctx.fillRect(bx, by, barW, fillH);
+      }
+
+      // Table label
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '11px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${table}×`, bx + barW / 2, ch - 6);
+
+      // Accuracy %
+      if (acc !== null) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px Segoe UI, sans-serif';
+        ctx.fillText(`${Math.round(acc * 100)}%`, bx + barW / 2, by - 4);
+      }
+    });
+
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px Segoe UI, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Accuracy per table (grey = not yet attempted)', 20, 14);
+
+    // Weak spots table
+    const weak = tables
+      .filter(t => t.acc !== null && t.acc < 0.7)
+      .sort((a, b) => a.acc - b.acc)
+      .slice(0, 5);
+    const detailEl = document.getElementById('dashboard-table-detail');
+    if (weak.length > 0) {
+      detailEl.innerHTML = '<div class="dash-weak-title">Needs practice:</div>' +
+        weak.map(t => `<span class="dash-weak-badge">${t.table}× table — ${Math.round(t.acc * 100)}%</span>`).join('');
+    } else if (tables.some(t => t.attempts > 0)) {
+      detailEl.innerHTML = '<div class="dash-weak-title" style="color:#2ed573">All attempted tables are ≥70% — great work!</div>';
+    } else {
+      detailEl.innerHTML = '<div class="dash-weak-title">No data yet — play some games first!</div>';
+    }
+
+    document.getElementById('btn-back-dashboard').onclick = onBack;
+    showScreen('dashboard');
+  }
+
   function showAchievements(onBack) {
     const all = Progress.getAchievements();
     const tbody = document.getElementById('achievements-body');
@@ -291,5 +398,5 @@ const UI = (() => {
     showScreen('achievements');
   }
 
-  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showLevelUp, showGameOver, showLeaderboard, showAchievements };
+  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain, shakeInput, showLevelUp, showGameOver, showLeaderboard, showAchievements, showDashboard };
 })();
