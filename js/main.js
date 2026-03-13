@@ -51,6 +51,72 @@ let state = {
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
 };
 
+// ---- Haptic feedback ----
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ---- Confetti ----
+const CONFETTI_COLORS = ['#f7c948','#ff4757','#2ed573','#1e90ff','#ff6b81','#eccc68','#a29bfe','#fd79a8'];
+
+function spawnConfetti(w) {
+  const particles = [];
+  for (let i = 0; i < 90; i++) {
+    const angle = (Math.PI * 0.4) + Math.random() * Math.PI * 0.2; // mostly downward
+    const speed = 180 + Math.random() * 320;
+    particles.push({
+      x:    Math.random() * w,
+      y:    -10,
+      vx:   (Math.random() - 0.5) * 160,
+      vy:   speed * Math.sin(angle),
+      rot:  Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 10,
+      w:    6 + Math.random() * 7,
+      h:    3 + Math.random() * 4,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      life: 1.0,
+    });
+  }
+  return particles;
+}
+
+function updateConfetti(particles, dt) {
+  for (const p of particles) {
+    p.x   += p.vx  * dt;
+    p.y   += p.vy  * dt;
+    p.vy  += 380   * dt; // gravity
+    p.rot += p.rotV * dt;
+    p.life -= 0.55 * dt; // ~1.8s lifespan
+  }
+}
+
+function drawConfetti(ctx, particles) {
+  for (const p of particles) {
+    if (p.life <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, p.life * 2); // fade in briefly, then hold, then fade
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    ctx.restore();
+  }
+}
+
+// ---- Streak vignette + shake ----
+function drawStreakOverlay(ctx, w, h, streak, intensity) {
+  // Vignette colour scales from amber (×1.5) to hot-red (×2)
+  const hot   = streak >= 5;
+  const color = hot ? '255,60,0' : '255,160,0';
+  const alpha = (hot ? 0.38 : 0.25) * intensity;
+  const cx    = w / 2, cy = h / 2;
+  const grad  = ctx.createRadialGradient(cx, cy, Math.min(w, h) * 0.25, cx, cy, Math.max(w, h) * 0.75);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, `rgba(${color},${alpha.toFixed(3)})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+}
+
 // ---- Voice suggestion pill (module-level so submitAnswer can access it) ----
 let _voiceSuggestionEl = null;
 
@@ -314,6 +380,10 @@ function startGame(settings) {
   state.freezeTimer = 0;
   state._bossSpawnedThisLevel = false;
   state.freezeActive = 0;
+  state.levelTransitionTimer = 0;
+  state.confetti = [];
+  state.streakFlashTimer = 0;
+  state.streakFlashLevel = 0;
   state.answerStartTime = Date.now();
   state.phase = 'PLAYING';
 
@@ -343,8 +413,25 @@ function update(dt) {
     state.freezeActive = Math.max(0, state.freezeActive - dt);
   }
 
-  // Speed multiplier: 0.25× while freeze is active
-  const freezeMult = state.freezeActive > 0 ? 0.25 : 1;
+  // Tick down level-transition freeze
+  if (state.levelTransitionTimer > 0) {
+    state.levelTransitionTimer = Math.max(0, state.levelTransitionTimer - dt);
+  }
+
+  // Tick down streak flash
+  if (state.streakFlashTimer > 0) {
+    state.streakFlashTimer = Math.max(0, state.streakFlashTimer - dt);
+  }
+
+  // Update confetti particles
+  if (state.confetti.length > 0) {
+    updateConfetti(state.confetti, dt);
+    state.confetti = state.confetti.filter(p => p.life > 0);
+  }
+
+  // Speed multiplier: 0.25× while freeze is active; 0 during level transition
+  const levelFreezing = state.levelTransitionTimer > 0;
+  const freezeMult    = levelFreezing ? 0 : (state.freezeActive > 0 ? 0.25 : 1);
 
   // Update all objects (keep animating during ENDING)
   for (const obj of state.objects) {
@@ -362,6 +449,7 @@ function update(dt) {
         state.missedList.push({ question: obj.question, answer: obj.answer });
         UI.showMissFlash(obj.question, obj.answer);
         Audio.play('lifeLost');
+        vibrate(200);
         UI.updateHUD(state);
         if (state.lives <= 0 && state.phase === 'PLAYING') {
           state.phase = 'ENDING';
@@ -445,9 +533,9 @@ function update(dt) {
     state.lifeUpTimer = 0; // reset timer when at full health or one already active
   }
 
-  // Spawn new question objects
+  // Spawn new question objects (skip during level transition)
   const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze).length;
-  if (aliveCount < maxObj) {
+  if (!levelFreezing && aliveCount < maxObj) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
     const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
@@ -482,22 +570,44 @@ function update(dt) {
 // ---- RENDER ----
 function render(ctx, w, h, t) {
   ctx.clearRect(0, 0, w, h);
+
+  // Screen shake on hot streak
+  const shaking = state.streakFlashTimer > 0;
+  if (shaking) {
+    const mag = state.streakFlashTimer > 0.35 ? 5 : 3;
+    ctx.save();
+    ctx.translate(
+      (Math.random() - 0.5) * mag * 2,
+      (Math.random() - 0.5) * mag * 2
+    );
+  }
+
   Themes.drawBackground(ctx, w, h, state.theme, t);
 
-  // Draw all objects
   for (const obj of state.objects) {
     Themes.drawObject(ctx, obj, state.theme);
   }
 
-  // Draw weapon aimed at target
   const target = Targeting.getTarget();
   const tx = target ? target.x + target.wobbleX : w / 2;
   const ty = target ? target.y : h / 2;
   Themes.drawWeapon(ctx, w, h, state.theme, tx, ty);
 
-  // Freeze overlay
   if (state.freezeActive > 0) {
     Themes.drawFreezeOverlay(ctx, w, h, state.freezeActive);
+  }
+
+  // Streak vignette (drawn inside the shake transform so it shakes too)
+  if (state.streakFlashTimer > 0) {
+    const intensity = state.streakFlashTimer / 0.5;
+    drawStreakOverlay(ctx, w, h, state.streakFlashLevel, intensity);
+  }
+
+  if (shaking) ctx.restore();
+
+  // Confetti drawn on top, outside shake so it stays stable
+  if (state.confetti.length > 0) {
+    drawConfetti(ctx, state.confetti);
   }
 }
 
@@ -612,6 +722,13 @@ function submitAnswer() {
     const particleColor = Themes.particleColorForTheme(state.theme);
     Objects.triggerDestruction(target, particleColor);
     Audio.play('correct');
+    vibrate(40);
+
+    // Streak flash at ×1.5 (streak 3+) and ×2 (streak 5+)
+    if (state.streak >= 3) {
+      state.streakFlashTimer = 0.5;
+      state.streakFlashLevel = state.streak;
+    }
 
     UI.showCombo(state.streak);
 
@@ -626,6 +743,9 @@ function submitAnswer() {
       state.correctThisLevel = 0;
       state.attemptsThisLevel = 0;
       Audio.play('levelUp');
+      vibrate([40, 60, 80]);
+      state.levelTransitionTimer = 1.0;
+      state.confetti = spawnConfetti(window.innerWidth);
       UI.showLevelUp(state.level, stars);
     }
 
@@ -643,6 +763,7 @@ function submitAnswer() {
       state.wrongQueue.push({ key: target.key, display: target.question, answer: target.answer });
     }
     Audio.play('wrong');
+    vibrate([30, 50, 30]);
     UI.shakeInput();
     UI.showTryAgain(target.question, target.answer);
     input.value = '';
