@@ -321,8 +321,42 @@ const UI = (() => {
     levelUpTimer = setTimeout(() => el.classList.remove('show'), 1700);
   }
 
+  // ---- Mastery grid ----
+  function _masteryDotClass(f) {
+    if (f.masteredLevel >= 5) return 'mastered';
+    if (f.masteredLevel >= 3) return 'good';
+    if (f.masteredLevel >= 1) return 'fair';
+    if (f.attempts > 0)       return 'weak';
+    return 'unseen';
+  }
+
+  function _renderMasteryGrid(masteryData) {
+    const { facts, mastered, total } = masteryData;
+    if (total === 0) return '';
+    // Group by A value
+    const aValues = [...new Set(facts.map(f => f.a))].sort((x, y) => x - y);
+    const rows = aValues.map(a => {
+      const row = facts.filter(f => f.a === a).sort((x, y) => x.b - y.b);
+      const dots = row.map(f =>
+        `<span class="mastery-dot ${_masteryDotClass(f)}" title="${f.a}×${f.b}=${f.a*f.b} (${f.masteredLevel}/5)"></span>`
+      ).join('');
+      return `<div class="mastery-row"><span class="mastery-label">${a}×</span>${dots}</div>`;
+    }).join('');
+    const pct = Math.round(mastered / total * 100);
+    return `
+      <div class="mastery-heading">${I18n.t('masteryTitle')} <span class="mastery-pct">${pct}%</span></div>
+      <div class="mastery-grid">${rows}</div>
+      <div class="mastery-legend">
+        <span class="mastery-dot mastered"></span>${I18n.t('masteryLegendDone')}
+        <span class="mastery-dot good"></span>${I18n.t('masteryLegendClose')}
+        <span class="mastery-dot fair"></span>${I18n.t('masteryLegendLearning')}
+        <span class="mastery-dot weak"></span>${I18n.t('masteryLegendNeeds')}
+        <span class="mastery-dot unseen"></span>${I18n.t('masteryLegendUnseen')}
+      </div>`;
+  }
+
   // ---- Game Over ----
-  function showGameOver(session, missedList, newAchievements, onPlayAgain, onLeaderboard) {
+  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard) {
     const starsHtml = session.levelStars && session.levelStars.length > 0
       ? `<div class="stars-row">${session.levelStars.map((s, i) =>
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
@@ -330,7 +364,10 @@ const UI = (() => {
       : '';
     const dailyBadge = session.dailyBadge
       ? `<div class="daily-complete-badge">${I18n.t('dailyComplete')}</div>` : '';
+    const masteryWinBanner = session.masteryWin
+      ? `<div class="mastery-win-banner">🏆 ${I18n.t('masteryWinBanner')} 🏆</div>` : '';
     document.getElementById('gameover-stats').innerHTML = `
+      ${masteryWinBanner}
       ${dailyBadge}
       <div>${I18n.t('goScore')}<strong>${session.score}</strong></div>
       <div>${I18n.t('goLevel')}<strong>${session.level}</strong></div>
@@ -355,6 +392,9 @@ const UI = (() => {
     } else {
       achEl.innerHTML = '';
     }
+
+    document.getElementById('gameover-mastery').innerHTML =
+      masteryData ? _renderMasteryGrid(masteryData) : '';
 
     document.getElementById('btn-play-again').onclick = onPlayAgain;
     document.getElementById('btn-leaderboard').onclick = onLeaderboard;

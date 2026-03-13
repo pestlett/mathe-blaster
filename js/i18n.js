@@ -89,6 +89,15 @@ const I18n = (() => {
       leaderboard:       'Leaderboard',
       achievementsBtn:   'Achievements',
 
+      // Mastery
+      masteryTitle:         'Table Progress',
+      masteryWinBanner:     'ALL TABLES MASTERED!',
+      masteryLegendDone:    ' Mastered  ',
+      masteryLegendClose:   ' Almost  ',
+      masteryLegendLearning:' Learning  ',
+      masteryLegendNeeds:   ' Needs work  ',
+      masteryLegendUnseen:  ' Not seen yet',
+
       // Leaderboard
       leaderboardTitle:  'Leaderboard',
       colName:           'Name',
@@ -215,6 +224,14 @@ const I18n = (() => {
       leaderboard:       'Bestenliste',
       achievementsBtn:   'Erfolge',
 
+      masteryTitle:         'Tabellenfortschritt',
+      masteryWinBanner:     'ALLE TABELLEN GEMEISTERT!',
+      masteryLegendDone:    ' Gemeistert  ',
+      masteryLegendClose:   ' Fast  ',
+      masteryLegendLearning:' Lernend  ',
+      masteryLegendNeeds:   ' Üben nötig  ',
+      masteryLegendUnseen:  ' Noch nicht gesehen',
+
       leaderboardTitle:  'Bestenliste',
       colName:           'Name',
       colAge:            'Alter',
@@ -336,6 +353,14 @@ const I18n = (() => {
       playAgain:         'Jugar de nuevo',
       leaderboard:       'Clasificación',
       achievementsBtn:   'Logros',
+
+      masteryTitle:         'Progreso de tablas',
+      masteryWinBanner:     '¡TODAS LAS TABLAS DOMINADAS!',
+      masteryLegendDone:    ' Dominado  ',
+      masteryLegendClose:   ' Casi  ',
+      masteryLegendLearning:' Aprendiendo  ',
+      masteryLegendNeeds:   ' Necesita práctica  ',
+      masteryLegendUnseen:  ' No visto aún',
 
       leaderboardTitle:  'Clasificación',
       colName:           'Nombre',

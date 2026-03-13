@@ -444,6 +444,74 @@ input[type="number"]::-webkit-outer-spin-button {
   100% { opacity: 0; transform: scale(0.9); }
 }
 
+/* Mastery grid (game-over screen) */
+.mastery-win-banner {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #f7c948;
+  text-align: center;
+  margin: 8px 0 4px;
+  text-shadow: 0 0 12px rgba(247,201,72,0.6);
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+.mastery-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  margin: 12px 0 4px;
+}
+.mastery-pct {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #2ed573;
+  margin-bottom: 6px;
+}
+.mastery-grid { margin: 8px 0; }
+.mastery-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+.mastery-label {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.45);
+  width: 22px;
+  text-align: right;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.mastery-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.mastery-dot.mastered { background: #2ed573; }
+.mastery-dot.good     { background: #f7c948; }
+.mastery-dot.fair     { background: #ffa502; }
+.mastery-dot.weak     { background: #ff4757; }
+.mastery-dot.unseen   { background: rgba(255,255,255,0.15); }
+.mastery-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.6);
+}
+.mastery-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mastery-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 .miss-flash {
   display: flex;
   align-items: center;

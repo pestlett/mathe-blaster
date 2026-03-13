@@ -147,6 +147,28 @@ const Progress = (() => {
     save(d);
   }
 
+  // ---- Mastery overview ----
+  // Returns every fact in the game range with its masteredLevel,
+  // plus aggregate counts for win-condition checking.
+  function getMastery(minTable, maxTable) {
+    const stats = load().stats;
+    const bLo = minTable === maxTable ? 1  : minTable;
+    const bHi = minTable === maxTable ? 12 : maxTable;
+    const facts = [];
+    for (let a = minTable; a <= maxTable; a++) {
+      for (let b = bLo; b <= bHi; b++) {
+        const key = `${a}x${b}`;
+        const s   = stats[key];
+        facts.push({ key, a, b,
+          masteredLevel: s?.masteredLevel ?? 0,
+          attempts:      s?.attempts      ?? 0,
+        });
+      }
+    }
+    const mastered = facts.filter(f => f.masteredLevel >= 5).length;
+    return { facts, mastered, total: facts.length };
+  }
+
   // ---- Settings persistence ----
   const SETTINGS_KEY = 'multiblaster_settings';
 
@@ -158,5 +180,5 @@ const Progress = (() => {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || null; } catch { return null; }
   }
 
-  return { getAll, saveName, recordAttempt, getStats, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings };
+  return { getAll, saveName, recordAttempt, getStats, getMastery, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings };
 })();

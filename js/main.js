@@ -243,6 +243,20 @@ function maybeSpeak() {
   }
 }
 
+// ---- Mastery win condition ----
+function checkMasteryWin() {
+  if (state.phase !== 'PLAYING' || state.masteryWin) return;
+  const { mastered, total } = Progress.getMastery(state.minTable, state.maxTable);
+  if (total > 0 && mastered === total) {
+    state.masteryWin = true;
+    state.confetti = spawnConfetti(window.innerWidth);
+    vibrate([40, 60, 80, 60, 40]);
+    UI.showLevelUp('🏆 All Mastered!', null);
+    state.phase = 'ENDING';
+    setTimeout(() => endGame(), 2000);
+  }
+}
+
 // ---- Bootstrap ----
 window.addEventListener('DOMContentLoaded', () => {
   Engine.init(update, render);
@@ -461,6 +475,7 @@ function startGame(settings) {
   state.freezeActive = 0;
   state.levelTransitionTimer = 0;
   state.ttsFreezeActive = false;
+  state.masteryWin = false;
   state.confetti = [];
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
@@ -526,21 +541,27 @@ function update(dt) {
       obj._dieHandled = true;
       if (obj.isLifeUp) {
         // Life-up missed — just disappears, no penalty
-      } else if (!state.practiceMode) {
-        state.lives = Math.max(0, state.lives - 1);
-        state.missedList.push({ question: obj.question, answer: obj.answer });
-        UI.showMissFlash(obj.question, obj.answer);
-        Audio.play('lifeLost');
-        vibrate(200);
-        UI.updateHUD(state);
-        if (state.lives <= 0 && state.phase === 'PLAYING') {
-          state.phase = 'ENDING';
-          setTimeout(() => endGame(), 1400);
-        }
       } else {
-        // Practice mode: track missed but no life loss
-        state.missedList.push({ question: obj.question, answer: obj.answer });
-        UI.showMissFlash(obj.question, obj.answer);
+        // Crash counts as a wrong attempt — lowers mastery for this fact
+        if (!obj.isFreeze) {
+          Progress.recordAttempt(obj.key, false, Date.now() - obj.spawnTime);
+        }
+        if (!state.practiceMode) {
+          state.lives = Math.max(0, state.lives - 1);
+          state.missedList.push({ question: obj.question, answer: obj.answer });
+          UI.showMissFlash(obj.question, obj.answer);
+          Audio.play('lifeLost');
+          vibrate(200);
+          UI.updateHUD(state);
+          if (state.lives <= 0 && state.phase === 'PLAYING') {
+            state.phase = 'ENDING';
+            setTimeout(() => endGame(), 1400);
+          }
+        } else {
+          // Practice mode: track missed but no life loss
+          state.missedList.push({ question: obj.question, answer: obj.answer });
+          UI.showMissFlash(obj.question, obj.answer);
+        }
       }
     }
   }
@@ -726,6 +747,7 @@ function submitAnswer() {
       state.bossesDefeated++;
       Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
+      checkMasteryWin();
       Audio.play('levelUp');
       UI.showLevelUp('Boss!', null);
       UI.updateHUD(state);
@@ -797,6 +819,7 @@ function submitAnswer() {
     state.correctThisLevel++;
 
     Progress.recordAttempt(target.key, true, elapsed);
+    checkMasteryWin();
 
     // Graduate out of wrong queue if it was there
     state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
@@ -892,18 +915,21 @@ function endGame() {
     levelStars: state.levelStars,
     maxStreak: state.maxStreak || 0,
     bossesDefeated: state.bossesDefeated || 0,
-    missCount: state.missedList.length
+    missCount: state.missedList.length,
+    masteryWin: state.masteryWin || false,
   };
   const newAchievements = Progress.saveSession(session);
   if (state.isDaily) {
     Progress.saveDailyResult({ score: state.score, level: state.level, accuracy });
     session.dailyBadge = true;
   }
+  const masteryData = Progress.getMastery(state.minTable, state.maxTable);
 
   UI.showGameOver(
     session,
     state.missedList,
     newAchievements,
+    masteryData,
     () => { UI.showScreen('onboarding'); },
     () => UI.showLeaderboard(() => UI.showScreen('onboarding'))
   );
