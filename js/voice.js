@@ -19,6 +19,27 @@ const Voice = (() => {
   let lastFiredQuestionKey = '';
   let activeQuestionKey = '';
 
+  // Delayed fire for conf=0 streaming partials (Android/Chrome SR behaviour).
+  // The engine fires isFinal=true with conf=0 for each growing token chunk:
+  //   "2" → "2 *" → "2 * 11" → "2 * 11 22" (conf=0.87, fires immediately)
+  // Holding conf=0 results 320ms lets later chunks cancel earlier wrong ones.
+  const PARTIAL_DELAY_MS = 320;
+  let _pendingFire = null;
+
+  function cancelPending() {
+    if (_pendingFire) { clearTimeout(_pendingFire.timer); _pendingFire = null; }
+  }
+
+  function _doFire(winner, votes, alternatives) {
+    lastFiredNum  = winner;
+    lastFiredTime = Date.now();
+    lastFiredQuestionKey = activeQuestionKey || '';
+    console.log(`[Voice] → ${winner} | weights ${JSON.stringify(votes)} | alts`, alternatives);
+    _tlog('onNumber', `→ ${winner}`);
+    callbacks.onNumber?.(winner);
+    callbacks.onResultDone?.();
+  }
+
   // While TTS is speaking, discard all SR results so the mic doesn't
   // hear the speaker output. SR stays running (no restart dead zone).
   let resultsMuted = false;
@@ -312,6 +333,8 @@ const Voice = (() => {
   // ---- Final transcript handling ----
   function handleTranscript(alternatives, confidences) {
     if (resultsMuted) return;
+    // Every new result supersedes any pending conf=0 partial from before.
+    cancelPending();
     const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const cmds = NAV_COMMANDS[lang] || NAV_COMMANDS.en;
 
@@ -400,14 +423,19 @@ const Voice = (() => {
       callbacks.onResultDone?.();
       return;
     }
-    lastFiredNum  = winner;
-    lastFiredTime = now;
-    lastFiredQuestionKey = activeQuestionKey || '';
-
-    console.log(`[Voice] → ${winner} | weights ${JSON.stringify(votes)} | alts`, alternatives);
-    _tlog('onNumber', `→ ${winner}`);
-    callbacks.onNumber?.(winner);
-    callbacks.onResultDone?.();
+    const primaryConf = confidences?.[0] ?? 0;
+    if (primaryConf > 0) {
+      // Confident result — fire immediately.
+      _doFire(winner, votes, alternatives);
+    } else {
+      // conf=0 streaming partial — hold briefly so the engine can extend it.
+      // If a better result arrives within PARTIAL_DELAY_MS it cancels this one.
+      const snap = { winner, votes, alternatives };
+      _pendingFire = { winner, timer: setTimeout(() => {
+        _pendingFire = null;
+        _doFire(snap.winner, snap.votes, snap.alternatives);
+      }, PARTIAL_DELAY_MS) };
+    }
   }
 
   // ---- Interim result handler ----
@@ -547,6 +575,7 @@ const Voice = (() => {
     if (!supported || !recognition) return;
     resultsMuted  = false; // clear any stale mute from previous TTS
     listening = shouldRestart = true;
+    cancelPending();
     lastFiredNum  = null;  // reset debounce on new game session
     lastFiredTime = 0;
     lastFiredQuestionKey = '';
@@ -560,6 +589,7 @@ const Voice = (() => {
   function stop() {
     if (!supported || !recognition) return;
     listening = shouldRestart = false;
+    cancelPending();
     clearTimeout(restartTimer);
     clearTimeout(watchdogTimer);
     try { recognition.stop(); } catch (_) {}
