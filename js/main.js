@@ -168,7 +168,10 @@ function update(dt) {
     state.lifeUpTimer += dt;
     if (state.lifeUpTimer >= 20) {
       state.lifeUpTimer = 0;
-      state.objects.push(Objects.createLifeUp(window.innerWidth, speed));
+      const stats = Progress.getStats();
+      const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
+      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
+      state.objects.push(Objects.createLifeUp(q, window.innerWidth, speed));
     }
   } else {
     state.lifeUpTimer = 0; // reset timer when at full health or one already active
@@ -191,10 +194,10 @@ function update(dt) {
   Targeting.syncTarget(state.objects);
   UI.updateHUD(state);
 
-  // Update input placeholder based on current target type
+  // Update input placeholder — hint when a life-up is targeted
   const currentTarget = Targeting.getTarget();
-  const input = document.getElementById('answer-input');
-  input.placeholder = (currentTarget && currentTarget.isLifeUp) ? 'Press Enter!' : 'Answer...';
+  const inp = document.getElementById('answer-input');
+  inp.placeholder = (currentTarget && currentTarget.isLifeUp) ? 'Answer for +1 life!' : 'Answer...';
 }
 
 // ---- RENDER ----
@@ -222,21 +225,28 @@ function submitAnswer() {
   const target = Targeting.getTarget();
   if (!target) { input.value = ''; input.focus(); return; }
 
-  // Life-up: collect on any Enter press (no answer needed)
+  const val = parseInt(input.value.trim());
+  if (isNaN(val)) { input.focus(); return; }
+
+  // Life-up: correct answer earns a life, wrong answer just shakes
   if (target.isLifeUp) {
-    Objects.triggerDestruction(target, '#2ed573');
-    state.lives = Math.min(MAX_LIVES, state.lives + 1);
-    UI.updateHUD(state);
-    Audio.play('levelUp');
-    input.value = '';
-    input.placeholder = 'Answer...';
-    Targeting.syncTarget(state.objects);
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#2ed573');
+      state.lives = Math.min(MAX_LIVES, state.lives + 1);
+      UI.updateHUD(state);
+      Audio.play('levelUp');
+      input.value = '';
+      input.placeholder = 'Answer...';
+      Targeting.syncTarget(state.objects);
+    } else {
+      Audio.play('wrong');
+      UI.shakeInput();
+      UI.showTryAgain();
+      input.value = '';
+    }
     input.focus();
     return;
   }
-
-  const val = parseInt(input.value.trim());
-  if (isNaN(val)) { input.focus(); return; }
 
   const elapsed = Date.now() - state.answerStartTime;
   state.totalAttempts++;

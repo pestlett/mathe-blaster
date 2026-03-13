@@ -88,14 +88,14 @@ const Objects = (() => {
     }
   }
 
-  function createLifeUp(canvasWidth, speed) {
+  function createLifeUp(question, canvasWidth, speed) {
     const margin = 90;
     const x = margin + Math.random() * (canvasWidth - margin * 2);
     return {
       isLifeUp: true,
-      question: '❤ +1',
-      answer: null,
-      key: '__lifeup__',
+      question: question.display,
+      answer: question.answer,
+      key: question.key,
       x,
       y: -80,
       speed: speed * 0.65,   // falls slower so the player has time to react

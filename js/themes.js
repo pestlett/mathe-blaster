@@ -476,21 +476,27 @@ const Themes = (() => {
     ctx.arc(x, y, 30, 0, Math.PI * 2);
     ctx.fill();
 
-    // Heart shape
+    // Heart icon (top of the circle)
     ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 22px serif';
+    ctx.font = 'bold 16px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('❤', x, y - 2);
+    ctx.fillText('❤', x, y - 16);
 
     if (showLabel) {
-      ctx.fillStyle = targeted ? '#fff' : '#e8ffe8';
-      ctx.font = 'bold 11px Segoe UI, sans-serif';
-      ctx.shadowColor = 'rgba(0,0,0,0.7)';
-      ctx.shadowBlur = 4;
-      ctx.fillText('+1 life', x, y + 22);
+      // Show the question
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Segoe UI, sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 5;
+      ctx.fillText(obj.question, x, y + 2);
+      // "+1 life" badge below
+      ctx.fillStyle = targeted ? '#fff' : '#b8ffcc';
+      ctx.font = 'bold 10px Segoe UI, sans-serif';
+      ctx.shadowBlur = 3;
+      ctx.fillText('+1 life', x, y + 20);
     }
 
     ctx.restore();
