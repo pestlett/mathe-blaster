@@ -51,9 +51,9 @@ const I18n = (() => {
       helpRepeat:       'Questions you get wrong come back more often — so you\'ll master them',
       helpEndless:      'The game gets faster each level — it\'s a high-score challenge, not a race to the finish!',
       helpVoiceTitle:   '🎤 Voice input',
-      helpVoiceNumber:  'Say the answer — it submits automatically (e.g. "forty-eight" or "48")',
-      helpVoiceTrigger: 'Trigger mode — enable it to require "fire 48" format (reduces accidental fires)',
-      helpVoiceFire:    'fire / shoot — submit a typed answer by voice',
+      helpVoiceNumber:  '<strong>Normal mode (default):</strong> say the answer — it submits automatically (e.g. "forty-eight" or "48")',
+      helpVoiceTrigger: '<strong>Trigger mode:</strong> say your trigger word then the answer (e.g. "fire 48") — only that combination fires; a bare number just previews it. Enable above and set your preferred word.',
+      helpVoiceFire:    '<strong>fire / shoot / go / yes</strong> — submit the answer currently shown, or use as the trigger word prefix',
       helpVoiceNext:    'next / forward — switch to the next problem',
       helpVoiceBack:    'back / previous — switch to the previous problem',
       helpVoiceClear:   'clear / delete — clear the answer box',
@@ -200,9 +200,9 @@ const I18n = (() => {
       helpRepeat:       'Falsch beantwortete Aufgaben kommen häufiger — so lernst du sie sicher',
       helpEndless:      'Das Spiel wird mit jedem Level schneller — es geht ums Highscore-Jagen!',
       helpVoiceTitle:   '🎤 Spracheingabe',
-      helpVoiceNumber:  'Zahl sagen — wird automatisch abgeschickt (z.B. "achtundvierzig" oder "48")',
-      helpVoiceTrigger: 'Auslösewort-Modus — aktivieren, um "feuer 48"-Format zu erfordern (verhindert Versehentliches)',
-      helpVoiceFire:    'feuer / schießen — eingetippte Antwort per Sprache absenden',
+      helpVoiceNumber:  '<strong>Normalmodus (Standard):</strong> Zahl sagen — wird sofort abgeschickt (z.B. "achtundvierzig" oder "48")',
+      helpVoiceTrigger: '<strong>Auslösewort-Modus:</strong> Befehlswort + Antwort sagen (z.B. "feuer 48") — nur diese Kombination zählt; eine einzelne Zahl zeigt nur eine Vorschau. Oben aktivieren und bevorzugtes Wort festlegen.',
+      helpVoiceFire:    '<strong>feuer / schießen / ja</strong> — angezeigte Antwort abschicken oder als Auslösewort-Präfix verwenden',
       helpVoiceNext:    'weiter / vor — zur nächsten Aufgabe',
       helpVoiceBack:    'zurück — zur vorherigen Aufgabe',
       helpVoiceClear:   'löschen — Eingabefeld leeren',
@@ -342,9 +342,9 @@ const I18n = (() => {
       helpRepeat:       'Las preguntas fallidas vuelven más seguido — así las dominarás de verdad',
       helpEndless:      '¡El juego se acelera cada nivel — es un reto de puntuación sin final!',
       helpVoiceTitle:   '🎤 Entrada de voz',
-      helpVoiceNumber:  'Di el número — se envía automáticamente (p.ej. "cuarenta y ocho" o "48")',
-      helpVoiceTrigger: 'Modo activador — actívalo para requerir el formato "fuego 48" (reduce disparos accidentales)',
-      helpVoiceFire:    'fuego / disparar — envía por voz una respuesta ya escrita',
+      helpVoiceNumber:  '<strong>Modo normal (predeterminado):</strong> di el número — se envía automáticamente (p.ej. "cuarenta y ocho" o "48")',
+      helpVoiceTrigger: '<strong>Modo activador:</strong> di la palabra activadora seguida de la respuesta (p.ej. "fuego 48") — solo esa combinación la envía; un número solo solo muestra una vista previa. Actívalo arriba y elige tu palabra.',
+      helpVoiceFire:    '<strong>fuego / disparar / listo / sí</strong> — envía la respuesta mostrada, o úsalo como prefijo activador',
       helpVoiceNext:    'siguiente / adelante — pasar al siguiente problema',
       helpVoiceBack:    'atrás / anterior — volver al problema anterior',
       helpVoiceClear:   'borrar / limpiar — vaciar el cuadro de respuesta',
@@ -480,6 +480,10 @@ const I18n = (() => {
       } else {
         el.textContent = val;
       }
+    });
+    // data-i18n-html: like data-i18n but renders HTML (use only for trusted static strings)
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = t(el.dataset.i18nHtml);
     });
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
       el.placeholder = t(el.dataset.i18nPh);
