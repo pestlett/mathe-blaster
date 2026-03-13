@@ -24,13 +24,19 @@ const Voice = (() => {
   //   "2" → "2 *" → "2 * 11" → "2 * 11 22" (conf=0.87, fires immediately)
   // Holding conf=0 results 320ms lets later chunks cancel earlier wrong ones.
   const PARTIAL_DELAY_MS = 320;
-  let _pendingFire = null;
+  let _pendingFire    = null;
+  let _pendingCommand = null;
 
   function cancelPending() {
     if (_pendingFire) { clearTimeout(_pendingFire.timer); _pendingFire = null; }
   }
 
+  function cancelPendingCommand() {
+    if (_pendingCommand) { clearTimeout(_pendingCommand.timer); _pendingCommand = null; }
+  }
+
   function _doFire(winner, votes, alternatives) {
+    cancelPendingCommand(); // a number firing supersedes any pending fire command
     lastFiredNum  = winner;
     lastFiredTime = Date.now();
     lastFiredQuestionKey = activeQuestionKey || '';
@@ -241,6 +247,25 @@ const Voice = (() => {
     return false;
   }
 
+  // Content-based echo filter (no time limit).
+  // Blocks results that are purely the question being read back, identified by:
+  //   - contains an explicit multiplication operator word (times, x, mal, por…)
+  //   - all parseable numeric tokens match the question operands (no extra answer digit)
+  // Without an operator word we can't distinguish "eight" (answer) from echo.
+  function looksLikePureEcho(text) {
+    if (_echoOperandNums.length < 2) return false;
+    const normalized = normalizeSpeechText(text);
+    if (!normalized) return false;
+    const tokens = normalized.split(' ').filter(Boolean);
+    const hasOperator = tokens.some(t => _echoOperatorWords.has(t) || t === '*');
+    if (!hasOperator) return false;
+    const numTokens = tokens.map(parseAtomicToken).filter(n => n !== null);
+    // If there are more numeric tokens than operands the user added the answer too — not a pure echo.
+    if (numTokens.length > _echoOperandNums.length) return false;
+    const operandSet = new Set(_echoOperandNums);
+    return numTokens.every(n => operandSet.has(n));
+  }
+
   // ---- Number parser ----
   function parseNumber(text) {
     text = normalizeSpeechText(text);
@@ -335,6 +360,7 @@ const Voice = (() => {
     if (resultsMuted) return;
     // Every new result supersedes any pending conf=0 partial from before.
     cancelPending();
+    cancelPendingCommand();
     const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
     const cmds = NAV_COMMANDS[lang] || NAV_COMMANDS.en;
 
@@ -344,11 +370,30 @@ const Voice = (() => {
 
     if (!texts.length) return;
 
+    // Compute confidence up front — needed by tryCommand for fire delay.
+    const primaryConf = confidences?.[0] ?? 0;
+
     // Commands: try exact match first, then last-word fallback.
     // The last-word fallback handles SR picking up ambient audio before
     // the command word, e.g. "tea fire" → "fire", "here fire" → "fire".
+    // "fire" with conf=0 is held briefly (same as number partials) so that
+    // a corrected result ("fire 39" → number 39) can cancel it first.
     function tryCommand(text) {
-      if (cmds.fire.includes(text))     { console.log('[Voice] cmd: fire');     callbacks.onFire?.();     callbacks.onResultDone?.(); return true; }
+      if (cmds.fire.includes(text)) {
+        if (primaryConf > 0) {
+          console.log('[Voice] cmd: fire');
+          callbacks.onFire?.();
+          callbacks.onResultDone?.();
+        } else {
+          _pendingCommand = { timer: setTimeout(() => {
+            _pendingCommand = null;
+            console.log('[Voice] cmd: fire (delayed)');
+            callbacks.onFire?.();
+            callbacks.onResultDone?.();
+          }, PARTIAL_DELAY_MS) };
+        }
+        return true;
+      }
       if (cmds.next.includes(text))     { console.log('[Voice] cmd: next');     callbacks.onNext?.();     callbacks.onResultDone?.(); return true; }
       if (cmds.previous.includes(text)) { console.log('[Voice] cmd: previous'); callbacks.onPrevious?.(); callbacks.onResultDone?.(); return true; }
       if (cmds.clear.includes(text))    { console.log('[Voice] cmd: clear');    callbacks.onClear?.();    callbacks.onResultDone?.(); return true; }
@@ -363,14 +408,18 @@ const Voice = (() => {
     // Numbers: confidence-weighted voting across all alternatives.
     // Falls back to position-based weight (1/rank) when confidence scores are
     // all zero (common on some engines/platforms).
+    const allCmdWords = new Set(Object.values(cmds).flat());
     const votes = {};
     texts.forEach((text, idx) => {
       const conf = (confidences?.[idx] > 0) ? confidences[idx] : (1 / (idx + 1));
-      // Try raw text, noise-stripped, then last token as fallback.
-      // Last-token fallback handles SR prepending ambient audio before the
-      // actual answer word, e.g. "here six" → 6, "2 x 9 18" → 18.
+      // Candidate order (tried in sequence, first successful parse wins):
+      //   1. raw text
+      //   2. noise-stripped text
+      //   3. first non-command parseable token — fixes "44 fire for" → 44 (vs lastToken "for"→4)
+      //   4. last token — catches "here six" → 6, "2 x 9 18" → 18
       const lastToken = text.split(/\s+/).filter(Boolean).pop() || '';
-      const candidates = [text, stripNoise(text), lastToken].filter((t, i, arr) => t && arr.indexOf(t) === i);
+      const firstNumNonCmd = text.split(/\s+/).filter(t => t && !allCmdWords.has(t) && parseAtomicToken(t) !== null)[0] || '';
+      const candidates = [text, stripNoise(text), firstNumNonCmd, lastToken].filter((t, i, arr) => t && arr.indexOf(t) === i);
       for (const t of candidates) {
         const n = parseNumber(t);
         if (n !== null && n >= 0 && n <= 200) {
@@ -408,6 +457,14 @@ const Voice = (() => {
       return;
     }
 
+    // Content-based echo filter (no time limit): blocks "2 times 2", "2 x 2" etc.
+    // even when TTS guard has already expired.
+    if (texts.some(looksLikePureEcho)) {
+      console.log('[Voice] echo filter: pure question echo, discarding', alternatives);
+      callbacks.onResultDone?.();
+      return;
+    }
+
     // Operand-only fallback: keep this short to avoid blocking valid fast
     // answers on facts like 1×7 where the answer equals a spoken operand.
     if (now < _echoNumberGuardUntil && _echoNums.has(winner)) {
@@ -423,7 +480,6 @@ const Voice = (() => {
       callbacks.onResultDone?.();
       return;
     }
-    const primaryConf = confidences?.[0] ?? 0;
     if (primaryConf > 0) {
       // Confident result — fire immediately.
       _doFire(winner, votes, alternatives);
@@ -576,6 +632,7 @@ const Voice = (() => {
     resultsMuted  = false; // clear any stale mute from previous TTS
     listening = shouldRestart = true;
     cancelPending();
+    cancelPendingCommand();
     lastFiredNum  = null;  // reset debounce on new game session
     lastFiredTime = 0;
     lastFiredQuestionKey = '';
@@ -590,6 +647,7 @@ const Voice = (() => {
     if (!supported || !recognition) return;
     listening = shouldRestart = false;
     cancelPending();
+    cancelPendingCommand();
     clearTimeout(restartTimer);
     clearTimeout(watchdogTimer);
     try { recognition.stop(); } catch (_) {}
