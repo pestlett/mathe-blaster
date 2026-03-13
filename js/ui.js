@@ -234,11 +234,20 @@ const UI = (() => {
 
   // ---- Try Again message ----
   let tryAgainTimer = null;
-  function showTryAgain() {
+  function showTryAgain(question, answer) {
     const el = document.getElementById('try-again-msg');
-    el.textContent = I18n.t('tryAgain');
+    if (question != null && answer != null) {
+      el.innerHTML =
+        `<span class="try-again-eq">${question} = <strong>${answer}</strong></span>`;
+    } else {
+      el.textContent = I18n.t('tryAgain');
+    }
+    el.classList.add('visible');
     if (tryAgainTimer) clearTimeout(tryAgainTimer);
-    tryAgainTimer = setTimeout(() => { el.textContent = ''; }, 500);
+    tryAgainTimer = setTimeout(() => {
+      el.classList.remove('visible');
+      setTimeout(() => { el.innerHTML = ''; }, 300);
+    }, 1400);
   }
 
   // ---- Miss flash (centre-screen equation reveal) ----

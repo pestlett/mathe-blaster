@@ -68,6 +68,37 @@ function hideSuggestion() {
   _voiceSuggestionEl.classList.add('hidden');
 }
 
+// ---- Read question aloud (speechSynthesis) ----
+let _lastSpokenTarget = null;
+let _speakTimer       = null;
+
+function speakQuestion(text) {
+  if (!window.speechSynthesis) return;
+  clearTimeout(_speakTimer);
+  // Cancel smoothly: let current speech finish its current phoneme (~80ms),
+  // then cancel and speak the new question after a short gap.
+  _speakTimer = setTimeout(() => {
+    window.speechSynthesis.cancel();
+    const lang       = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
+    const timesWord  = lang === 'de' ? 'mal' : lang === 'es' ? 'por' : 'times';
+    const speakable  = text.replace(/×/, timesWord).replace(/\s+/g, ' ').trim();
+    const utt        = new SpeechSynthesisUtterance(speakable);
+    utt.lang         = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
+    utt.rate         = 0.92;
+    utt.pitch        = 1.1;
+    window.speechSynthesis.speak(utt);
+  }, 120);
+}
+
+function maybeSpeak() {
+  if (state.phase !== 'PLAYING') return;
+  const target = Targeting.getTarget();
+  if (target && target !== _lastSpokenTarget) {
+    _lastSpokenTarget = target;
+    speakQuestion(target.question);
+  }
+}
+
 // ---- Bootstrap ----
 window.addEventListener('DOMContentLoaded', () => {
   Engine.init(update, render);
@@ -287,6 +318,9 @@ function startGame(settings) {
   state.phase = 'PLAYING';
 
   Targeting.reset();
+  _lastSpokenTarget = null;
+  clearTimeout(_speakTimer);
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   Themes.init(state.theme, window.innerWidth, window.innerHeight);
   Audio.setTheme(state.theme);
   Audio.playMusic(state.theme);
@@ -366,6 +400,7 @@ function update(dt) {
   // If boss is alive, skip normal spawns
   if (hasBoss) {
     Targeting.syncTarget(state.objects);
+    maybeSpeak();
     for (const obj of state.objects) {
       if (!obj.isLifeUp && !obj.isFreeze) obj.hintActive = obj.wrongAttempts >= state.hintThreshold;
     }
@@ -427,6 +462,7 @@ function update(dt) {
 
   // Sync targeting
   Targeting.syncTarget(state.objects);
+  maybeSpeak();
 
   // Update hint visibility
   for (const obj of state.objects) {
@@ -500,7 +536,7 @@ function submitAnswer() {
       target.wrongAttempts = (target.wrongAttempts || 0) + 1;
       Audio.play('wrong');
       UI.shakeInput();
-      UI.showTryAgain();
+      UI.showTryAgain(target.question, target.answer);
       input.value = '';
       state.answerStartTime = Date.now();
     }
@@ -521,7 +557,7 @@ function submitAnswer() {
     } else {
       Audio.play('wrong');
       UI.shakeInput();
-      UI.showTryAgain();
+      UI.showTryAgain(target.question, target.answer);
       input.value = '';
     }
     focusAnswerInput();
@@ -541,7 +577,7 @@ function submitAnswer() {
     } else {
       Audio.play('wrong');
       UI.shakeInput();
-      UI.showTryAgain();
+      UI.showTryAgain(target.question, target.answer);
       input.value = '';
     }
     focusAnswerInput();
@@ -608,7 +644,7 @@ function submitAnswer() {
     }
     Audio.play('wrong');
     UI.shakeInput();
-    UI.showTryAgain();
+    UI.showTryAgain(target.question, target.answer);
     input.value = '';
     state.answerStartTime = Date.now();
   }
@@ -621,6 +657,9 @@ function endGame() {
   Audio.stopMusic();
   Engine.stop();
   Voice.stop();
+  clearTimeout(_speakTimer);
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  _lastSpokenTarget = null;
   state.phase = 'GAME_OVER';
 
   const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 0;

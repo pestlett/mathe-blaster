@@ -728,12 +728,26 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 #try-again-msg {
-  font-size: 1rem;
+  min-height: 1.6rem;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+#try-again-msg.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.try-again-eq {
+  font-size: 1.15rem;
   font-weight: 700;
   color: #ff4757;
-  min-height: 1.2rem;
-  text-align: center;
-  text-shadow: 0 0 10px rgba(255,71,87,0.6);
+  text-shadow: 0 0 12px rgba(255,71,87,0.5);
+  letter-spacing: 0.03em;
+}
+.try-again-eq strong {
+  color: #f7c948;
+  text-shadow: 0 0 12px rgba(247,201,72,0.6);
 }
 
 
