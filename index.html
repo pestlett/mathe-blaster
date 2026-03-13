@@ -151,6 +151,7 @@
     </div>
     <footer class="game-footer">
       Made with ❤️ &amp; 🐱 for <strong>Emma Jewell Colicheo</strong> by her Daddy (and Claude Code)
+      &nbsp;·&nbsp; <span id="footer-version"></span>
     </footer>
   </div>
 
@@ -265,6 +266,7 @@
     </div>
   </div>
 
+  <script src="js/version.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/voice.js"></script>
   <script src="js/progress.js"></script>
@@ -277,6 +279,7 @@
   <script src="js/engine.js"></script>
   <script src="js/main.js"></script>
   <script>
+    document.getElementById('footer-version').textContent = 'v' + APP_VERSION;
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
     }
