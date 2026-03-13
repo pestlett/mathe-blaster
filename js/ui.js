@@ -46,16 +46,20 @@ const UI = (() => {
       });
     });
 
-    // Range sliders
-    function updateRange() {
-      let min = parseInt(rangeMin.value);
-      let max = parseInt(rangeMax.value);
-      if (min > max) { const t = min; min = max; max = t; }
-      rangeDisplay.textContent = `${min} – ${max}`;
-    }
-    rangeMin.addEventListener('input', updateRange);
-    rangeMax.addEventListener('input', updateRange);
-    updateRange();
+    // Range sliders — clamp so min ≤ max at all times
+    rangeMin.addEventListener('input', () => {
+      if (parseInt(rangeMin.value) > parseInt(rangeMax.value)) {
+        rangeMax.value = rangeMin.value;
+      }
+      rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
+    });
+    rangeMax.addEventListener('input', () => {
+      if (parseInt(rangeMax.value) < parseInt(rangeMin.value)) {
+        rangeMin.value = rangeMax.value;
+      }
+      rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
+    });
+    rangeDisplay.textContent = `${rangeMin.value} – ${rangeMax.value}`;
 
     btnStart.addEventListener('click', () => {
       const name = nameInput.value.trim() || 'Player';
