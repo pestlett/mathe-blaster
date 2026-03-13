@@ -172,6 +172,10 @@ const UI = (() => {
     }
     _refreshDailyBtn();
 
+    document.getElementById('btn-achievements-home').addEventListener('click', () => {
+      showAchievements(() => showScreen('onboarding'));
+    });
+
     document.getElementById('btn-dashboard').addEventListener('click', () => {
       showDashboard(() => showScreen('onboarding'));
     });

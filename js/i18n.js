@@ -36,6 +36,10 @@ const I18n = (() => {
       dailyDone:        '⚡ Daily Challenge ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Parent Dashboard',
 
+      // HUD
+      levelLabel:        'Level ',
+      hintWrongTries:    'wrong tries',
+
       // In-game
       answerPlaceholder: 'Answer...',
       lifeUpPlaceholder: 'Answer for +1 life!',
@@ -141,6 +145,10 @@ const I18n = (() => {
       dailyDone:        '⚡ Tages-Challenge ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Eltern-Dashboard',
 
+      // HUD
+      levelLabel:        'Level ',
+      hintWrongTries:    'falsche Versuche',
+
       answerPlaceholder: 'Antwort...',
       lifeUpPlaceholder: 'Antwort für +1 Leben!',
       freezePlaceholder: 'Antwort zum Einfrieren!',
@@ -239,6 +247,10 @@ const I18n = (() => {
       dailyNew:         '⚡ Desafío Diario — tabla del {table}× · {diff}',
       dailyDone:        '⚡ Desafío Diario ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Panel de Padres',
+
+      // HUD
+      levelLabel:        'Nivel ',
+      hintWrongTries:    'intentos fallidos',
 
       answerPlaceholder: 'Respuesta...',
       lifeUpPlaceholder: '¡Responde por +1 vida!',
