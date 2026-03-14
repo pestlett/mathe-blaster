@@ -24,6 +24,10 @@ const Themes = (() => {
 
   // ---- Sky clouds ----
   let clouds = null;
+
+  // ---- Cats theme ----
+  let yarnBalls = null;
+  let pawprints = null;
   function initClouds(w, h) {
     clouds = [];
     for (let i = 0; i < 7; i++) {
@@ -35,6 +39,32 @@ const Themes = (() => {
     if (theme === 'space') initStars(w, h);
     if (theme === 'ocean') initFish(w, h);
     if (theme === 'sky') initClouds(w, h);
+    if (theme === 'cats') initCatsScene(w, h);
+  }
+
+  function initCatsScene(w, h) {
+    yarnBalls = [];
+    for (let i = 0; i < 4; i++) {
+      yarnBalls.push({
+        x: Math.random() * w,
+        y: h * 0.4 + Math.random() * (h * 0.35),
+        vx: (Math.random() - 0.5) * 40,
+        vy: (Math.random() - 0.5) * 20,
+        r: 14 + Math.random() * 10,
+        color: ['#e63946', '#f4a261', '#a8dadc', '#c77dff'][i % 4],
+        angle: 0
+      });
+    }
+    pawprints = [];
+    for (let i = 0; i < 8; i++) {
+      pawprints.push({
+        x: 50 + Math.random() * (w - 100),
+        y: h * 0.6 + Math.random() * (h * 0.35),
+        angle: (Math.random() - 0.5) * 0.8,
+        alpha: 0.05 + Math.random() * 0.1,
+        size: 8 + Math.random() * 6
+      });
+    }
   }
 
   // ========================
@@ -164,6 +194,125 @@ const Themes = (() => {
     ctx.restore();
   }
 
+  function drawCatsBackground(ctx, w, h, t) {
+    // Warm room gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#ffecd2');
+    grad.addColorStop(0.55, '#fcb69f');
+    grad.addColorStop(0.8, '#c8834a');
+    grad.addColorStop(1, '#8b5e3c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Wooden floor planks
+    const floorY = h * 0.78;
+    ctx.save();
+    ctx.fillStyle = '#8b5e3c';
+    ctx.fillRect(0, floorY, w, h - floorY);
+    ctx.strokeStyle = '#6b4226';
+    ctx.lineWidth = 1.5;
+    const plankW = w / 4;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * plankW, floorY);
+      ctx.lineTo(i * plankW, h);
+      ctx.stroke();
+    }
+    for (let j = 0; j < 3; j++) {
+      ctx.beginPath();
+      ctx.moveTo(0, floorY + (h - floorY) * (j + 1) / 3);
+      ctx.lineTo(w, floorY + (h - floorY) * (j + 1) / 3);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Window light patch on the wall
+    ctx.save();
+    const winX = w * 0.15, winY = h * 0.08;
+    const winW = w * 0.22, winH = h * 0.28;
+    ctx.globalAlpha = 0.18;
+    const wg = ctx.createRadialGradient(winX + winW/2, winY + winH/2, 0, winX + winW/2, winY + winH/2, winW * 0.8);
+    wg.addColorStop(0, '#fffbe0');
+    wg.addColorStop(1, 'rgba(255,251,224,0)');
+    ctx.fillStyle = wg;
+    ctx.fillRect(winX, winY, winW, winH);
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = '#c89b5a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(winX, winY, winW, winH);
+    ctx.beginPath();
+    ctx.moveTo(winX + winW/2, winY); ctx.lineTo(winX + winW/2, winY + winH);
+    ctx.moveTo(winX, winY + winH/2); ctx.lineTo(winX + winW, winY + winH/2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Pawprints on floor
+    if (!pawprints) initCatsScene(w, h);
+    for (const p of pawprints) {
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      drawPawprint(ctx, 0, 0, p.size, '#5a3620');
+      ctx.restore();
+    }
+
+    // Yarn balls
+    if (!yarnBalls) initCatsScene(w, h);
+    const dt = 0.016;
+    for (const ball of yarnBalls) {
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt + Math.sin(t * 0.5 + ball.r) * 0.3;
+      ball.angle += ball.vx * dt * 0.05;
+      if (ball.x < ball.r) { ball.x = ball.r; ball.vx = Math.abs(ball.vx); }
+      if (ball.x > w - ball.r) { ball.x = w - ball.r; ball.vx = -Math.abs(ball.vx); }
+      const floorLine = h * 0.78 - ball.r;
+      if (ball.y > floorLine) ball.y = floorLine;
+      drawYarnBall(ctx, ball.x, ball.y, ball.r, ball.color, ball.angle);
+    }
+  }
+
+  function drawPawprint(ctx, x, y, size, color) {
+    ctx.fillStyle = color;
+    // Main pad (larger oval)
+    ctx.beginPath();
+    ctx.ellipse(x, y + size * 0.3, size * 0.6, size * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Toe beans (3 small circles on top)
+    const toeOffsets = [[-size*0.55, -size*0.1], [0, -size*0.5], [size*0.55, -size*0.1]];
+    for (const [tx, ty] of toeOffsets) {
+      ctx.beginPath();
+      ctx.arc(x + tx, y + ty, size * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawYarnBall(ctx, x, y, r, color, angle) {
+    ctx.save();
+    ctx.translate(x, y);
+    // Ball body
+    const g = ctx.createRadialGradient(-r*0.3, -r*0.3, r*0.05, 0, 0, r);
+    g.addColorStop(0, lighten(color, 50));
+    g.addColorStop(0.7, color);
+    g.addColorStop(1, darken(color, 30));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    // Yarn lines (rotated)
+    ctx.strokeStyle = lighten(color, 30);
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.5;
+    ctx.rotate(angle);
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 4);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 0.9, r * 0.3, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // ========================
   //  OBJECT RENDERERS
   // ========================
@@ -208,6 +357,7 @@ const Themes = (() => {
     if (theme === 'space') drawMeteor(ctx, x, y, obj, targeted, showQuestion);
     else if (theme === 'ocean') drawBubble(ctx, x, y, obj, targeted, showQuestion);
     else if (theme === 'sky') drawBalloon(ctx, x, y, obj, targeted, showQuestion);
+    else if (theme === 'cats') drawFishObject(ctx, x, y, obj, targeted, showQuestion);
 
     if (obj.hintActive) drawHintGrid(ctx, obj);
     if (obj._answerRevealed) drawAnswerReveal(ctx, obj);
@@ -424,6 +574,101 @@ const Themes = (() => {
     if (showQuestion) drawQuestionText(ctx, x, y - 2, obj.question, '#fff', 14);
   }
 
+  function drawFishObject(ctx, x, y, obj, targeted, showQuestion) {
+    // Pick a color per answer
+    const FISH_COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#f77f00', '#c77dff', '#ff9ebc', '#00d4aa'];
+    const col = FISH_COLORS[obj.answer % FISH_COLORS.length];
+    const t = Date.now() * 0.001;
+    const wobble = Math.sin(t * 3 + obj.wobbleOffset) * 0.15;
+
+    ctx.save();
+    if (targeted) { ctx.shadowColor = '#fff59d'; ctx.shadowBlur = 35; }
+    ctx.translate(x, y);
+    ctx.rotate(wobble);
+
+    // Tail fin
+    ctx.fillStyle = darken(col, 20);
+    ctx.beginPath();
+    ctx.moveTo(-28, 0);
+    ctx.lineTo(-42, -14);
+    ctx.lineTo(-42, 14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Body
+    const bg = ctx.createRadialGradient(-5, -6, 3, 0, 0, 22);
+    bg.addColorStop(0, lighten(col, 50));
+    bg.addColorStop(0.6, col);
+    bg.addColorStop(1, darken(col, 25));
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 26, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Top dorsal fin
+    ctx.fillStyle = darken(col, 15);
+    ctx.beginPath();
+    ctx.moveTo(-8, -14);
+    ctx.quadraticCurveTo(2, -26, 14, -14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(16, -4, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.arc(17, -4, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye shine
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(18, -5, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mouth
+    ctx.strokeStyle = darken(col, 30);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(24, -1, 4, Math.PI * 0.2, Math.PI * 0.9);
+    ctx.stroke();
+
+    // Scales (subtle arcs)
+    ctx.strokeStyle = darken(col, 15);
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.5;
+    [[-5, 0, 8], [5, 3, 7], [-12, -3, 7]].forEach(([sx, sy, sr]) => {
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+
+    // Targeted glow ring
+    if (targeted) {
+      const pulse = 0.6 + 0.4 * Math.sin(Date.now() * 0.008);
+      ctx.shadowColor = '#fff59d';
+      ctx.shadowBlur = 25;
+      ctx.strokeStyle = '#fff59d';
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = pulse;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 36, 22, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = pulse * 0.35;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 42, 27, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#fff', 14);
+  }
+
   function drawDyingObject(ctx, obj, theme) {
     const x = obj.x + obj.wobbleX;
     const y = obj.y;
@@ -446,6 +691,15 @@ const Themes = (() => {
       const r = 34 * (1 - obj.dieTimer * 0.3);
       ctx.fillStyle = 'rgba(0,150,200,0.3)';
       ctx.beginPath(); ctx.arc(x, y, Math.max(4, r), 0, Math.PI * 2); ctx.fill();
+    } else if (theme === 'cats') {
+      // Fish floats up and fades
+      const scaleX = Math.max(0.2, 1 - obj.dieTimer * 0.4);
+      ctx.save(); ctx.translate(x, y); ctx.scale(scaleX, scaleX); ctx.rotate(Math.PI / 4);
+      const FISH_COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#f77f00', '#c77dff', '#ff9ebc', '#00d4aa'];
+      const col = FISH_COLORS[obj.answer % FISH_COLORS.length];
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     } else {
       // Deflating balloon
       const scaleY = Math.max(0.1, 1 - obj.dieTimer * 0.5);
@@ -572,7 +826,154 @@ const Themes = (() => {
   //  BOSS OBJECT
   // ========================
 
+  function drawRatBoss(ctx, obj, showQuestion) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y;
+    const t = Date.now() * 0.001;
+    const scale = obj.scale ?? 1.0;
+    const pulse = 0.6 + 0.4 * Math.sin(t * 3);
+    const r = Math.max(22, 55 * scale);
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+
+    const rs = r / scale; // base radius before scale
+
+    // Shadow
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = (20 + 10 * pulse);
+
+    // Tail
+    ctx.strokeStyle = '#c89b8a';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(30, 20);
+    ctx.quadraticCurveTo(60, 30 + Math.sin(t * 2) * 10, 55, 60 + Math.sin(t * 1.5) * 15);
+    ctx.stroke();
+
+    // Body
+    ctx.fillStyle = '#8b8b8b';
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 35, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head
+    const ratHeadGrad = ctx.createRadialGradient(-5, -15, 3, 0, -10, 30);
+    ratHeadGrad.addColorStop(0, '#aaaaaa');
+    ratHeadGrad.addColorStop(0.7, '#888888');
+    ratHeadGrad.addColorStop(1, '#666666');
+    ctx.fillStyle = ratHeadGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 26, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ears
+    ctx.fillStyle = '#7a7a7a';
+    ctx.beginPath();
+    ctx.arc(-20, -26, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(20, -26, 12, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner ear
+    ctx.fillStyle = '#c89b8a';
+    ctx.beginPath();
+    ctx.arc(-20, -26, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(20, -26, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes (red beady)
+    [-10, 10].forEach(ex => {
+      ctx.fillStyle = '#330000';
+      ctx.beginPath();
+      ctx.arc(ex, -14, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#cc0000';
+      ctx.beginPath();
+      ctx.arc(ex, -14, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff4444';
+      ctx.beginPath();
+      ctx.arc(ex, -14, 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Shine
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(ex + 1.5, -16, 1, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Nose
+    ctx.fillStyle = '#cc6677';
+    ctx.beginPath();
+    ctx.ellipse(0, -4, 5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mouth / fangs
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-5, -1); ctx.lineTo(-3, 3); ctx.moveTo(5, -1); ctx.lineTo(3, 3);
+    ctx.stroke();
+    ctx.fillStyle = '#f0f0e0';
+    ctx.beginPath();
+    ctx.moveTo(-4, 0); ctx.lineTo(-2, 0); ctx.lineTo(-3, 5); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(4, 0); ctx.lineTo(2, 0); ctx.lineTo(3, 5); ctx.closePath(); ctx.fill();
+
+    // Whiskers
+    ctx.strokeStyle = 'rgba(200,200,200,0.7)';
+    ctx.lineWidth = 1;
+    [[-8, -6], [-6, -2]].forEach(([wx, wy]) => {
+      ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx - 22, wy - 3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-wx, wy); ctx.lineTo(-wx + 22, wy - 3); ctx.stroke();
+    });
+
+    // Pulsing outer ring
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 20 + 10 * pulse;
+    ctx.strokeStyle = '#ff3333';
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.4 + 0.3 * pulse;
+    ctx.beginPath();
+    ctx.arc(0, 0, rs * 1.15 + 5 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // BOSS label above
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ff0';
+    ctx.font = `bold ${Math.max(8, Math.round(11 * scale))}px Segoe UI, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BOSS', 0, -rs * 0.6 - 5);
+
+    // Progress dots
+    if ((obj.questionsTotal ?? 1) > 1) {
+      const dotR = Math.max(3, 4 * scale);
+      const spacing = dotR * 3;
+      const total = obj.questionsTotal;
+      const done = obj.questionIndex;
+      const startX = -((total - 1) * spacing) / 2;
+      for (let i = 0; i < total; i++) {
+        ctx.beginPath();
+        ctx.arc(startX + i * spacing, rs * 0.7 + 5, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = i < done ? '#ff0' : 'rgba(255,255,255,0.3)';
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+
+    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#ffffff', Math.max(13, Math.round(20 * scale)));
+  }
+
   function drawBossObject(ctx, obj, theme, showQuestion) {
+    if (theme === 'cats') { drawRatBoss(ctx, obj, showQuestion); return; }
     const x = obj.x + obj.wobbleX;
     const y = obj.y;
     const t = Date.now() * 0.001;
@@ -711,10 +1112,212 @@ const Themes = (() => {
   //  WEAPON RENDERERS
   // ========================
 
+  function drawCatPlayer(ctx, w, h, tx, ty) {
+    const bx = w / 2;
+    const by = h - 80;
+    const t = Date.now() * 0.001;
+
+    // Determine which way the cat is looking
+    const lookDir = tx < bx ? -1 : 1;
+    const angle = Math.atan2(ty - by, tx - bx);
+
+    ctx.save();
+    ctx.translate(bx, by);
+
+    // Tail (behind body)
+    ctx.save();
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-lookDir * 18, 0);
+    ctx.quadraticCurveTo(-lookDir * 50, -20 + Math.sin(t * 2) * 10, -lookDir * 55, -45 + Math.sin(t * 2.5) * 15);
+    ctx.stroke();
+    // Tail tip
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(-lookDir * 50, -38 + Math.sin(t * 2.5) * 15);
+    ctx.lineTo(-lookDir * 55, -45 + Math.sin(t * 2.5) * 15);
+    ctx.stroke();
+    ctx.restore();
+
+    // Body (fluffy oval)
+    const bodyGrad = ctx.createRadialGradient(-4, -8, 4, 0, 0, 30);
+    bodyGrad.addColorStop(0, '#ffffff');
+    bodyGrad.addColorStop(0.7, '#f0f0f0');
+    bodyGrad.addColorStop(1, '#d8d8d8');
+    ctx.fillStyle = bodyGrad;
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 28, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Head
+    const headGrad = ctx.createRadialGradient(-3, -38, 3, 0, -38, 22);
+    headGrad.addColorStop(0, '#ffffff');
+    headGrad.addColorStop(0.7, '#f0f0f0');
+    headGrad.addColorStop(1, '#d8d8d8');
+    ctx.fillStyle = headGrad;
+    ctx.beginPath();
+    ctx.arc(0, -38, 22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ears (triangles)
+    ctx.fillStyle = '#f0f0f0';
+    // Left ear
+    ctx.beginPath();
+    ctx.moveTo(-18, -50);
+    ctx.lineTo(-28, -68);
+    ctx.lineTo(-8, -58);
+    ctx.closePath();
+    ctx.fill();
+    // Right ear
+    ctx.beginPath();
+    ctx.moveTo(18, -50);
+    ctx.lineTo(28, -68);
+    ctx.lineTo(8, -58);
+    ctx.closePath();
+    ctx.fill();
+    // Inner ear pink
+    ctx.fillStyle = '#ffb3ba';
+    ctx.beginPath();
+    ctx.moveTo(-17, -53);
+    ctx.lineTo(-24, -63);
+    ctx.lineTo(-10, -58);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(17, -53);
+    ctx.lineTo(24, -63);
+    ctx.lineTo(10, -58);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eyes (blue!)
+    [-7, 7].forEach(ex => {
+      // Outer eye white
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(ex, -40, 6, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Blue iris
+      const irisGrad = ctx.createRadialGradient(ex + lookDir * 1.5, -40, 0.5, ex, -40, 5);
+      irisGrad.addColorStop(0, '#74c0fc');
+      irisGrad.addColorStop(0.5, '#339af0');
+      irisGrad.addColorStop(1, '#1864ab');
+      ctx.fillStyle = irisGrad;
+      ctx.beginPath();
+      ctx.ellipse(ex, -40, 4.5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Pupil
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.ellipse(ex + lookDir * 1, -40, 2, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Eye shine
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(ex + lookDir * 2, -42, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Nose (pink triangle)
+    ctx.fillStyle = '#ffb3ba';
+    ctx.beginPath();
+    ctx.moveTo(0, -33);
+    ctx.lineTo(-3, -30);
+    ctx.lineTo(3, -30);
+    ctx.closePath();
+    ctx.fill();
+
+    // Mouth
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -30);
+    ctx.quadraticCurveTo(-5, -27, -7, -29);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -30);
+    ctx.quadraticCurveTo(5, -27, 7, -29);
+    ctx.stroke();
+
+    // Whiskers
+    ctx.strokeStyle = 'rgba(180,180,180,0.8)';
+    ctx.lineWidth = 1;
+    [[-22, -32, -8, -31], [-22, -29, -8, -29], [-22, -26, -8, -27]].forEach(([x1, y1, x2, y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-x1, y1); ctx.lineTo(-x2, y2); ctx.stroke();
+    });
+
+    // Paw (extended toward target)
+    const pawAngle = angle;
+    ctx.save();
+    ctx.rotate(pawAngle);
+    ctx.translate(32, -5);
+    // Arm
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(20, 0);
+    ctx.stroke();
+    // Paw pad
+    ctx.fillStyle = '#ffb3ba';
+    ctx.beginPath();
+    ctx.arc(22, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,180,190,0.6)';
+    [[-3, -5], [3, -5], [-5, 0], [5, 0]].forEach(([px, py]) => {
+      ctx.beginPath();
+      ctx.arc(22 + px, py, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+
+    ctx.restore();
+
+    // Targeting beam — warm orange glow (like a cat laser pointer!)
+    ctx.save();
+    const beamStart = { x: bx + Math.cos(angle) * 34, y: by + Math.sin(angle) * 34 - 5 };
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = '#ff6b35';
+    ctx.lineWidth = 10;
+    ctx.shadowColor = '#ff6b35';
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.moveTo(beamStart.x, beamStart.y);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+    ctx.globalAlpha = 0.8;
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(beamStart.x, beamStart.y);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+    // Laser dot at target
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#ff0000';
+    ctx.shadowColor = '#ff4000';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(tx, ty, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   function drawWeapon(ctx, w, h, theme, targetX, targetY) {
     if (theme === 'space') drawCannon(ctx, w, h, targetX, targetY);
     else if (theme === 'ocean') drawSubmarine(ctx, w, h, targetX, targetY);
     else if (theme === 'sky') drawSlingshot(ctx, w, h, targetX, targetY);
+    else if (theme === 'cats') drawCatPlayer(ctx, w, h, targetX, targetY);
   }
 
   function drawCannon(ctx, w, h, tx, ty) {
@@ -883,6 +1486,7 @@ const Themes = (() => {
     if (theme === 'space') drawSpaceBackground(ctx, w, h, t);
     else if (theme === 'ocean') drawOceanBackground(ctx, w, h, t);
     else if (theme === 'sky') drawSkyBackground(ctx, w, h, t);
+    else if (theme === 'cats') drawCatsBackground(ctx, w, h, t);
   }
 
   // ========================
@@ -892,6 +1496,7 @@ const Themes = (() => {
   function particleColorForTheme(theme) {
     if (theme === 'space') return '#ff6b35';
     if (theme === 'ocean') return '#90e0ef';
+    if (theme === 'cats') return '#ff9ebc';
     return '#ffd93d';
   }
 
