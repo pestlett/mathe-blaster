@@ -16,10 +16,15 @@ The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
 | `MINOR` (0.**x**.0) | New feature or mechanic |
 | `MAJOR` (**x**.0.0) | Major redesign or breaking change |
 
-**Update all three places on every release:**
-1. `js/version.js` — `const APP_VERSION = 'x.y.z';`
-2. `package.json` — `"version": "x.y.z"`
-3. `sw.js` — `const CACHE = 'multiblaster-vx.y.z';` (forces users to fetch fresh assets)
+**`package.json` is the single source of truth for the version.**
+CI automatically injects it into `js/version.js` and `sw.js` at deploy time.
+
+**On every release, update ONE place only:**
+- `package.json` — `"version": "x.y.z"`
+
+Do **not** manually edit `js/version.js` or `sw.js` for version changes — CI overwrites them. Updating them locally is fine for dev convenience but has no effect on what gets deployed.
+
+> **Why?** When multiple feature branches are in flight simultaneously, manually versioning in each branch causes collisions (two branches both picking the same version number). Centralising in `package.json` and letting CI inject it at build time means the deployed version always matches exactly what is in `package.json` on `main` at the time of deploy.
 
 The footer displays the version automatically from `js/version.js`.
 
@@ -28,7 +33,7 @@ The footer displays the version automatically from `js/version.js`.
 |------|---------|
 | `index.html` | Single HTML shell |
 | `style.css` | All styling |
-| `js/version.js` | App version (single source of truth) |
+| `js/version.js` | App version (injected by CI from `package.json`; update `package.json` instead) |
 | `js/main.js` | State machine, entry point |
 | `js/engine.js` | requestAnimationFrame game loop |
 | `js/questions.js` | Weighted question pool |

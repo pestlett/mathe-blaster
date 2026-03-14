@@ -44,6 +44,18 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Inject version from package.json
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "const APP_VERSION = '${VERSION}';" > js/version.js
+          sed -i "s|const CACHE = .*|const CACHE = 'multiblaster-v${VERSION}';|" sw.js
+          echo "Deploying version ${VERSION}"
+
       - name: Copy site files
         run: |
           mkdir _site
