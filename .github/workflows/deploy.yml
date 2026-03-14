@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── Phase 1: run on every push EXCEPT the chore:release commit ──────────
+  # ── Skipped entirely for chore:release commits ───────────────────────────
   test:
     if: "!startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
@@ -42,8 +42,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Use DEPLOY_TOKEN (PAT) so the chore:release push re-triggers this workflow.
-          # Falls back to GITHUB_TOKEN if the secret isn't set (re-trigger won't fire in that case).
+          # DEPLOY_TOKEN (PAT) re-triggers the workflow so deploy runs under the chore:release commit.
+          # Falls back to github.token if secret not set — deploy still runs in this same workflow run.
           token: ${{ secrets.DEPLOY_TOKEN || github.token }}
 
       - name: Set up Node.js
@@ -56,23 +56,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Increment patch in package.json (0.7.0 → 0.7.1, etc.)
           npm version patch --no-git-tag-version
           VERSION=$(node -p "require('./package.json').version")
 
-          # Inject into the two derived files
           echo "// Version injected by CI from package.json — do not edit manually." > js/version.js
           echo "const APP_VERSION = '${VERSION}';" >> js/version.js
           sed -i "s|const CACHE = .*|const CACHE = 'multiblaster-v${VERSION}';|" sw.js
 
-          # Push with PAT — this WILL re-trigger the workflow, which then runs the deploy job
           git add package.json js/version.js sw.js
           git commit -m "chore: release v${VERSION}"
           git push
 
-  # ── Phase 2: deploy only when the chore:release commit lands ────────────
+  # ── Deploy: runs after bump (same run) OR when chore:release re-triggers ─
   deploy:
-    if: "startsWith(github.event.head_commit.message, 'chore: release')"
+    needs: bump-version
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -81,7 +78,10 @@ jobs:
       pages: write
       id-token: write
     steps:
+      # Fresh checkout so we always deploy the chore:release state (post-bump files)
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Configure Pages
         uses: actions/configure-pages@v4
