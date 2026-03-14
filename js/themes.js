@@ -17,8 +17,8 @@ const Themes = (() => {
   let fish = null;
   function initFish(w, h) {
     fish = [];
-    for (let i = 0; i < 5; i++) {
-      fish.push({ x: Math.random() * w, y: 80 + Math.random() * (h - 200), speed: 20 + Math.random() * 30, size: 12 + Math.random() * 20, dir: Math.random() > 0.5 ? 1 : -1 });
+    for (let i = 0; i < 6; i++) {
+      fish.push({ x: Math.random() * w, y: 80 + Math.random() * (h - 200), speed: 20 + Math.random() * 30, size: 28 + Math.random() * 28, dir: Math.random() > 0.5 ? 1 : -1 });
     }
   }
 
@@ -72,9 +72,9 @@ const Themes = (() => {
 
   function drawOceanBackground(ctx, w, h, t) {
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#001233');
-    grad.addColorStop(0.6, '#023e8a');
-    grad.addColorStop(1, '#c19a6b'); // sandy bottom
+    grad.addColorStop(0, '#003a6e');
+    grad.addColorStop(0.6, '#0a6ebd');
+    grad.addColorStop(1, '#7a5c3a'); // sandy bottom
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
@@ -104,7 +104,7 @@ const Themes = (() => {
 
   function drawFish(ctx, x, y, size, dir) {
     ctx.save();
-    ctx.globalAlpha = 0.35;
+    ctx.globalAlpha = 0.72;
     ctx.fillStyle = '#48cae4';
     ctx.translate(x, y);
     if (dir < 0) ctx.scale(-1, 1);
@@ -360,7 +360,7 @@ const Themes = (() => {
     }
     ctx.restore();
 
-    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#e0f4ff', 15);
+    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#ffffff', 18);
   }
 
   function drawBalloon(ctx, x, y, obj, targeted, showQuestion) {
@@ -493,8 +493,8 @@ const Themes = (() => {
     ctx.fillStyle = color;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 6;
+    ctx.shadowColor = 'rgba(0,0,0,0.95)';
+    ctx.shadowBlur = 10;
     ctx.fillText(text, x, y);
     ctx.restore();
   }
