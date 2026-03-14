@@ -99,14 +99,30 @@ const UI = (() => {
     });
 
     // Single-table grid
+    const numberblocksLink = document.getElementById('numberblocks-link');
+    const numberblocksLinkTable = document.getElementById('numberblocks-link-table');
     document.querySelectorAll('.table-num-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         focusSingleTable = parseInt(btn.dataset.val);
         singleNote.textContent = I18n.t('singleNote', { table: focusSingleTable });
+        if (btn.dataset.youtube) {
+          numberblocksLink.href = btn.dataset.youtube;
+          numberblocksLinkTable.textContent = focusSingleTable;
+          numberblocksLink.classList.remove('hidden');
+        } else {
+          numberblocksLink.classList.add('hidden');
+        }
       });
     });
+    // Show link for the initially active button
+    const activeBtn = document.querySelector('.table-num-btn.active');
+    if (activeBtn?.dataset.youtube) {
+      numberblocksLink.href = activeBtn.dataset.youtube;
+      numberblocksLinkTable.textContent = activeBtn.dataset.val;
+      numberblocksLink.classList.remove('hidden');
+    }
 
     // Range sliders
     const EXTENDED_MAX = 20;
