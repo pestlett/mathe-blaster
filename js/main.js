@@ -28,6 +28,8 @@ let state = {
   minTable: 1,
   maxTable: 10,
   operation: 'multiply', // 'multiply' | 'divide' | 'add' | 'subtract'
+  operations:       ['multiply'],
+  addSubRange:      100,
   zehner: false,
   halbschriftlich: false,
   difficulty: 'medium',
@@ -318,8 +320,19 @@ function maybeSpeak() {
 // for the first time this session. Shows a banner and confetti but does NOT
 // end the game. When every table in the range is done, extended tables are
 // unlocked.
+function _pickQuestion(excludeAnswers) {
+  const stats = Progress.getStats();
+  const op  = state.operations[Math.floor(Math.random() * state.operations.length)];
+  const isAddSub = op === 'add' || op === 'subtract';
+  const qMin = isAddSub ? 1 : state.minTable;
+  const qMax = isAddSub ? state.addSubRange : state.maxTable;
+  return Questions.pick(qMin, qMax, stats, excludeAnswers, state.wrongQueue, op,
+    { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich });
+}
+
 function checkTableMastery() {
   if (state.phase !== 'PLAYING') return;
+  if (state.operations.length > 1) return; // skip in mixed mode
   const op = state.operation || 'multiply';
   const { facts } = Progress.getMastery(state.minTable, state.maxTable, op);
   const aValues = [...new Set(facts.map(f => f.a))];
@@ -606,6 +619,9 @@ function startGame(settings) {
   state.operation = settings.operation || 'multiply';
   state.zehner = settings.zehner || false;
   state.halbschriftlich = settings.halbschriftlich || false;
+  state.operations  = settings.operations  || [settings.operation || 'multiply'];
+  state.operation   = state.operations[0]; // backward compat
+  state.addSubRange = settings.addSubRange || 100;
   state.difficulty = settings.difficulty;
   state.hintThreshold = settings.hintThreshold || 3;
   state.practiceMode = settings.practiceMode || false;
@@ -858,7 +874,7 @@ function update(dt) {
     const usedAnswers = [];
     const bossQuestions = [];
     for (let i = 0; i < numQ; i++) {
-      const q = Questions.pick(state.minTable, state.maxTable, stats, usedAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich });
+      const q = _pickQuestion(usedAnswers);
       bossQuestions.push(q);
       usedAnswers.push(q.answer);
     }
@@ -888,9 +904,8 @@ function update(dt) {
     state.freezeTimer += dt;
     if (state.freezeTimer >= 30) {
       state.freezeTimer = 0;
-      const stats = Progress.getStats();
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich });
+      const q = _pickQuestion(excludeAnswers);
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
       const fz = Objects.createFreeze(q, window.innerWidth, speed, liveX);
       if (fz) state.objects.push(fz); else state.freezeTimer = 28; // retry in 2s
@@ -905,9 +920,8 @@ function update(dt) {
     state.lifeUpTimer += dt;
     if (state.lifeUpTimer >= 20) {
       state.lifeUpTimer = 0;
-      const stats = Progress.getStats();
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich });
+      const q = _pickQuestion(excludeAnswers);
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
       const lu = Objects.createLifeUp(q, window.innerWidth, speed, liveX);
       if (lu) state.objects.push(lu); else state.lifeUpTimer = 18; // retry in 2s
@@ -922,9 +936,8 @@ function update(dt) {
   const staggerMax = Math.min(maxObj, 1 + Math.floor(state.gameTimeSecs / 4));
   const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze).length;
   if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < staggerMax) {
-    const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-    const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich });
+    const q = _pickQuestion(excludeAnswers);
     const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
     const obj = Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX);
     if (obj) state.objects.push(obj);

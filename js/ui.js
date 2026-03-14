@@ -38,6 +38,7 @@ const UI = (() => {
     let selectedNumRange = 100;
     let selectedZehner = false;
     let selectedHalbschriftlich = false;
+    let selectedOperations = null; // null = single op (use selectedOp); array = mixed mode
 
     // Operation selector
     const opNote = document.getElementById('op-note');
@@ -51,6 +52,12 @@ const UI = (() => {
       multiply: 'opNoteMultiply', divide: 'opNoteDivide',
       add: 'opNoteAdd', subtract: 'opNoteSubtract'
     };
+    function _clearMixed() {
+      selectedOperations = null;
+      document.querySelectorAll('#mixed-group .numrange-btn').forEach(b => b.classList.remove('active'));
+      if (document.getElementById('mixed-note')) document.getElementById('mixed-note').textContent = '';
+    }
+
     function _applyOp(op) {
       selectedOp = op;
       document.querySelectorAll('.op-btn').forEach(b => b.classList.toggle('active', b.dataset.op === op));
@@ -70,7 +77,34 @@ const UI = (() => {
       if (zehnerGroup) zehnerGroup.hidden = !isMulDiv;
     }
     document.querySelectorAll('.op-btn').forEach(btn => {
-      btn.addEventListener('click', () => _applyOp(btn.dataset.op));
+      btn.addEventListener('click', () => { _clearMixed(); _applyOp(btn.dataset.op); });
+    });
+
+    const mixedMulDiv = document.getElementById('mixed-muldiv');
+    const mixedAddSub = document.getElementById('mixed-addsub');
+    const mixedAll    = document.getElementById('mixed-all');
+    const mixedNote   = document.getElementById('mixed-note');
+
+    if (mixedMulDiv) mixedMulDiv.addEventListener('click', () => {
+      _clearMixed();
+      mixedMulDiv.classList.add('active');
+      selectedOperations = ['multiply', 'divide'];
+      _applyOp('multiply'); // show table section, zehner group
+      if (mixedNote) mixedNote.textContent = I18n.t('mixedMulDivNote');
+    });
+    if (mixedAddSub) mixedAddSub.addEventListener('click', () => {
+      _clearMixed();
+      mixedAddSub.classList.add('active');
+      selectedOperations = ['add', 'subtract'];
+      _applyOp('add'); // show numrange section
+      if (mixedNote) mixedNote.textContent = I18n.t('mixedAddSubNote');
+    });
+    if (mixedAll) mixedAll.addEventListener('click', () => {
+      _clearMixed();
+      mixedAll.classList.add('active');
+      selectedOperations = ['multiply', 'divide', 'add', 'subtract'];
+      _applyOp('multiply'); // show table section (primary)
+      if (mixedNote) mixedNote.textContent = I18n.t('mixedAllNote');
     });
 
     document.querySelectorAll('[data-max]').forEach(btn => {
@@ -358,9 +392,12 @@ const UI = (() => {
         lastPlayer: name, lastAge: age,
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
         numRange: selectedNumRange, zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich,
+        mixedPreset: selectedOperations ? selectedOperations.join(',') : null,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
+        operations: selectedOperations || [selectedOp],
+        addSubRange: selectedNumRange,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '',
@@ -404,9 +441,12 @@ const UI = (() => {
         lastPlayer: name, lastAge: age,
         triggerWord: triggerWdInput?.value?.trim(),
         numRange: selectedNumRange, zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich,
+        mixedPreset: selectedOperations ? selectedOperations.join(',') : null,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
+        operations: selectedOperations || [selectedOp],
+        addSubRange: selectedNumRange,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: false, runMode: true,
         triggerWord: triggerWdInput?.value?.trim() || '',
@@ -450,6 +490,8 @@ const UI = (() => {
       Progress.saveSettings({ ...Progress.loadSettings(), lastPlayer: name, lastAge: age });
       onStart({ name, age, theme: selectedTheme,
         minTable: dp.table, maxTable: dp.table, difficulty: dp.difficulty,
+        operations: selectedOperations || [selectedOp],
+        addSubRange: selectedNumRange,
         hintThreshold: parseInt(hintThreshInput.value), practiceMode: false, isDaily: true,
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
     });
@@ -511,6 +553,24 @@ const UI = (() => {
           document.querySelectorAll('[data-zehner]').forEach(b => {
             b.classList.toggle('active', b.dataset.zehner === 'halbschriftlich');
           });
+        }
+      }
+      if (saved.mixedPreset) {
+        const ops = saved.mixedPreset.split(',');
+        selectedOperations = ops;
+        // Activate the matching button
+        if (ops.join(',') === 'multiply,divide' && mixedMulDiv) {
+          mixedMulDiv.classList.add('active');
+          _applyOp('multiply');
+          if (mixedNote) mixedNote.textContent = I18n.t('mixedMulDivNote');
+        } else if (ops.join(',') === 'add,subtract' && mixedAddSub) {
+          mixedAddSub.classList.add('active');
+          _applyOp('add');
+          if (mixedNote) mixedNote.textContent = I18n.t('mixedAddSubNote');
+        } else if (mixedAll) {
+          mixedAll.classList.add('active');
+          _applyOp('multiply');
+          if (mixedNote) mixedNote.textContent = I18n.t('mixedAllNote');
         }
       }
     }

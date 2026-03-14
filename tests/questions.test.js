@@ -346,6 +346,19 @@ describe('Questions — large range sampling (Phase 5)', () => {
   });
 });
 
+describe('Questions — cross-operation picks', () => {
+  test('pick works for all four operations independently', () => {
+    const ctx = makeQCtx();
+    const ops = ['multiply', 'divide', 'add', 'subtract'];
+    for (const op of ops) {
+      const q = ctx.Questions.pick(3, 6, {}, [], [], op, {});
+      expect(q).not.toBeNull();
+      expect(q).toHaveProperty('answer');
+      expect(q).toHaveProperty('key');
+    }
+  });
+});
+
 describe('Questions — Halbschriftlich division (Phase 7)', () => {
   let ctx;
   beforeEach(() => { ctx = makeQCtxWithBuildPool(); });

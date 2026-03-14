@@ -64,6 +64,14 @@ const I18n = (() => {
       parentDashboard:  '📊 Parent Dashboard',
       extendedTablesUnlocked: '🎉 Extended Tables Unlocked! Try 13–20×',
 
+      mixedLabel:       'Mixed Practice',
+      mixedMulDiv:      '× + ÷',
+      mixedAddSub:      '+ + −',
+      mixedAll:         'All 4 ⚡',
+      mixedMulDivNote:  'Multiplication & division together (PIKAS recommended)',
+      mixedAddSubNote:  'Addition & subtraction together',
+      mixedAllNote:     'All four operations — full workout!',
+
       // Help section
       helpTitle:        '❓ How to Play',
       helpIntro:        'Maths problems fall from the sky. Answer them before they hit the ground!',
@@ -290,6 +298,14 @@ const I18n = (() => {
       parentDashboard:  '📊 Eltern-Dashboard',
       extendedTablesUnlocked: '🎉 Erweiterte Tabellen freigeschaltet! Probiere 13–20×',
 
+      mixedLabel:       'Gemischtes Rechnen',
+      mixedMulDiv:      '× + ÷',
+      mixedAddSub:      '+ + −',
+      mixedAll:         'Alle 4 ⚡',
+      mixedMulDivNote:  'Mal- und Geteiltaufgaben gemischt (PIKAS-Empfehlung)',
+      mixedAddSubNote:  'Plus- und Minusaufgaben gemischt',
+      mixedAllNote:     'Alle vier Rechenarten — Generalprobe!',
+
       // Help section
       helpTitle:        '❓ Wie spielt man',
       helpIntro:        'Mathe-Aufgaben fallen vom Himmel. Beantworte sie, bevor sie den Boden berühren!',
@@ -508,6 +524,14 @@ const I18n = (() => {
       dailyDone:        '⚡ Desafío Diario ✓ ({table}× · {diff})',
       parentDashboard:  '📊 Panel de Padres',
       extendedTablesUnlocked: '🎉 ¡Tablas Extendidas Desbloqueadas! Prueba 13–20×',
+
+      mixedLabel:       'Práctica Mixta',
+      mixedMulDiv:      '× + ÷',
+      mixedAddSub:      '+ + −',
+      mixedAll:         'Las 4 ⚡',
+      mixedMulDivNote:  'Multiplicación y división juntas (recomendado por PIKAS)',
+      mixedAddSubNote:  'Suma y resta juntas',
+      mixedAllNote:     '¡Las cuatro operaciones — entrenamiento completo!',
 
       // Help section
       helpTitle:        '❓ Cómo jugar',
