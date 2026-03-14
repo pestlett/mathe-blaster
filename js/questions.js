@@ -36,6 +36,71 @@ const Questions = (() => {
     return false;
   }
 
+  function _randInt(lo, hi) {
+    return lo + Math.floor(Math.random() * (hi - lo + 1));
+  }
+
+  // Generate structured random pairs for large add/subtract ranges.
+  // roundMag: granularity for 'easy' mode (10 for ≤100, 100 for ≤1000)
+  function _sampleAddPairs(lo, hi, difficulty, count) {
+    const roundMag = hi >= 200 ? 100 : 10;
+    const pairs = [];
+    const seen = new Set();
+    let attempts = 0;
+    while (pairs.length < count && attempts < count * 15) {
+      attempts++;
+      let a, b;
+      if (difficulty === 'easy') {
+        // Round multiples: both are pure multiples of roundMag within [0..hi]
+        const maxStep = Math.floor(hi / roundMag);
+        if (maxStep < 1) break;
+        a = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
+        b = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
+      } else {
+        a = _randInt(lo, hi);
+        b = _randInt(lo, hi);
+      }
+      if (difficulty === 'easy'  &&  _hasCarry(a, b)) continue;
+      if (difficulty === 'hard'  && !_hasCarry(a, b)) continue;
+      const key = `${a}a${b}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pairs.push({ a, b });
+    }
+    return pairs;
+  }
+
+  function _sampleSubPairs(lo, hi, difficulty, count) {
+    const roundMag = hi >= 200 ? 100 : 10;
+    const pairs = [];
+    const seen = new Set();
+    let attempts = 0;
+    while (pairs.length < count && attempts < count * 15) {
+      attempts++;
+      let a, b;
+      if (difficulty === 'easy') {
+        // Round multiples: both are pure multiples of roundMag within [0..hi]
+        const maxStep = Math.floor(hi / roundMag);
+        if (maxStep < 1) break;
+        a = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
+        b = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
+      } else {
+        a = _randInt(lo, hi);
+        b = _randInt(lo, hi);
+      }
+      // no negatives: ensure a >= b
+      if (a < b) { const tmp = a; a = b; b = tmp; }
+      if (a === b && difficulty === 'hard') continue; // x-x=0 never has borrow
+      if (difficulty === 'easy'  &&  _hasBorrow(a, b)) continue;
+      if (difficulty === 'hard'  && !_hasBorrow(a, b)) continue;
+      const key = `${a}s${b}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pairs.push({ a, b });
+    }
+    return pairs;
+  }
+
   // Build a weighted pool of question pairs.
   // wrongQueue: array of {key} for questions missed this session — given 16× weight.
   // operation: 'multiply' | 'divide' | 'add' | 'subtract'
@@ -70,32 +135,78 @@ const Questions = (() => {
       }
     } else if (operation === 'add') {
       const { difficulty } = opts;
-      for (let a = aRange.lo; a <= aRange.hi; a++) {
-        for (let b = bRange.lo; b <= bRange.hi; b++) {
-          if (difficulty === 'easy' && _hasCarry(a, b)) continue;
-          if (difficulty === 'hard' && !_hasCarry(a, b)) continue;
+      const lo = aRange.lo, hi = aRange.hi;
+      if (hi > 20) {
+        // Large range: always include wrongQueue pairs first
+        for (const wq of wrongQueue) {
+          const m = wq.key.match(/^(\d+)a(\d+)$/);
+          if (!m) continue;
+          const a = +m[1], b = +m[2];
           const answer = a + b;
-          const key    = `${a}a${b}`;
+          if (!excludeAnswers.includes(answer)) {
+            for (let i = 0; i < 16; i++) pool.push({ a, b, answer, key: wq.key, display: `${a} + ${b}` });
+          }
+        }
+        // Sample random pairs
+        const sampled = _sampleAddPairs(lo, hi, difficulty, 250);
+        for (const { a, b } of sampled) {
+          const answer = a + b;
+          const key = `${a}a${b}`;
           if (excludeAnswers.includes(answer)) continue;
           const w = _weight(stats, key, wrongKeys);
-          for (let i = 0; i < w; i++) {
-            pool.push({ a, b, answer, key, display: `${a} + ${b}` });
+          for (let i = 0; i < w; i++) pool.push({ a, b, answer, key, display: `${a} + ${b}` });
+        }
+      } else {
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          for (let b = bRange.lo; b <= bRange.hi; b++) {
+            if (difficulty === 'easy' && _hasCarry(a, b)) continue;
+            if (difficulty === 'hard' && !_hasCarry(a, b)) continue;
+            const answer = a + b;
+            const key    = `${a}a${b}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a, b, answer, key, display: `${a} + ${b}` });
+            }
           }
         }
       }
     } else if (operation === 'subtract') {
       const { difficulty } = opts;
-      for (let a = aRange.lo; a <= aRange.hi; a++) {
-        for (let b = bRange.lo; b <= bRange.hi; b++) {
-          if (b > a) continue; // no negatives in Klasse 3
-          if (difficulty === 'easy' && _hasBorrow(a, b)) continue;
-          if (difficulty === 'hard' && !_hasBorrow(a, b)) continue;
+      const lo = aRange.lo, hi = aRange.hi;
+      if (hi > 20) {
+        // Large range: always include wrongQueue pairs first
+        for (const wq of wrongQueue) {
+          const m = wq.key.match(/^(\d+)s(\d+)$/);
+          if (!m) continue;
+          const a = +m[1], b = +m[2];
           const answer = a - b;
-          const key    = `${a}s${b}`;
+          if (!excludeAnswers.includes(answer)) {
+            for (let i = 0; i < 16; i++) pool.push({ a, b, answer, key: wq.key, display: `${a} − ${b}` });
+          }
+        }
+        // Sample random pairs
+        const sampled = _sampleSubPairs(lo, hi, difficulty, 250);
+        for (const { a, b } of sampled) {
+          const answer = a - b;
+          const key = `${a}s${b}`;
           if (excludeAnswers.includes(answer)) continue;
           const w = _weight(stats, key, wrongKeys);
-          for (let i = 0; i < w; i++) {
-            pool.push({ a, b, answer, key, display: `${a} − ${b}` });
+          for (let i = 0; i < w; i++) pool.push({ a, b, answer, key, display: `${a} − ${b}` });
+        }
+      } else {
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          for (let b = bRange.lo; b <= bRange.hi; b++) {
+            if (b > a) continue;
+            if (difficulty === 'easy' && _hasBorrow(a, b)) continue;
+            if (difficulty === 'hard' && !_hasBorrow(a, b)) continue;
+            const answer = a - b;
+            const key    = `${a}s${b}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a, b, answer, key, display: `${a} − ${b}` });
+            }
           }
         }
       }

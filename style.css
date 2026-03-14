@@ -406,6 +406,31 @@ input[type="number"]::-webkit-outer-spin-button {
   color: var(--accent);
 }
 
+/* Number range buttons (Phase 5) */
+.numrange-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.numrange-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid var(--card-border);
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.numrange-btn:hover {
+  border-color: rgba(255,255,255,0.4);
+}
+.numrange-btn.active {
+  border-color: var(--accent);
+  background: rgba(247,201,72,0.15);
+  color: var(--accent);
+}
+
 /* Difficulty buttons */
 .difficulty-btns {
   display: flex;

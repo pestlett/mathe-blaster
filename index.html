@@ -67,7 +67,15 @@
         </div>
         <span class="setting-note" id="op-note"></span>
       </div>
-      <div class="form-group">
+      <div class="form-group" id="numrange-group" hidden>
+        <label data-i18n="numRange">Number Range</label>
+        <div class="numrange-btns">
+          <button class="numrange-btn active" data-max="100" data-i18n="numRange100">bis 100</button>
+          <button class="numrange-btn" data-max="1000" data-i18n="numRange1000">bis 1.000</button>
+        </div>
+        <span class="setting-note" id="numrange-note"></span>
+      </div>
+      <div class="form-group" id="tables-section">
         <label id="tables-label" data-i18n="tables">Tables</label>
         <div class="tables-tabs">
           <button class="tables-tab active" data-tab="range" data-i18n="tabRange">Range</button>

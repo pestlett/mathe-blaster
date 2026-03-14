@@ -201,3 +201,60 @@ describe('Questions — subtraction borrow filter', () => {
     expect(q).toHaveProperty('answer');
   });
 });
+
+describe('Questions — large range sampling (Phase 5)', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
+
+  test('add bis 100 easy: all pairs are multiples of 10', () => {
+    const pool = ctx.Questions._buildPool(1, 99, {}, [], [], 'add', { difficulty: 'easy' });
+    expect(pool.length).toBeGreaterThan(0);
+    const allRound = pool.every(q => q.a % 10 === 0 && q.b % 10 === 0);
+    expect(allRound).toBe(true);
+  });
+
+  test('add bis 100 hard: every pair has carry', () => {
+    const pool = ctx.Questions._buildPool(1, 99, {}, [], [], 'add', { difficulty: 'hard' });
+    expect(pool.length).toBeGreaterThan(0);
+    const allCarry = pool.every(q => _hasCarryTest(q.a, q.b));
+    expect(allCarry).toBe(true);
+    function _hasCarryTest(a, b) {
+      if ((a % 10) + (b % 10) >= 10) return true;
+      if (Math.floor((a % 100) / 10) + Math.floor((b % 100) / 10) >= 10) return true;
+      return false;
+    }
+  });
+
+  test('add bis 1000 easy: all pairs are multiples of 100', () => {
+    const pool = ctx.Questions._buildPool(1, 999, {}, [], [], 'add', { difficulty: 'easy' });
+    expect(pool.length).toBeGreaterThan(0);
+    const allRound = pool.every(q => q.a % 100 === 0 && q.b % 100 === 0);
+    expect(allRound).toBe(true);
+  });
+
+  test('subtract bis 1000 hard: every pair has borrow', () => {
+    const pool = ctx.Questions._buildPool(1, 999, {}, [], [], 'subtract', { difficulty: 'hard' });
+    expect(pool.length).toBeGreaterThan(0);
+    const allBorrow = pool.every(q => _hasBorrowTest(q.a, q.b));
+    expect(allBorrow).toBe(true);
+    function _hasBorrowTest(a, b) {
+      if ((a % 10) < (b % 10)) return true;
+      if (Math.floor((a % 100) / 10) < Math.floor((b % 100) / 10)) return true;
+      return false;
+    }
+  });
+
+  test('add bis 100 medium: pool contains diverse pairs', () => {
+    const pool = ctx.Questions._buildPool(1, 99, {}, [], [], 'add', {});
+    expect(pool.length).toBeGreaterThan(50);
+    const unique = new Set(pool.map(q => q.key));
+    expect(unique.size).toBeGreaterThan(30);
+  });
+
+  test('wrongQueue pairs always included with weight 16 in large range', () => {
+    const wrongQueue = [{ key: '45a32' }];
+    const pool = ctx.Questions._buildPool(1, 99, {}, [], wrongQueue, 'add', {});
+    const count = pool.filter(q => q.key === '45a32').length;
+    expect(count).toBe(16);
+  });
+});

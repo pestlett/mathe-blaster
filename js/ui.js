@@ -35,10 +35,14 @@ const UI = (() => {
     let selectedDiff = 'medium';
     let selectedMode = 'normal';
     let selectedOp = 'multiply';
+    let selectedNumRange = 100;
 
     // Operation selector
     const opNote = document.getElementById('op-note');
     const tablesLabel = document.getElementById('tables-label');
+    const numrangeGroup = document.getElementById('numrange-group');
+    const numrangeNote  = document.getElementById('numrange-note');
+    const tablesSection = document.getElementById('tables-section');
     const opNoteKeys = {
       multiply: 'opNoteMultiply', divide: 'opNoteDivide',
       add: 'opNoteAdd', subtract: 'opNoteSubtract'
@@ -52,9 +56,26 @@ const UI = (() => {
         const labelKey = (op === 'add' || op === 'subtract') ? `tables${op.charAt(0).toUpperCase()+op.slice(1)}` : 'tables';
         tablesLabel.textContent = I18n.t(labelKey);
       }
+      const isAddSub = op === 'add' || op === 'subtract';
+      if (numrangeGroup) numrangeGroup.hidden = !isAddSub;
+      if (tablesSection) tablesSection.hidden = isAddSub;
+      if (numrangeNote && isAddSub) numrangeNote.textContent = I18n.t(
+        selectedNumRange >= 1000 ? 'numRange1000Note' : 'numRange100Note'
+      );
     }
     document.querySelectorAll('.op-btn').forEach(btn => {
       btn.addEventListener('click', () => _applyOp(btn.dataset.op));
+    });
+
+    document.querySelectorAll('.numrange-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.numrange-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedNumRange = parseInt(btn.dataset.max);
+        if (numrangeNote) numrangeNote.textContent = I18n.t(
+          selectedNumRange >= 1000 ? 'numRange1000Note' : 'numRange100Note'
+        );
+      });
     });
 
     // Language switcher
@@ -294,7 +315,9 @@ const UI = (() => {
       if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
 
       let min, max;
-      if (tablesMode === 'single') {
+      if (selectedOp === 'add' || selectedOp === 'subtract') {
+        min = 1; max = selectedNumRange;
+      } else if (tablesMode === 'single') {
         min = focusSingleTable; max = focusSingleTable;
       } else {
         min = parseInt(rangeMin.value);
@@ -311,6 +334,7 @@ const UI = (() => {
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
+        numRange: selectedNumRange,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
@@ -337,7 +361,9 @@ const UI = (() => {
       if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
       if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
       let min, max;
-      if (tablesMode === 'single') {
+      if (selectedOp === 'add' || selectedOp === 'subtract') {
+        min = 1; max = selectedNumRange;
+      } else if (tablesMode === 'single') {
         min = focusSingleTable; max = focusSingleTable;
       } else {
         min = parseInt(rangeMin.value);
@@ -353,6 +379,7 @@ const UI = (() => {
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerWord: triggerWdInput?.value?.trim(),
+        numRange: selectedNumRange,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
@@ -440,6 +467,12 @@ const UI = (() => {
       }
       if (saved.triggerMode) _setTriggerMode(true);
       if (saved.triggerWord && triggerWdInput) triggerWdInput.value = saved.triggerWord;
+      if (saved.numRange) {
+        selectedNumRange = parseInt(saved.numRange);
+        document.querySelectorAll('.numrange-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.max) === selectedNumRange);
+        });
+      }
     }
     // Apply all dynamic strings in the current language (must run after settings restore)
     _refreshDynamicOnboarding(selectedMode);
