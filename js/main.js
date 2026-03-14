@@ -179,6 +179,23 @@ function drawProgressBar(ctx, target, h) {
 // ---- Voice suggestion pill (module-level so submitAnswer can access it) ----
 let _voiceSuggestionEl  = null;
 let _autoSubmitTimer    = null;
+let _typingMode         = false;  // true when user is typing; suppresses voice
+
+function _enterTypingMode() {
+  if (_typingMode) return;
+  _typingMode = true;
+  Voice.stop();
+  const btn = document.getElementById('btn-mic');
+  if (btn) { btn.classList.add('typing'); btn.title = 'Keyboard mode — click to switch to voice'; }
+}
+
+function _exitTypingMode() {
+  if (!_typingMode) return;
+  _typingMode = false;
+  const btn = document.getElementById('btn-mic');
+  if (btn) { btn.classList.remove('typing'); }
+  Voice.start();
+}
 
 function cancelAutoSubmit() {
   if (_autoSubmitTimer) { clearTimeout(_autoSubmitTimer); _autoSubmitTimer = null; }
@@ -359,6 +376,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   answerInput.addEventListener('input', () => {
     if (state.phase !== 'PLAYING') return;
+    if (Voice.supported) {
+      if (answerInput.value !== '') _enterTypingMode();
+      else _exitTypingMode();
+    }
     const target = Targeting.getTarget();
     if (!target) return;
     const val = parseInt(answerInput.value.trim());
@@ -505,6 +526,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     btnMic.addEventListener('click', () => {
       if (btnMic.classList.contains('denied')) return;
+      if (_typingMode) {
+        // User explicitly re-enables voice — exit typing mode
+        _typingMode = false;
+        btnMic.classList.remove('typing');
+        Voice.start();
+        return;
+      }
       if (btnMic.classList.contains('listening')) {
         Voice.stop();
       } else {
@@ -547,15 +575,18 @@ function useHelp() {
 
 function togglePause() {
   if (state.phase !== 'PLAYING' && !Engine.isPaused()) return;
+  const btnMic = document.getElementById('btn-mic');
   if (Engine.isPaused()) {
     Engine.resume();
-    Voice.start();                       // mic activates immediately
+    if (!_typingMode) Voice.start();     // mic activates immediately (skip if user chose keyboard mode)
     state.unpauseFreezeTimer = 1.5;      // objects hold for 1.5s so player can orient
+    btnMic.classList.remove('above-overlay');
     document.getElementById('pause-overlay').classList.remove('visible');
     focusAnswerInput();
   } else {
     Engine.pause();
     Voice.stop();
+    btnMic.classList.add('above-overlay');  // lift mic above the pause overlay
     document.getElementById('pause-overlay').classList.add('visible');
   }
 }
@@ -988,6 +1019,7 @@ function render(ctx, w, h, t) {
 function submitAnswer() {
   if (state.phase !== 'PLAYING') return;
   hideSuggestion();
+  if (_typingMode && Voice.supported) _exitTypingMode();
   const input = document.getElementById('answer-input');
 
   const target = Targeting.getTarget();
