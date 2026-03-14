@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiplication Blaster!</title>
+  <title>Mathe Blaster!</title>
   <meta name="theme-color" content="#f7c948">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -58,7 +58,17 @@
         </div>
       </div>
       <div class="form-group">
-        <label data-i18n="tables">Tables</label>
+        <label data-i18n="operation">Operation</label>
+        <div class="operation-btns">
+          <button class="op-btn active" data-op="multiply" data-i18n="opMultiply">× Multiply</button>
+          <button class="op-btn" data-op="divide" data-i18n="opDivide">÷ Divide</button>
+          <button class="op-btn" data-op="add" data-i18n="opAdd">+ Add</button>
+          <button class="op-btn" data-op="subtract" data-i18n="opSubtract">− Subtract</button>
+        </div>
+        <span class="setting-note" id="op-note"></span>
+      </div>
+      <div class="form-group">
+        <label id="tables-label" data-i18n="tables">Tables</label>
         <div class="tables-tabs">
           <button class="tables-tab active" data-tab="range" data-i18n="tabRange">Range</button>
           <button class="tables-tab" data-tab="single" data-i18n="tabSingle">One Table</button>

@@ -377,6 +377,35 @@ input[type="number"]::-webkit-outer-spin-button {
   50%       { opacity: 0.7; }
 }
 
+/* Operation buttons */
+.operation-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.op-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid var(--card-border);
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.op-btn:hover {
+  border-color: rgba(255,255,255,0.4);
+}
+.op-btn.active {
+  border-color: var(--accent);
+  background: rgba(247,201,72,0.15);
+  color: var(--accent);
+}
+
 /* Difficulty buttons */
 .difficulty-btns {
   display: flex;

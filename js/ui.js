@@ -34,6 +34,28 @@ const UI = (() => {
     let selectedTheme = 'space';
     let selectedDiff = 'medium';
     let selectedMode = 'normal';
+    let selectedOp = 'multiply';
+
+    // Operation selector
+    const opNote = document.getElementById('op-note');
+    const tablesLabel = document.getElementById('tables-label');
+    const opNoteKeys = {
+      multiply: 'opNoteMultiply', divide: 'opNoteDivide',
+      add: 'opNoteAdd', subtract: 'opNoteSubtract'
+    };
+    function _applyOp(op) {
+      selectedOp = op;
+      document.querySelectorAll('.op-btn').forEach(b => b.classList.toggle('active', b.dataset.op === op));
+      if (opNote) opNote.textContent = I18n.t(opNoteKeys[op]);
+      // Update "Tables / Zahlenraum" label
+      if (tablesLabel) {
+        const labelKey = (op === 'add' || op === 'subtract') ? `tables${op.charAt(0).toUpperCase()+op.slice(1)}` : 'tables';
+        tablesLabel.textContent = I18n.t(labelKey);
+      }
+    }
+    document.querySelectorAll('.op-btn').forEach(btn => {
+      btn.addEventListener('click', () => _applyOp(btn.dataset.op));
+    });
 
     // Language switcher
     document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -68,8 +90,13 @@ const UI = (() => {
 
     function _refreshDynamicOnboarding(mode) {
       modeNote.textContent = I18n.t(mode === 'practice' ? 'modePracticeNote' : 'modeNormalNote');
-      singleNote.textContent = I18n.t('singleNote', { table: focusSingleTable });
+      const singleNoteKey = selectedOp === 'divide' ? 'singleNoteDivide'
+        : selectedOp === 'add' ? 'singleNoteAdd'
+        : selectedOp === 'subtract' ? 'singleNoteSubtract'
+        : 'singleNote';
+      singleNote.textContent = I18n.t(singleNoteKey, { table: focusSingleTable, table2: focusSingleTable * 4 });
       hintLabel.textContent  = I18n.t('hintAfter',  { n: hintThreshInput.value });
+      _applyOp(selectedOp); // re-apply op strings in current language
     }
 
     // Difficulty
@@ -106,7 +133,11 @@ const UI = (() => {
         document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         focusSingleTable = parseInt(btn.dataset.val);
-        singleNote.textContent = I18n.t('singleNote', { table: focusSingleTable });
+        const snKey = selectedOp === 'divide' ? 'singleNoteDivide'
+          : selectedOp === 'add' ? 'singleNoteAdd'
+          : selectedOp === 'subtract' ? 'singleNoteSubtract'
+          : 'singleNote';
+        singleNote.textContent = I18n.t(snKey, { table: focusSingleTable, table2: focusSingleTable * 4 });
         if (btn.dataset.youtube) {
           numberblocksLink.href = btn.dataset.youtube;
           numberblocksLinkTable.textContent = focusSingleTable;
@@ -168,7 +199,11 @@ const UI = (() => {
             document.querySelectorAll('.table-num-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             focusSingleTable = v;
-            singleNote.textContent = I18n.t('singleNote', { table: v });
+            const snk = selectedOp === 'divide' ? 'singleNoteDivide'
+              : selectedOp === 'add' ? 'singleNoteAdd'
+              : selectedOp === 'subtract' ? 'singleNoteSubtract'
+              : 'singleNote';
+            singleNote.textContent = I18n.t(snk, { table: v, table2: v * 4 });
           });
           grid.appendChild(btn);
         }
@@ -271,12 +306,14 @@ const UI = (() => {
       Progress.saveName(name);
       Progress.saveSettings({
         theme: selectedTheme, diff: selectedDiff, mode: selectedMode,
+        operation: selectedOp,
         tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
+        operation: selectedOp,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
@@ -311,12 +348,14 @@ const UI = (() => {
       Progress.saveName(name);
       Progress.saveSettings({
         theme: selectedTheme, diff: selectedDiff, mode: selectedMode,
+        operation: selectedOp,
         tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerWord: triggerWdInput?.value?.trim(),
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
+        operation: selectedOp,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: false, runMode: true,
         triggerWord: triggerWdInput?.value?.trim() || '' });
@@ -383,9 +422,10 @@ const UI = (() => {
 
     // Restore remaining settings
     if (saved) {
-      if (saved.theme) document.querySelector(`.theme-card[data-theme="${saved.theme}"]`)?.click();
-      if (saved.diff)  document.querySelector(`.diff-btn[data-diff="${saved.diff}"]`)?.click();
-      if (saved.mode)  document.querySelector(`.mode-btn[data-mode="${saved.mode}"]`)?.click();
+      if (saved.theme)     document.querySelector(`.theme-card[data-theme="${saved.theme}"]`)?.click();
+      if (saved.diff)      document.querySelector(`.diff-btn[data-diff="${saved.diff}"]`)?.click();
+      if (saved.mode)      document.querySelector(`.mode-btn[data-mode="${saved.mode}"]`)?.click();
+      if (saved.operation) _applyOp(saved.operation);
       if (saved.hintThreshold) {
         hintThreshInput.value = saved.hintThreshold;
       }
@@ -411,9 +451,11 @@ const UI = (() => {
     document.getElementById('hud-name').textContent = I18n.t('hiPlayer', { name: state.name });
     document.getElementById('score-val').textContent = state.score;
     document.getElementById('level-val').textContent = state.level;
+    const op = state.operation || 'multiply';
+    const opSuffix = op === 'multiply' ? '' : op.charAt(0).toUpperCase() + op.slice(1);
     const tableLabel = state.minTable === state.maxTable
-      ? I18n.t('tablesFocus', { table: state.minTable })
-      : I18n.t('tablesRange', { min: state.minTable, max: state.maxTable });
+      ? I18n.t(`tablesFocus${opSuffix}`, { table: state.minTable })
+      : I18n.t(`tablesRange${opSuffix}`, { min: state.minTable, max: state.maxTable });
     let hudTables = tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
     if (state.runMode) {
       const badges = [];

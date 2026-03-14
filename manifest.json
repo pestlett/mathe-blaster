@@ -1,7 +1,7 @@
 {
-  "name": "Multiplication Blaster",
-  "short_name": "Blaster!",
-  "description": "A fun multiplication game for kids — answer questions before they hit the ground!",
+  "name": "Mathe Blaster",
+  "short_name": "Mathe Blaster",
+  "description": "A fun maths game for kids — answer questions before they hit the ground!",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait-primary",

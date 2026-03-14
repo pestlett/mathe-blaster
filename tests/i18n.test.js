@@ -14,7 +14,7 @@ describe('I18n.t()', () => {
   beforeEach(() => { ctx = makeI18nCtx(); });
 
   test('returns English string by default', () => {
-    expect(ctx.I18n.t('gameTitle')).toBe('Multiplication');
+    expect(ctx.I18n.t('gameTitle')).toBe('Mathe');
   });
 
   test('interpolates single variable', () => {
@@ -22,7 +22,7 @@ describe('I18n.t()', () => {
   });
 
   test('interpolates multiple variables', () => {
-    expect(ctx.I18n.t('tablesRange', { min: 2, max: 9 })).toBe('2–9 tables');
+    expect(ctx.I18n.t('tablesRange', { min: 2, max: 9 })).toBe('2–9 ×');
   });
 
   test('returns key when key is missing', () => {
@@ -37,7 +37,7 @@ describe('I18n.t()', () => {
     ctx.I18n.setLang('de');
     // answerPlaceholder exists in DE, so test a key that only exists in EN
     // Use a key we know is in EN to verify fallback mechanism works
-    expect(ctx.I18n.t('gameTitle')).toBe('Einmaleins'); // DE has this
+    expect(ctx.I18n.t('gameTitle')).toBe('Mathe'); // DE has this (same in all langs now)
   });
 });
 
