@@ -1,2 +1,2 @@
 // Version injected by CI from package.json — do not edit manually.
-const APP_VERSION = '0.7.21';
+const APP_VERSION = '0.7.22';
