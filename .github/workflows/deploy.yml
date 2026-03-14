@@ -5,7 +5,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Default: least-privilege. deploy job overrides what it needs.
+# Default: least-privilege. Jobs override what they need.
 permissions:
   contents: read
 
@@ -14,7 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Phase 1: run on every push EXCEPT the chore:release commit ──────────
   test:
+    if: "!startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,28 +33,24 @@ jobs:
       - name: Run tests
         run: npm test
 
-  deploy:
+  bump-version:
     needs: test
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    if: "!startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # push version-bump commit back to main
-      pages: write
-      id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          # Use GITHUB_TOKEN so the version-bump push doesn't re-trigger workflows
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Use DEPLOY_TOKEN (PAT) so the chore:release push re-triggers this workflow
+          token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Bump patch version and inject into source files
+      - name: Bump patch version and push chore:release commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -66,12 +64,23 @@ jobs:
           echo "const APP_VERSION = '${VERSION}';" >> js/version.js
           sed -i "s|const CACHE = .*|const CACHE = 'multiblaster-v${VERSION}';|" sw.js
 
-          # Commit back to main — GITHUB_TOKEN pushes do not re-trigger workflows
+          # Push with PAT — this WILL re-trigger the workflow, which then runs the deploy job
           git add package.json js/version.js sw.js
           git commit -m "chore: release v${VERSION}"
           git push
 
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+  # ── Phase 2: deploy only when the chore:release commit lands ────────────
+  deploy:
+    if: "startsWith(github.event.head_commit.message, 'chore: release')"
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Configure Pages
         uses: actions/configure-pages@v4
