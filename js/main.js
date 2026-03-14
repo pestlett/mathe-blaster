@@ -341,8 +341,12 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       useBomb();
     }
+    if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      useHelp();
+    }
     // Keep input focused on desktop
-    if (!['ArrowLeft','ArrowRight','Enter','Tab',' '].includes(e.key)) {
+    if (!['ArrowLeft','ArrowRight','Enter','Tab',' ','h','H'].includes(e.key)) {
       focusAnswerInput();
     }
   });
@@ -354,6 +358,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   btnFire.addEventListener('click', submitAnswer);
+  document.getElementById('btn-help').addEventListener('click', useHelp);
 
   // ---- Swipe to change target (mobile) ----
   // Attach to the canvas so swipes on the answer bar don't interfere.
@@ -515,6 +520,23 @@ function useBomb() {
   UI.updateHUD(state);
 }
 
+// ---- SOS / Help ----
+function useHelp() {
+  if (state.phase !== 'PLAYING') return;
+  if (state.helpCooldown > 0) return;
+  const target = Targeting.getTarget();
+  if (!target || target.isFreeze || target.isLifeUp || target.isBoss) return;
+
+  // Reveal the answer on the targeted object for 4 seconds
+  target._answerRevealed = true;
+  target._helpRevealTimer = 4;
+
+  state.helpCooldown = state.helpCooldownMax;
+  Audio.play('levelUp');
+  vibrate(60);
+  UI.updateHelpBtn(state.helpCooldown, state.helpCooldownMax);
+}
+
 function togglePause() {
   if (state.phase !== 'PLAYING' && !Engine.isPaused()) return;
   if (Engine.isPaused()) {
@@ -598,6 +620,10 @@ function startGame(settings) {
   state.lastChanceUsed    = false;
   state.missCount         = 0;
 
+  // Help / SOS system
+  state.helpCooldown    = 0;   // seconds remaining on cooldown (0 = ready)
+  state.helpCooldownMax = 30;  // cooldown duration in seconds
+
   state.phase = 'PLAYING';
 
   Targeting.reset();
@@ -645,6 +671,16 @@ function update(dt) {
   // Tick down streak flash
   if (state.streakFlashTimer > 0) {
     state.streakFlashTimer = Math.max(0, state.streakFlashTimer - dt);
+  }
+
+  // Tick down help cooldown
+  if (state.helpCooldown > 0) {
+    const prev = state.helpCooldown;
+    state.helpCooldown = Math.max(0, state.helpCooldown - dt);
+    // Update button only on integer-second boundaries (avoids per-frame DOM writes)
+    if (Math.ceil(state.helpCooldown) !== Math.ceil(prev)) {
+      UI.updateHelpBtn(state.helpCooldown, state.helpCooldownMax);
+    }
   }
 
   // Update confetti particles
@@ -857,6 +893,11 @@ function update(dt) {
       obj._revealTimer = Math.max(0, obj._revealTimer - dt);
       if (obj._revealTimer <= 0) obj._answerRevealed = false;
     }
+    // Help reveal timer (set by useHelp)
+    if (obj._helpRevealTimer > 0) {
+      obj._helpRevealTimer = Math.max(0, obj._helpRevealTimer - dt);
+      if (obj._helpRevealTimer <= 0) obj._answerRevealed = false;
+    }
   }
 
   UI.updateHUD(state);
@@ -1053,6 +1094,13 @@ function submitAnswer() {
     state.streak++;
     state.maxStreak = Math.max(state.maxStreak, state.streak);
     state.correctThisLevel++;
+
+    // Streak recharges help every 3 in a row
+    if (state.streak % 3 === 0 && state.helpCooldown > 0) {
+      state.helpCooldown = 0;
+      UI.updateHelpBtn(0, state.helpCooldownMax);
+      UI.showLevelUp('💡 Help recharged!', null);
+    }
 
     Progress.recordAttempt(target.key, true, elapsed);
     checkTableMastery();

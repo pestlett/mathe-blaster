@@ -210,6 +210,28 @@ const Themes = (() => {
     else if (theme === 'sky') drawBalloon(ctx, x, y, obj, targeted, showQuestion);
 
     if (obj.hintActive) drawHintGrid(ctx, obj);
+    if (obj._answerRevealed) drawAnswerReveal(ctx, obj);
+  }
+
+  // Draws a glowing answer badge on the object (used by SOS help)
+  function drawAnswerReveal(ctx, obj) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y + 32;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.shadowColor = '#f7c948';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = 'rgba(30,20,0,0.82)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x - 22, y - 14, 44, 26, 8) : ctx.rect(x - 22, y - 14, 44, 26);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#f7c948';
+    ctx.font = 'bold 17px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('= ' + obj.answer, x, y);
+    ctx.restore();
   }
 
   // Draws a dot grid hint (a×b visual) below the object
