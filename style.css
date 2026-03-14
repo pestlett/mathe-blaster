@@ -1553,9 +1553,15 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   margin-top: 10px !important;
 }
 
+/* Icon button group (gear + help) */
+.icon-btn-group {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
 /* Settings gear button */
 .settings-gear-btn {
-  margin-left: auto;
   padding: 4px 10px;
   border-radius: 8px;
   border: 1px solid var(--card-border);
