@@ -1,12 +1,19 @@
 # Multiplication Blaster — Development Guide
 
+## Working in a git worktree
+**Always work in a git worktree** — never modify the main checkout directly.
+
+1. Create a worktree for your task: `git worktree add ../multiplication-<task-name> -b feat/<task-name>`
+2. Do all work inside that worktree directory
+3. When done, merge directly into `main` — **do not open pull requests or MRs**
+
 ## After every change
 **Always commit and push when a task is complete.**
 1. Run `git pull origin main --rebase` — pull latest `main` first and resolve any conflicts before pushing
 2. Run `npm test` — do not commit if tests fail
 3. Stage the changed files
 4. Commit with a concise message (what changed and why)
-5. Push to `main` — this triggers CI tests and deploys to GitHub Pages
+5. Push directly to `main` — this triggers CI tests and deploys to GitHub Pages
 
 ## Versioning
 The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
