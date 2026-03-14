@@ -3,9 +3,11 @@
 ## Working in a git worktree
 **Always work in a git worktree** — never modify the main checkout directly.
 
-1. Create a worktree for your task: `git worktree add ../multiplication-<task-name> -b feat/<task-name>`
-2. Do all work inside that worktree directory
-3. When done, merge directly into `main` — **do not open pull requests or MRs**
+1. `git pull origin main --rebase` — sync with latest `main` before creating the worktree
+2. Create a worktree for your task: `git worktree add ../multiplication-<task-name> -b feat/<task-name>`
+3. Do all work inside that worktree directory
+4. **Periodically pull during long tasks**: run `git fetch origin main && git rebase origin/main` every few steps to stay current and catch conflicts early
+5. When done, merge directly into `main` — **do not open pull requests or MRs**
 
 ## After every change
 **Always commit and push when a task is complete.**
