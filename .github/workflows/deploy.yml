@@ -42,8 +42,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Use DEPLOY_TOKEN (PAT) so the chore:release push re-triggers this workflow
-          token: ${{ secrets.DEPLOY_TOKEN }}
+          # Use DEPLOY_TOKEN (PAT) so the chore:release push re-triggers this workflow.
+          # Falls back to GITHUB_TOKEN if the secret isn't set (re-trigger won't fire in that case).
+          token: ${{ secrets.DEPLOY_TOKEN || github.token }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
