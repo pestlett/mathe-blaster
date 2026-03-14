@@ -129,11 +129,15 @@ const I18n = (() => {
       achievementsBtn:   'Achievements',
 
       // Mastery
-      tableMastered:            '⭐ {table}× table mastered!',
-      tableMasteredDivide:      '⭐ ÷{table} table mastered!',
-      masteryMasteredCount:     '{n} fully mastered',
-      tableClearedBanner:       '{table}× table — well done! ⭐',
-      tableClearedBannerDivide: '÷{table} table — well done! ⭐',
+      tableMastered:               '⭐ {table}× table mastered!',
+      tableMasteredDivide:         '⭐ ÷{table} table mastered!',
+      tableMasteredAdd:            '⭐ {table}+ range mastered!',
+      tableMasteredSubtract:       '⭐ {table}− range mastered!',
+      masteryMasteredCount:        '{n} fully mastered',
+      tableClearedBanner:          '{table}× table — well done! ⭐',
+      tableClearedBannerDivide:    '÷{table} table — well done! ⭐',
+      tableClearedBannerAdd:       '{table}+ range — well done! ⭐',
+      tableClearedBannerSubtract:  '{table}− range — well done! ⭐',
       masteryTitle:             'Times Tables Progress',
       masteryTitleDivide:       'Division Progress',
       masteryTitleAdd:          'Addition Progress',
@@ -207,6 +211,10 @@ const I18n = (() => {
       ach_div_table_8:    ['Eighth Wonder',    'Answer every ÷8 fact correctly at least once'],
       ach_div_table_9:    ['Nine Slices',      'Answer every ÷9 fact correctly at least once'],
       ach_div_table_10:   ['Perfect Split',    'Answer every ÷10 fact correctly at least once'],
+      // Addition achievements
+      ach_add_first_correct: ['First Sum',        'Answer your first addition question correctly'],
+      // Subtraction achievements
+      ach_sub_first_correct: ['First Difference', 'Answer your first subtraction question correctly'],
     },
 
     de: {
@@ -332,11 +340,15 @@ const I18n = (() => {
       leaderboard:       'Bestenliste',
       achievementsBtn:   'Erfolge',
 
-      tableMastered:            '⭐ {table}× Tabelle gemeistert!',
-      tableMasteredDivide:      '⭐ ÷{table}-Tabelle gemeistert!',
-      masteryMasteredCount:     '{n} vollständig gemeistert',
-      tableClearedBanner:       '{table}×-Tabelle — toll gemacht! ⭐',
-      tableClearedBannerDivide: '÷{table}-Tabelle — toll gemacht! ⭐',
+      tableMastered:               '⭐ {table}× Tabelle gemeistert!',
+      tableMasteredDivide:         '⭐ ÷{table}-Tabelle gemeistert!',
+      tableMasteredAdd:            '⭐ {table}+ Bereich gemeistert!',
+      tableMasteredSubtract:       '⭐ {table}− Bereich gemeistert!',
+      masteryMasteredCount:        '{n} vollständig gemeistert',
+      tableClearedBanner:          '{table}×-Tabelle — toll gemacht! ⭐',
+      tableClearedBannerDivide:    '÷{table}-Tabelle — toll gemacht! ⭐',
+      tableClearedBannerAdd:       '{table}+-Bereich — toll gemacht! ⭐',
+      tableClearedBannerSubtract:  '{table}−-Bereich — toll gemacht! ⭐',
       masteryTitle:             'Einmaleins-Fortschritt',
       masteryTitleDivide:       'Divisionsfortschritt',
       masteryTitleAdd:          'Additionsfortschritt',
@@ -406,6 +418,10 @@ const I18n = (() => {
       ach_div_table_8:    ['Achteiler',           'Alle ÷8-Aufgaben mindestens einmal richtig'],
       ach_div_table_9:    ['Neunstück',           'Alle ÷9-Aufgaben mindestens einmal richtig'],
       ach_div_table_10:   ['Zehnteiler',          'Alle ÷10-Aufgaben mindestens einmal richtig'],
+      // Addition achievements
+      ach_add_first_correct: ['Erste Summe',       'Erste Additionsaufgabe richtig beantwortet'],
+      // Subtraction achievements
+      ach_sub_first_correct: ['Erste Differenz',   'Erste Subtraktionsaufgabe richtig beantwortet'],
     },
 
     es: {
@@ -531,11 +547,15 @@ const I18n = (() => {
       leaderboard:       'Clasificación',
       achievementsBtn:   'Logros',
 
-      tableMastered:            '⭐ ¡Tabla del {table}× dominada!',
-      tableMasteredDivide:      '⭐ ¡Tabla ÷{table} dominada!',
-      masteryMasteredCount:     '{n} completamente dominadas',
-      tableClearedBanner:       '¡Tabla del {table}× — muy bien! ⭐',
-      tableClearedBannerDivide: '¡Tabla ÷{table} — muy bien! ⭐',
+      tableMastered:               '⭐ ¡Tabla del {table}× dominada!',
+      tableMasteredDivide:         '⭐ ¡Tabla ÷{table} dominada!',
+      tableMasteredAdd:            '⭐ ¡Rango {table}+ dominado!',
+      tableMasteredSubtract:       '⭐ ¡Rango {table}− dominado!',
+      masteryMasteredCount:        '{n} completamente dominadas',
+      tableClearedBanner:          '¡Tabla del {table}× — muy bien! ⭐',
+      tableClearedBannerDivide:    '¡Tabla ÷{table} — muy bien! ⭐',
+      tableClearedBannerAdd:       '¡Rango {table}+ — muy bien! ⭐',
+      tableClearedBannerSubtract:  '¡Rango {table}− — muy bien! ⭐',
       masteryTitle:             'Progreso de multiplicación',
       masteryTitleDivide:       'Progreso de división',
       masteryTitleAdd:          'Progreso de suma',
@@ -605,6 +625,10 @@ const I18n = (() => {
       ach_div_table_8:    ['Dividir por 8',       'Responde cada hecho ÷8 correctamente al menos una vez'],
       ach_div_table_9:    ['Dividir por 9',       'Responde cada hecho ÷9 correctamente al menos una vez'],
       ach_div_table_10:   ['Dividir por 10',      'Responde cada hecho ÷10 correctamente al menos una vez'],
+      // Addition achievements
+      ach_add_first_correct: ['Primera Suma',      'Responde tu primera pregunta de suma correctamente'],
+      // Subtraction achievements
+      ach_sub_first_correct: ['Primera Resta',     'Responde tu primera pregunta de resta correctamente'],
     },
   };
 

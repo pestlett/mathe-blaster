@@ -18,10 +18,29 @@ const Questions = (() => {
     return baseWeight;
   }
 
+  // Returns true if adding a+b requires carrying (ones or tens column overflows)
+  function _hasCarry(a, b) {
+    if ((a % 10) + (b % 10) >= 10) return true;
+    const aTens = Math.floor((a % 100) / 10);
+    const bTens = Math.floor((b % 100) / 10);
+    if (aTens + bTens >= 10) return true;
+    return false;
+  }
+
+  // Returns true if subtracting a-b requires borrowing (a >= b assumed)
+  function _hasBorrow(a, b) {
+    if ((a % 10) < (b % 10)) return true;
+    const aTens = Math.floor((a % 100) / 10);
+    const bTens = Math.floor((b % 100) / 10);
+    if (aTens < bTens) return true;
+    return false;
+  }
+
   // Build a weighted pool of question pairs.
   // wrongQueue: array of {key} for questions missed this session — given 16× weight.
   // operation: 'multiply' | 'divide' | 'add' | 'subtract'
-  function buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation = 'multiply') {
+  // opts.difficulty: 'easy' (no carry/borrow) | 'hard' (only carry/borrow) | anything else = all
+  function buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation = 'multiply', opts = {}) {
     const wrongKeys = new Set(wrongQueue.map(q => q.key));
     const pool = [];
 
@@ -50,8 +69,11 @@ const Questions = (() => {
         }
       }
     } else if (operation === 'add') {
+      const { difficulty } = opts;
       for (let a = aRange.lo; a <= aRange.hi; a++) {
         for (let b = bRange.lo; b <= bRange.hi; b++) {
+          if (difficulty === 'easy' && _hasCarry(a, b)) continue;
+          if (difficulty === 'hard' && !_hasCarry(a, b)) continue;
           const answer = a + b;
           const key    = `${a}a${b}`;
           if (excludeAnswers.includes(answer)) continue;
@@ -62,9 +84,12 @@ const Questions = (() => {
         }
       }
     } else if (operation === 'subtract') {
+      const { difficulty } = opts;
       for (let a = aRange.lo; a <= aRange.hi; a++) {
         for (let b = bRange.lo; b <= bRange.hi; b++) {
           if (b > a) continue; // no negatives in Klasse 3
+          if (difficulty === 'easy' && _hasBorrow(a, b)) continue;
+          if (difficulty === 'hard' && !_hasBorrow(a, b)) continue;
           const answer = a - b;
           const key    = `${a}s${b}`;
           if (excludeAnswers.includes(answer)) continue;
@@ -113,8 +138,12 @@ const Questions = (() => {
     return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
   }
 
-  function pick(minTable, maxTable, stats, excludeAnswers = [], wrongQueue = [], operation = 'multiply') {
-    const pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation);
+  function pick(minTable, maxTable, stats, excludeAnswers = [], wrongQueue = [], operation = 'multiply', opts = {}) {
+    let pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, opts);
+    // If difficulty filter leaves pool empty, retry without difficulty constraint
+    if (pool.length === 0 && opts.difficulty) {
+      pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, {});
+    }
     if (pool.length === 0) {
       return _fallback(minTable, maxTable, operation);
     }

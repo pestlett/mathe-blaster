@@ -837,7 +837,12 @@ const UI = (() => {
 
   // ---- Table cleared banner (all facts in a table answered ≥1 time) ----
   function showTableClearedBanner(table, operation = 'multiply') {
-    const key = operation === 'divide' ? 'tableClearedBannerDivide' : 'tableClearedBanner';
+    const keyMap = {
+      divide:   'tableClearedBannerDivide',
+      add:      'tableClearedBannerAdd',
+      subtract: 'tableClearedBannerSubtract',
+    };
+    const key = keyMap[operation] || 'tableClearedBanner';
     showLevelUp(I18n.t(key, { table }), null);
   }
 

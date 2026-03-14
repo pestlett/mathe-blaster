@@ -332,7 +332,8 @@ function checkTableMastery() {
     state.masteredTablesAnnounced.add(a);
     state.confetti = spawnConfetti(window.innerWidth);
     vibrate([40, 60, 80, 60, 40]);
-    const masteredKey = op === 'divide' ? 'tableMasteredDivide' : 'tableMastered';
+    const masteredKeyMap = { divide: 'tableMasteredDivide', add: 'tableMasteredAdd', subtract: 'tableMasteredSubtract' };
+    const masteredKey = masteredKeyMap[op] || 'tableMastered';
     UI.showLevelUp(I18n.t(masteredKey, { table: a }), null);
   }
 
@@ -850,7 +851,7 @@ function update(dt) {
     const usedAnswers = [];
     const bossQuestions = [];
     for (let i = 0; i < numQ; i++) {
-      const q = Questions.pick(state.minTable, state.maxTable, stats, usedAnswers, state.wrongQueue, state.operation);
+      const q = Questions.pick(state.minTable, state.maxTable, stats, usedAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty });
       bossQuestions.push(q);
       usedAnswers.push(q.answer);
     }
@@ -882,7 +883,7 @@ function update(dt) {
       state.freezeTimer = 0;
       const stats = Progress.getStats();
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation);
+      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty });
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
       const fz = Objects.createFreeze(q, window.innerWidth, speed, liveX);
       if (fz) state.objects.push(fz); else state.freezeTimer = 28; // retry in 2s
@@ -899,7 +900,7 @@ function update(dt) {
       state.lifeUpTimer = 0;
       const stats = Progress.getStats();
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation);
+      const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty });
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
       const lu = Objects.createLifeUp(q, window.innerWidth, speed, liveX);
       if (lu) state.objects.push(lu); else state.lifeUpTimer = 18; // retry in 2s
@@ -916,7 +917,7 @@ function update(dt) {
   if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < staggerMax) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-    const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation);
+    const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue, state.operation, { difficulty: state.difficulty });
     const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
     const obj = Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX);
     if (obj) state.objects.push(obj);

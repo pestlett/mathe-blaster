@@ -147,3 +147,57 @@ describe('Questions.pick — fallback', () => {
     expect(q).toHaveProperty('answer');
   });
 });
+
+describe('Questions — addition carry filter', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
+
+  test('easy (no carry): no question in pool has ones digits summing ≥ 10', () => {
+    const pool = ctx.Questions._buildPool(1, 9, {}, [], [], 'add', { difficulty: 'easy' });
+    const hasCarry = pool.some(q => (q.a % 10) + (q.b % 10) >= 10);
+    expect(hasCarry).toBe(false);
+  });
+
+  test('hard (with carry): every question in pool has carry', () => {
+    const pool = ctx.Questions._buildPool(1, 9, {}, [], [], 'add', { difficulty: 'hard' });
+    expect(pool.length).toBeGreaterThan(0);
+    const allHaveCarry = pool.every(q => (q.a % 10) + (q.b % 10) >= 10 ||
+      Math.floor((q.a % 100) / 10) + Math.floor((q.b % 100) / 10) >= 10);
+    expect(allHaveCarry).toBe(true);
+  });
+
+  test('medium (no difficulty): pool contains both carry and non-carry pairs', () => {
+    const pool = ctx.Questions._buildPool(1, 9, {}, [], [], 'add', {});
+    const hasCarry    = pool.some(q => (q.a % 10) + (q.b % 10) >= 10);
+    const hasNoCarry  = pool.some(q => (q.a % 10) + (q.b % 10) < 10);
+    expect(hasCarry).toBe(true);
+    expect(hasNoCarry).toBe(true);
+  });
+});
+
+describe('Questions — subtraction borrow filter', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
+
+  test('easy (no borrow): no question requires borrowing from ones column', () => {
+    const pool = ctx.Questions._buildPool(1, 9, {}, [], [], 'subtract', { difficulty: 'easy' });
+    const hasBorrow = pool.some(q => (q.a % 10) < (q.b % 10));
+    expect(hasBorrow).toBe(false);
+  });
+
+  test('hard (with borrow): every question requires borrowing', () => {
+    // Use 20× (single-table) so bRange=1..12; pairs like 20-1, 20-3 etc. need borrow (0 < 1/3)
+    const pool = ctx.Questions._buildPool(20, 20, {}, [], [], 'subtract', { difficulty: 'hard' });
+    expect(pool.length).toBeGreaterThan(0);
+    const allHaveBorrow = pool.every(q => (q.a % 10) < (q.b % 10) ||
+      Math.floor((q.a % 100) / 10) < Math.floor((q.b % 100) / 10));
+    expect(allHaveBorrow).toBe(true);
+  });
+
+  test('pick() falls back to unfiltered pool when difficulty filter empties it', () => {
+    // 5−5 is the only pair (1-range), no borrow possible → hard filter empties it → fallback
+    const q = ctx.Questions.pick(5, 5, {}, [], [], 'subtract', { difficulty: 'hard' });
+    expect(q).not.toBeNull();
+    expect(q).toHaveProperty('answer');
+  });
+});

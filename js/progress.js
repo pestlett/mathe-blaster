@@ -74,6 +74,10 @@ const Progress = (() => {
     { id: 'div_table_8',  label: 'Eighth Wonder',   desc: 'Answer every ÷8 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 8)  },
     { id: 'div_table_9',  label: 'Nine Slices',     desc: 'Answer every ÷9 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 9)  },
     { id: 'div_table_10', label: 'Perfect Split',   desc: 'Answer every ÷10 fact correctly at least once', check: (_, s) => tableDivideComplete(s, 10) },
+    // Addition achievements
+    { id: 'add_first_correct', label: 'First Sum',        desc: 'Answer your first addition question correctly',    check: (_, s) => Object.keys(s).some(k => /^\d+a\d+$/.test(k) && (s[k].correct || 0) >= 1) },
+    // Subtraction achievements
+    { id: 'sub_first_correct', label: 'First Difference', desc: 'Answer your first subtraction question correctly', check: (_, s) => Object.keys(s).some(k => /^\d+s\d+$/.test(k) && (s[k].correct || 0) >= 1) },
   ];
 
   // A multiplication fact is "cleanly known" if answered correctly at least once
