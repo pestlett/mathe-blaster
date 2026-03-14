@@ -21,6 +21,7 @@
         <button class="lang-btn active" data-lang="en">EN</button>
         <button class="lang-btn" data-lang="de">DE</button>
         <button class="lang-btn" data-lang="es">ES</button>
+        <button id="btn-help-modal" class="settings-gear-btn" aria-label="How to Play">?</button>
         <button id="btn-settings" class="settings-gear-btn" aria-label="Settings">⚙️</button>
       </div>
 
@@ -278,6 +279,40 @@
     </div>
   </div>
 
+  <!-- Help Modal -->
+  <div id="help-modal" class="settings-overlay">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h2 data-i18n="helpTitle">How to Play</h2>
+        <button id="btn-help-modal-close" class="settings-close-btn">✕</button>
+      </div>
+      <div class="help-body">
+        <p data-i18n="helpIntro">Multiplication problems fall from the sky. Answer them before they hit the ground!</p>
+        <ul>
+          <li data-i18n="helpTarget">Swipe left/right (mobile) or use <strong>← →</strong> arrow keys to switch target</li>
+          <li data-i18n="helpType">Type the answer and press <strong>Enter</strong> or <strong>Fire!</strong> — on mobile, just say the answer aloud</li>
+          <li data-i18n="helpLives">You have 3 lives — lose one each time a problem hits the bottom (Normal mode)</li>
+          <li data-i18n="helpStreak">Answer fast for bonus points — streaks of <strong>3×</strong> and <strong>5×</strong> multiply your score</li>
+          <li data-i18n="helpFreeze">Catch the ❄️ <strong>Freeze</strong> item to slow all falling problems for 5s</li>
+          <li data-i18n="helpLifeUp">Catch the 💚 <strong>Life Up</strong> item to regain a lost life</li>
+          <li data-i18n="helpBoss">Every 5 levels a <strong>Boss</strong> appears — defeat it for 50 bonus points</li>
+          <li data-i18n="helpHint">A dot-grid hint appears after you miss the same question several times</li>
+          <li data-i18n="helpRepeat">Questions you get wrong come back more often — so you'll master them</li>
+          <li data-i18n="helpEndless">The game gets faster each level — it's a high-score challenge, not a race to the finish!</li>
+        </ul>
+        <p class="help-subhead" data-i18n="helpVoiceTitle">🎤 Voice input</p>
+        <ul>
+          <li data-i18n-html="helpVoiceNumber"><strong>Normal mode (default):</strong> say the answer — it submits automatically (e.g. "forty-eight" or "48")</li>
+          <li data-i18n-html="helpVoiceTrigger"><strong>Trigger mode:</strong> say your trigger word then the answer (e.g. "fire 48") — only that combination fires; a bare number just previews it. Enable above and set your preferred word.</li>
+          <li data-i18n-html="helpVoiceFire"><strong>fire / shoot / go / yes</strong> — submit the answer currently shown, or use as the trigger word prefix</li>
+          <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
+          <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>
+          <li data-i18n="helpVoiceClear"><strong>clear / delete</strong> — clear the answer box</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal -->
   <div id="settings-modal" class="settings-overlay">
     <div class="settings-card">
@@ -346,36 +381,6 @@
         </div>
       </div>
 
-      <!-- Help section -->
-      <div class="settings-section">
-        <details class="help-section">
-          <summary data-i18n="helpTitle">❓ How to Play</summary>
-          <div class="help-body">
-            <p data-i18n="helpIntro">Multiplication problems fall from the sky. Answer them before they hit the ground!</p>
-            <ul>
-              <li data-i18n="helpTarget">Swipe left/right (mobile) or use <strong>← →</strong> arrow keys to switch target</li>
-              <li data-i18n="helpType">Type the answer and press <strong>Enter</strong> or <strong>Fire!</strong> — on mobile, just say the answer aloud</li>
-              <li data-i18n="helpLives">You have 3 lives — lose one each time a problem hits the bottom (Normal mode)</li>
-              <li data-i18n="helpStreak">Answer fast for bonus points — streaks of <strong>3×</strong> and <strong>5×</strong> multiply your score</li>
-              <li data-i18n="helpFreeze">Catch the ❄️ <strong>Freeze</strong> item to slow all falling problems for 5s</li>
-              <li data-i18n="helpLifeUp">Catch the 💚 <strong>Life Up</strong> item to regain a lost life</li>
-              <li data-i18n="helpBoss">Every 5 levels a <strong>Boss</strong> appears — defeat it for 50 bonus points</li>
-              <li data-i18n="helpHint">A dot-grid hint appears after you miss the same question several times</li>
-              <li data-i18n="helpRepeat">Questions you get wrong come back more often — so you'll master them</li>
-              <li data-i18n="helpEndless">The game gets faster each level — it's a high-score challenge, not a race to the finish!</li>
-            </ul>
-            <p class="help-subhead" data-i18n="helpVoiceTitle">🎤 Voice input</p>
-            <ul>
-              <li data-i18n-html="helpVoiceNumber"><strong>Normal mode (default):</strong> say the answer — it submits automatically (e.g. "forty-eight" or "48")</li>
-              <li data-i18n-html="helpVoiceTrigger"><strong>Trigger mode:</strong> say your trigger word then the answer (e.g. "fire 48") — only that combination fires; a bare number just previews it. Enable above and set your preferred word.</li>
-              <li data-i18n-html="helpVoiceFire"><strong>fire / shoot / go / yes</strong> — submit the answer currently shown, or use as the trigger word prefix</li>
-              <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
-              <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>
-              <li data-i18n="helpVoiceClear"><strong>clear / delete</strong> — clear the answer box</li>
-            </ul>
-          </div>
-        </details>
-      </div>
     </div>
   </div>
 

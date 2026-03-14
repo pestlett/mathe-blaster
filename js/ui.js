@@ -162,8 +162,29 @@ const UI = (() => {
     btnSettings?.addEventListener('click', openSettings);
     btnSettingsClose?.addEventListener('click', closeSettings);
     settingsModal?.addEventListener('click', e => { if (e.target === settingsModal) closeSettings(); });
+
+    // Help modal
+    const helpModal = document.getElementById('help-modal');
+    const btnHelpModal = document.getElementById('btn-help-modal');
+    const btnHelpModalClose = document.getElementById('btn-help-modal-close');
+
+    function openHelp() {
+      helpModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeHelp() {
+      helpModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    btnHelpModal?.addEventListener('click', openHelp);
+    btnHelpModalClose?.addEventListener('click', closeHelp);
+    helpModal?.addEventListener('click', e => { if (e.target === helpModal) closeHelp(); });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && settingsModal?.classList.contains('open')) closeSettings();
+      if (e.key === 'Escape') {
+        if (settingsModal?.classList.contains('open')) closeSettings();
+        if (helpModal?.classList.contains('open')) closeHelp();
+      }
     });
 
     // Apply saved language on load
