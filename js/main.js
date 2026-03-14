@@ -357,6 +357,14 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowRight') { e.preventDefault(); hideSuggestion(); Targeting.moveRight(state.objects); }
   });
 
+  answerInput.addEventListener('input', () => {
+    if (state.phase !== 'PLAYING') return;
+    const target = Targeting.getTarget();
+    if (!target) return;
+    const val = parseInt(answerInput.value.trim());
+    if (!isNaN(val) && val === target.answer) submitAnswer();
+  });
+
   btnFire.addEventListener('click', submitAnswer);
   document.getElementById('btn-help').addEventListener('click', useHelp);
 
