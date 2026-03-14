@@ -378,7 +378,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (state.phase !== 'PLAYING') return;
     if (Voice.supported) {
       if (answerInput.value !== '') _enterTypingMode();
-      else _exitTypingMode();
     }
     const target = Targeting.getTarget();
     if (!target) return;
@@ -1019,7 +1018,6 @@ function render(ctx, w, h, t) {
 function submitAnswer() {
   if (state.phase !== 'PLAYING') return;
   hideSuggestion();
-  if (_typingMode && Voice.supported) _exitTypingMode();
   const input = document.getElementById('answer-input');
 
   const target = Targeting.getTarget();
