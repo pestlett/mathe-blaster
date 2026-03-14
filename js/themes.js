@@ -197,8 +197,8 @@ const Themes = (() => {
   function drawCatsBackground(ctx, w, h, t) {
     // Warm room gradient
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#ffecd2');
-    grad.addColorStop(0.55, '#fcb69f');
+    grad.addColorStop(0, '#f5c88a');
+    grad.addColorStop(0.55, '#e08850');
     grad.addColorStop(0.8, '#c8834a');
     grad.addColorStop(1, '#8b5e3c');
     ctx.fillStyle = grad;
@@ -584,6 +584,7 @@ const Themes = (() => {
     ctx.save();
     if (targeted) { ctx.shadowColor = '#fff59d'; ctx.shadowBlur = 35; }
     ctx.translate(x, y);
+    ctx.scale(1.5, 1.5);
     ctx.rotate(wobble);
 
     // Tail fin
@@ -666,7 +667,17 @@ const Themes = (() => {
 
     ctx.restore();
 
-    if (showQuestion) drawQuestionText(ctx, x, y, obj.question, '#fff', 14);
+    if (showQuestion) {
+      ctx.save();
+      ctx.font = 'bold 18px Segoe UI, sans-serif';
+      ctx.fillStyle = '#1a0800';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(255,255,255,0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(obj.question, x, y);
+      ctx.restore();
+    }
   }
 
   function drawDyingObject(ctx, obj, theme) {
