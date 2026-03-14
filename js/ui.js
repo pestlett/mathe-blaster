@@ -797,6 +797,17 @@ const UI = (() => {
     }
   }
 
+  // ---- Boss Victory ----
+  function showBossVictory(stars, score, onContinue, onFinish) {
+    const overlay = document.getElementById('boss-victory-overlay');
+    const starStr = stars !== null ? '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
+    document.getElementById('boss-victory-stars').textContent = starStr;
+    document.getElementById('boss-victory-sub').textContent = `Score: ${score}`;
+    document.getElementById('btn-keep-going').onclick = () => { overlay.classList.remove('visible'); onContinue(); };
+    document.getElementById('btn-finish-game').onclick = () => { overlay.classList.remove('visible'); onFinish(); };
+    overlay.classList.add('visible');
+  }
+
   return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory };
 })();

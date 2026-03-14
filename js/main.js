@@ -1058,7 +1058,36 @@ function submitAnswer() {
         }
         checkTableMastery();
         Audio.play('levelUp');
-        UI.showLevelUp('BOSS!', null);
+        vibrate([60, 80, 120]);
+        state.confetti = spawnConfetti(window.innerWidth);
+
+        // Level accuracy stars for this boss level
+        const levelAcc = state.attemptsThisLevel > 0 ? state.correctThisLevel / state.attemptsThisLevel : 1;
+        const bossStars = levelAcc >= 0.9 ? 3 : levelAcc >= 0.7 ? 2 : 1;
+        state.levelStars.push(bossStars);
+
+        // Pause and let the player choose: keep going or finish
+        Engine.pause();
+        Voice.stop();
+        UI.showBossVictory(bossStars, state.score,
+          // Keep going
+          () => {
+            state.level++;
+            state.correctThisLevel = 0;
+            state.attemptsThisLevel = 0;
+            state.levelTransitionTimer = 1.0;
+            state.unpauseFreezeTimer = 1.5;
+            Engine.resume();
+            if (!_typingMode) Voice.start();
+            focusAnswerInput();
+          },
+          // Finish
+          () => {
+            state.phase = 'ENDING';
+            Engine.resume();
+            setTimeout(() => endGame(), 800);
+          }
+        );
       } else {
         // Advance to the next question
         const nextQ = target.questions[target.questionIndex];
