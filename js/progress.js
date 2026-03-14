@@ -215,7 +215,18 @@ const Progress = (() => {
       }
     }
     const mastered = facts.filter(f => f.masteredLevel >= 5).length;
-    return { facts, mastered, total: facts.length };
+    const seen     = facts.filter(f => f.masteredLevel >= 1).length;
+    return { facts, mastered, seen, total: facts.length };
+  }
+
+  // Returns array of "a" table numbers where every fact has been answered correctly ≥1 time
+  function getTableBadges(minTable, maxTable) {
+    const { facts } = getMastery(minTable, maxTable);
+    const aValues = [...new Set(facts.map(f => f.a))];
+    return aValues.filter(a => {
+      const tableFacts = facts.filter(f => f.a === a);
+      return tableFacts.length > 0 && tableFacts.every(f => f.masteredLevel >= 1);
+    });
   }
 
   // ---- Settings persistence ----
@@ -282,5 +293,5 @@ const Progress = (() => {
     return newlyUnlocked;
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, getStats, getMastery, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks };
+  return { setPlayer, getAll, saveName, recordAttempt, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks };
 })();

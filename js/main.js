@@ -569,6 +569,7 @@ function startGame(settings) {
   state.voiceActive = false;
   state.masteryWin = false;
   state.masteredTablesAnnounced = new Set();
+  state.seenTablesAnnounced = new Set(Progress.getTableBadges(settings.minTable, settings.maxTable));
   state.confetti = [];
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
@@ -670,6 +671,14 @@ function update(dt) {
     const isSpecial = obj.isFreeze || obj.isLifeUp || obj.isBoss;
     const effectiveDt = isSpecial ? dt * freezeMult : dt * freezeMult * bossMult;
     Objects.update(obj, effectiveDt, window.innerHeight - 148);
+
+    // Detect first frame of gracing (1s grace window to answer before life is lost)
+    if (obj.gracing && !obj._graceHandled && !obj.isFreeze && !obj.isLifeUp && !obj.isBoss) {
+      obj._graceHandled = true;
+      if (!state.practiceMode) {
+        UI.showLevelUp(I18n.t('lastChanceMsg'), null);
+      }
+    }
 
     // Detect first frame of dying (object hit bottom)
     if (obj.dying && !obj._dieHandled) {
@@ -1046,6 +1055,9 @@ function submitAnswer() {
 
   if (val === target.answer) {
     // Correct!
+    const wasGracing = target.gracing;
+    const prevMasteredLevel = (Progress.getStats()[target.key]?.masteredLevel ?? 0);
+
     state.totalCorrect++;
     state.streak++;
     state.maxStreak = Math.max(state.maxStreak, state.streak);
@@ -1053,6 +1065,15 @@ function submitAnswer() {
 
     Progress.recordAttempt(target.key, true, elapsed);
     checkTableMastery();
+
+    // Check for newly cleared tables (all facts answered correctly ≥1 time)
+    const newBadges = Progress.getTableBadges(state.minTable, state.maxTable);
+    for (const table of newBadges) {
+      if (!state.seenTablesAnnounced.has(table)) {
+        state.seenTablesAnnounced.add(table);
+        UI.showTableClearedBanner(table);
+      }
+    }
 
     // Graduate out of wrong queue if it was there
     state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
@@ -1108,6 +1129,10 @@ function submitAnswer() {
     Objects.triggerDestruction(target, particleColor);
     Audio.play('correct');
     vibrate(40);
+
+    // Encouragement banners
+    if (wasGracing) UI.showSaved();
+    else if (prevMasteredLevel === 0) UI.showFirstTime(target.question);
 
     // Chain-answer (Gravity Well / Riptide / Lightning Strike)
     if (state.chainAnswer) {

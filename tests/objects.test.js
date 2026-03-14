@@ -131,11 +131,22 @@ describe('Objects.update', () => {
     expect(o.age).toBeCloseTo(0.5, 5);
   });
 
-  test('sets dying when y reaches canvasHeight', () => {
+  test('sets gracing (not dying immediately) when y reaches canvasHeight', () => {
     const o = ctx.Objects.create(Q, 800, 600, 100, []);
     o.y = 595;
     ctx.Objects.update(o, 1.0, 600);
+    expect(o.gracing).toBe(true);
+    expect(o.dying).toBe(false);
+  });
+
+  test('sets dying after grace period expires (1s)', () => {
+    const o = ctx.Objects.create(Q, 800, 600, 100, []);
+    o.y = 600;
+    o.gracing = true;
+    o.graceTimer = 999;
+    ctx.Objects.update(o, 0.002, 600); // advances graceTimer to > 1000ms
     expect(o.dying).toBe(true);
+    expect(o.gracing).toBe(false);
   });
 
   test('does not move when dying', () => {

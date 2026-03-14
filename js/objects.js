@@ -40,6 +40,8 @@ const Objects = (() => {
       age: 0,             // seconds alive
       dying: false,
       dieTimer: 0,        // counts up after hitting bottom
+      gracing: false,     // true during grace period (1s window before life is lost)
+      graceTimer: 0,      // ms elapsed during grace period
       dead: false,
       correctFlash: false,
       destroyTimer: 0,    // for destruction animation
@@ -67,6 +69,18 @@ const Objects = (() => {
       return;
     }
 
+    if (obj.gracing) {
+      obj.graceTimer += dt * 1000;
+      // Keep wobble animation during grace period
+      obj.wobbleX = Math.sin(obj.age * WOBBLE_SPEED + obj.wobbleOffset) * WOBBLE_AMPLITUDE;
+      if (obj.graceTimer >= 1000) {
+        obj.gracing = false;
+        obj.dying = true;
+        obj.dieTimer = 0;
+      }
+      return;
+    }
+
     // Sinusoidal wobble
     obj.wobbleX = Math.sin(obj.age * WOBBLE_SPEED + obj.wobbleOffset) * WOBBLE_AMPLITUDE;
     obj.y += obj.speed * dt;
@@ -74,8 +88,13 @@ const Objects = (() => {
     // Check if it hit the crash line
     if (obj.y >= canvasHeight) {
       obj.y = canvasHeight;
-      obj.dying = true;
-      obj.dieTimer = 0;
+      if (!obj.isFreeze && !obj.isLifeUp && !obj.isBoss) {
+        obj.gracing = true;
+        obj.graceTimer = 0;
+      } else {
+        obj.dying = true;
+        obj.dieTimer = 0;
+      }
     }
   }
 
@@ -130,6 +149,8 @@ const Objects = (() => {
       age: 0,
       dying: false,
       dieTimer: 0,
+      gracing: false,
+      graceTimer: 0,
       dead: false,
       destroyTimer: 0,
       destroyed: false,
@@ -157,6 +178,8 @@ const Objects = (() => {
       age: 0,
       dying: false,
       dieTimer: 0,
+      gracing: false,
+      graceTimer: 0,
       dead: false,
       destroyTimer: 0,
       destroyed: false,
@@ -184,6 +207,8 @@ const Objects = (() => {
       age: 0,
       dying: false,
       dieTimer: 0,
+      gracing: false,
+      graceTimer: 0,
       dead: false,
       destroyTimer: 0,
       destroyed: false,

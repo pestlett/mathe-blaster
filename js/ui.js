@@ -166,14 +166,75 @@ const UI = (() => {
       hintLabel.textContent = I18n.t('hintAfter', { n: hintThreshInput.value });
     });
 
-    // ---- Voice trigger word ----
-    const triggerGroup   = document.getElementById('voice-trigger-group');
+    // ---- Voice trigger word mode ----
+    const triggerGroup  = document.getElementById('voice-trigger-group');
+    const triggerOff    = document.getElementById('voice-trigger-off');
+    const triggerOn     = document.getElementById('voice-trigger-on');
+    const triggerWdRow  = document.getElementById('voice-trigger-word-row');
     const triggerWdInput = document.getElementById('voice-trigger-word');
 
     // Hide if voice not supported
     if (!Voice.supported) {
       if (triggerGroup) triggerGroup.style.display = 'none';
     }
+
+    let _triggerModeOn = false;
+    function _setTriggerMode(on) {
+      _triggerModeOn = on;
+      triggerOff.classList.toggle('active', !on);
+      triggerOn.classList.toggle('active', on);
+      triggerWdRow.style.display = on ? '' : 'none';
+    }
+    triggerOff?.addEventListener('click', () => _setTriggerMode(false));
+    triggerOn?.addEventListener('click',  () => _setTriggerMode(true));
+
+    // ---- Hold-to-record trigger word ----
+    const triggerRecordBtn = document.getElementById('voice-trigger-record-btn');
+    let _triggerRecognition = null;
+
+    function _startTriggerRecording() {
+      if (!Voice.supported) return;
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR || _triggerRecognition) return;
+      _triggerRecognition = new SR();
+      _triggerRecognition.continuous = false;
+      _triggerRecognition.interimResults = false;
+      _triggerRecognition.maxAlternatives = 1;
+      _triggerRecognition.lang = (typeof I18n !== 'undefined')
+        ? ({ en: 'en-US', de: 'de-DE', es: 'es-ES' }[I18n.getLang()] || 'en-US')
+        : (navigator.language || 'en-US');
+      triggerRecordBtn.classList.add('recording');
+      triggerRecordBtn.textContent = '🔴 Listening…';
+      _triggerRecognition.onresult = e => {
+        const transcript = (e.results[0]?.[0]?.transcript || '').trim();
+        const word = transcript.split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9äöüéàèíóú]/g, '');
+        if (word && triggerWdInput) triggerWdInput.value = word;
+      };
+      _triggerRecognition.onend = () => {
+        triggerRecordBtn.classList.remove('recording');
+        const label = (typeof I18n !== 'undefined' && I18n.t('voiceTriggerRecord')) || '🎙 Hold to record';
+        triggerRecordBtn.textContent = label;
+        _triggerRecognition = null;
+      };
+      _triggerRecognition.onerror = () => {
+        triggerRecordBtn.classList.remove('recording');
+        _triggerRecognition = null;
+      };
+      try { _triggerRecognition.start(); } catch (_) {}
+    }
+
+    function _stopTriggerRecording() {
+      if (_triggerRecognition) {
+        try { _triggerRecognition.stop(); } catch (_) {}
+      }
+    }
+
+    triggerRecordBtn?.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      _startTriggerRecording();
+    });
+    triggerRecordBtn?.addEventListener('pointerup',    () => _stopTriggerRecording());
+    triggerRecordBtn?.addEventListener('pointerleave', () => _stopTriggerRecording());
 
     btnStart.addEventListener('click', () => {
       const name = nameInput.value.trim();
@@ -197,12 +258,12 @@ const UI = (() => {
         tablesMode, rangeMin: rangeMin.value, rangeMax: rangeMax.value,
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
-        triggerWord: triggerWdInput?.value?.trim(),
+        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
-        triggerWord: triggerWdInput?.value?.trim() || '' });
+        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
     });
 
     nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
@@ -283,7 +344,7 @@ const UI = (() => {
       onStart({ name, age, theme: selectedTheme,
         minTable: dp.table, maxTable: dp.table, difficulty: dp.difficulty,
         hintThreshold: parseInt(hintThreshInput.value), practiceMode: false, isDaily: true,
-        triggerWord: triggerWdInput?.value?.trim() || '' });
+        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
     });
 
     // Restore saved name + age, then activate player data for that identity
@@ -321,6 +382,7 @@ const UI = (() => {
         if (saved.rangeMax) { rangeMax.value = saved.rangeMax; }
         updateRangeDisplay();
       }
+      if (saved.triggerMode) _setTriggerMode(true);
       if (saved.triggerWord && triggerWdInput) triggerWdInput.value = saved.triggerWord;
     }
     // Apply all dynamic strings in the current language (must run after settings restore)
@@ -336,94 +398,15 @@ const UI = (() => {
     const tableLabel = state.minTable === state.maxTable
       ? I18n.t('tablesFocus', { table: state.minTable })
       : I18n.t('tablesRange', { min: state.minTable, max: state.maxTable });
-    document.getElementById('hud-tables').textContent =
-      tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
-
-    // Run-mode ante chip
-    const anteChip = document.getElementById('run-ante-chip');
+    let hudTables = tableLabel + (state.practiceMode ? ' ' + I18n.t('practiceSuffix') : '');
     if (state.runMode) {
-      anteChip.textContent = `⚔ Ante ${state.currentAnte}`;
-      anteChip.classList.remove('hidden');
-    } else {
-      anteChip.classList.add('hidden');
+      const badges = [];
+      if (state.shieldCharges > 0) badges.push(`🛡×${state.shieldCharges}`);
+      if (state.bombCharges > 0)   badges.push(`💣×${state.bombCharges}`);
+      hudTables += ` | Ante ${state.currentAnte}` + (badges.length ? ' ' + badges.join(' ') : '');
     }
-
-    // Run-mode active upgrades bar
-    _updateUpgradesBar(state);
-
+    document.getElementById('hud-tables').textContent = hudTables;
     renderLives(state.lives, state.maxLives, state.theme);
-  }
-
-  function _updateUpgradesBar(state) {
-    const bar = document.getElementById('active-upgrades-bar');
-    if (!state.runMode || !state.activeUpgrades || state.activeUpgrades.length === 0) {
-      bar.classList.add('hidden');
-      return;
-    }
-    bar.classList.remove('hidden');
-
-    const { positive: synIds, negative: conflictIds } = getActiveSynergySets(state.activeUpgradeIds || []);
-    const adjBonuses = state.adjacencyBonuses || new Set();
-
-    const parts = [];
-    state.activeUpgrades.forEach((upg, idx) => {
-      // Adjacency connector between consecutive pills
-      if (idx > 0) {
-        const prevId = state.activeUpgrades[idx - 1].id;
-        const hasAdj = adjBonuses.size > 0 && (() => {
-          const adj = getAdjacencyForPair(prevId, upg.id);
-          return adj && adjBonuses.has(adj.flag);
-        })();
-        parts.push(
-          `<span class="upg-bar-connector${hasAdj ? ' upg-bar-connector-active' : ''}">${hasAdj ? '✦' : '·'}</span>`
-        );
-      }
-
-      const name = upgradeNameForTheme(upg, state.theme);
-      const icon = upg.icon || '★';
-
-      // Count badge for consumables
-      let countBadge = '';
-      let modClass = '';
-      if (upg.id === 'shield') {
-        const n = state.shieldCharges || 0;
-        countBadge = `<span class="upg-count">${n}</span>`;
-        if (n === 0) modClass = 'upg-spent';
-      } else if (upg.id === 'bomb') {
-        const n = state.bombCharges || 0;
-        countBadge = `<span class="upg-count">${n}</span>`;
-        if (n === 0) modClass = 'upg-spent';
-      } else if (upg.id === 'lastChance') {
-        modClass = state.lastChanceUsed ? 'upg-spent' : 'upg-ready';
-        countBadge = state.lastChanceUsed
-          ? '<span class="upg-count">✗</span>'
-          : '<span class="upg-count">✓</span>';
-      }
-
-      // Timer bar for streak-slow when active
-      let timerBar = '';
-      if (upg.id === 'streakSlow' && state.streakSlowTimer > 0) {
-        const maxDur = state.streakSlowDuration || 5;
-        const pct = Math.round((state.streakSlowTimer / maxDur) * 100);
-        timerBar = `<div class="upg-timer-bar"><div class="upg-timer-fill" style="width:${pct}%"></div></div>`;
-        modClass = 'upg-active';
-      }
-
-      // Synergy / conflict state (only if not already spent/active)
-      if (modClass === '') {
-        if (conflictIds.has(upg.id))  modClass = 'upg-conflict';
-        else if (synIds.has(upg.id))  modClass = 'upg-synergy';
-      }
-
-      parts.push(`<div class="upg-pill ${modClass}" title="${name}">
-        <span class="upg-icon">${icon}</span>
-        <span class="upg-label">${name}</span>
-        ${countBadge}
-        ${timerBar}
-      </div>`);
-    });
-
-    bar.innerHTML = parts.join('');
   }
 
   function renderLives(lives, max, theme) {
@@ -452,9 +435,9 @@ const UI = (() => {
   let tryAgainTimer = null;
   function showTryAgain(question, answer) {
     const el = document.getElementById('try-again-msg');
-    if (question != null && answer != null) {
+    if (answer != null) {
       el.innerHTML =
-        `<span class="try-again-eq">${question} = <strong>${answer}</strong></span>`;
+        `<span class="try-again-eq">${I18n.t('tryAgain')} <strong>${answer}</strong> 💡</span>`;
     } else {
       el.textContent = I18n.t('tryAgain');
     }
@@ -517,7 +500,7 @@ const UI = (() => {
   }
 
   function _renderMasteryGrid(masteryData) {
-    const { facts, mastered, total } = masteryData;
+    const { facts, mastered, seen, total } = masteryData;
     if (total === 0) return '';
     // Group by A value
     const aValues = [...new Set(facts.map(f => f.a))].sort((x, y) => x - y);
@@ -528,9 +511,13 @@ const UI = (() => {
       ).join('');
       return `<div class="mastery-row"><span class="mastery-label">${a}×</span>${dots}</div>`;
     }).join('');
-    const pct = Math.round(mastered / total * 100);
+    const seenCount = seen ?? 0;
+    const pct = Math.round(seenCount / total * 100);
+    const masteredSubtitle = mastered > 0
+      ? `<div class="mastery-subtitle">${I18n.t('masteryMasteredCount', { n: mastered })}</div>` : '';
     return `
       <div class="mastery-heading">${I18n.t('masteryTitle')} <span class="mastery-pct">${pct}%</span></div>
+      ${masteredSubtitle}
       <div class="mastery-grid">${rows}</div>
       <div class="mastery-legend">
         <span class="mastery-dot mastered"></span>${I18n.t('masteryLegendDone')}
@@ -543,6 +530,13 @@ const UI = (() => {
 
   // ---- Game Over ----
   function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard, runData) {
+    // Context-sensitive heading based on accuracy
+    const goHeadingEl = document.querySelector('#screen-gameover h2');
+    if (goHeadingEl) {
+      const acc = session.accuracy || 0;
+      const goKey = acc >= 0.8 ? 'goExcellent' : acc >= 0.5 ? 'goGood' : 'goKeepTrying';
+      goHeadingEl.textContent = I18n.t(goKey, { name: session.name });
+    }
     const starsHtml = session.levelStars && session.levelStars.length > 0
       ? `<div class="stars-row">${session.levelStars.map((s, i) =>
           `<span class="level-star-badge" title="Level ${i + 1}">L${i + 1} ${'★'.repeat(s)}${'☆'.repeat(3 - s)}</span>`
@@ -727,100 +721,22 @@ const UI = (() => {
   }
 
   // ---- Upgrade Picker ----
-  // currentUpgrades: the live array of upgrade objects already active
-  // onDone(chosen, newOrder) — chosen may be null if player only reordered
-  function showUpgradePicker(options, theme, currentUpgrades, onDone) {
+  function showUpgradePicker(options, theme, onPick) {
     const el = document.getElementById('upgrade-picker');
     const optionsEl = document.getElementById('upgrade-options');
     optionsEl.innerHTML = '';
-
-    // Local mutable order — player can swap before picking
-    let orderedUpgrades = currentUpgrades.slice();
-    let selectedIdx = -1;
-
-    // ---- Reorder section ----
-    function buildReorderRow() {
-      const section = document.getElementById('reorder-section');
-      const rowEl   = document.getElementById('reorder-row');
-      if (!section || !rowEl) return;
-      if (orderedUpgrades.length === 0) { section.classList.add('hidden'); return; }
-      section.classList.remove('hidden');
-      rowEl.innerHTML = '';
-
-      orderedUpgrades.forEach((upg, i) => {
-        if (i > 0) {
-          const prevId = orderedUpgrades[i - 1].id;
-          const adj    = getAdjacencyForPair(prevId, upg.id);
-          const conn   = document.createElement('span');
-          conn.className = adj ? 'reorder-connector reorder-connector-bonus' : 'reorder-connector';
-          conn.textContent = adj ? '✦' : '·';
-          if (adj) conn.title = adj.effect;
-          rowEl.appendChild(conn);
-        }
-        const pill = document.createElement('button');
-        pill.className = 'reorder-pill' + (i === selectedIdx ? ' reorder-selected' : '');
-        pill.title = upgradeNameForTheme(upg, theme);
-        pill.innerHTML = `<span class="reorder-icon">${upg.icon || '★'}</span>`;
-        pill.addEventListener('click', () => {
-          if (selectedIdx === -1) {
-            selectedIdx = i;
-          } else if (selectedIdx === i) {
-            selectedIdx = -1;
-          } else {
-            [orderedUpgrades[selectedIdx], orderedUpgrades[i]] =
-              [orderedUpgrades[i], orderedUpgrades[selectedIdx]];
-            selectedIdx = -1;
-          }
-          buildReorderRow();
-          // Refresh hints on upgrade cards since activeIds may be reused
-          buildPickerCards();
-        });
-        rowEl.appendChild(pill);
-      });
-    }
-
-    // ---- Upgrade pick cards ----
-    function buildPickerCards() {
-      optionsEl.innerHTML = '';
-      const activeIds = orderedUpgrades.map(u => u.id);
-      options.forEach(upg => {
-        const name  = upgradeNameForTheme(upg, theme);
-        const desc  = upgradeDescForTheme(upg, theme);
-        const hints = getSynergyHintsForUpgrade(upg.id, activeIds, theme);
-        const hintsHtml = hints.map(h => {
-          const cls  = h.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
-          const icon = h.type === 'positive' ? '✦' : '⚠';
-          return `<div class="${cls}">${icon} ${h.type === 'positive' ? 'Synergy' : 'Conflict'} with ${h.partnerName}: ${h.effect}</div>`;
-        }).join('');
-        const synClass = hints.some(h => h.type === 'negative') ? 'upgrade-option-conflict'
-                       : hints.some(h => h.type === 'positive') ? 'upgrade-option-synergy' : '';
-        const btn = document.createElement('button');
-        btn.className = `upgrade-option ${synClass}`;
-        btn.innerHTML = `
-          <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '★'}</span> ${name}</div>
-          <div class="upgrade-desc">${desc}</div>
-          ${hintsHtml}`;
-        btn.addEventListener('click', () => {
-          el.classList.add('hidden');
-          onDone(upg, orderedUpgrades);
-        });
-        optionsEl.appendChild(btn);
-      });
-    }
-
-    // ---- Skip / Done button (reorder only, no new pick) ----
-    const skipBtn = document.getElementById('btn-skip-upgrade');
-    if (skipBtn) {
-      skipBtn.onclick = () => {
+    options.forEach(upg => {
+      const name = upgradeNameForTheme(upg, theme);
+      const desc = upgradeDescForTheme(upg, theme);
+      const btn = document.createElement('button');
+      btn.className = 'upgrade-option';
+      btn.innerHTML = `<div class="upgrade-name">${name}</div><div class="upgrade-desc">${desc}</div>`;
+      btn.addEventListener('click', () => {
         el.classList.add('hidden');
-        onDone(null, orderedUpgrades);
-      };
-      skipBtn.textContent = options.length > 0 ? 'Keep order ›' : 'Done ›';
-      skipBtn.classList.remove('hidden');
-    }
-
-    buildReorderRow();
-    buildPickerCards();
+        onPick(upg);
+      });
+      optionsEl.appendChild(btn);
+    });
     el.classList.remove('hidden');
   }
 
@@ -841,6 +757,26 @@ const UI = (() => {
     showScreen('achievements');
   }
 
+  // ---- Table cleared banner (all facts in a table answered ≥1 time) ----
+  function showTableClearedBanner(table) {
+    showLevelUp(I18n.t('tableClearedBanner', { table }), null);
+  }
+
+  // ---- Saved! (answered correctly during grace period) ----
+  function showSaved() {
+    const container = document.getElementById('miss-flash-container');
+    const el = document.createElement('div');
+    el.className = 'miss-flash saved-flash';
+    el.innerHTML = `<span class="miss-flash-ans">${I18n.t('savedMsg')}</span>`;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 1100);
+  }
+
+  // ---- First time answering a new fact correctly ----
+  function showFirstTime(question) {
+    showLevelUp(I18n.t('firstTimeMsg', { q: question }), null);
+  }
+
   return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime };
 })();
