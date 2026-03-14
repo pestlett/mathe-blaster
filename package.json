@@ -1,6 +1,6 @@
 {
   "name": "multiplication",
-  "version": "0.7.22",
+  "version": "0.7.23",
   "description": "Multiplication Blaster — browser game",
   "scripts": {
     "test": "jest",
