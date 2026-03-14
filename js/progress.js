@@ -276,38 +276,55 @@ const Progress = (() => {
   // For divide: f.a = divisor (the "table"), f.b = quotient
   function getMastery(minTable, maxTable, operation = 'multiply') {
     const stats = load().stats;
-    const bLo = minTable === maxTable ? 1  : minTable;
-    const bHi = minTable === maxTable ? 12 : maxTable;
+    const isLargeRange = (operation === 'add' || operation === 'subtract') && maxTable > 20;
     const facts = [];
 
-    for (let a = minTable; a <= maxTable; a++) {
-      for (let b = bLo; b <= bHi; b++) {
-        let key, fa, fb;
-        if (operation === 'divide') {
-          key = `${a * b}d${a}`;  // dividend÷divisor; a=divisor, b=quotient
-          fa = a; fb = b;         // fa=divisor for row-grouping (same role as table in ×)
-        } else if (operation === 'add') {
-          key = `${a}a${b}`;
-          fa = a; fb = b;
-        } else if (operation === 'subtract') {
-          if (b > a) continue;    // skip invalid (no negatives)
-          key = `${a}s${b}`;
-          fa = a; fb = b;
-        } else {
-          key = `${a}x${b}`;
-          fa = a; fb = b;
-        }
+    if (isLargeRange) {
+      // Large +/− range: scan existing stats keys instead of enumerating all pairs
+      const pattern = operation === 'add' ? /^(\d+)a(\d+)$/ : /^(\d+)s(\d+)$/;
+      for (const key of Object.keys(stats)) {
+        const m = key.match(pattern);
+        if (!m) continue;
+        const a = +m[1], b = +m[2];
+        if (a < 1 || a > maxTable || b < 0 || b > maxTable) continue;
+        if (operation === 'subtract' && b > a) continue;
         const s = stats[key];
-        facts.push({ key, a: fa, b: fb,
-          masteredLevel: s?.masteredLevel ?? 0,
-          attempts:      s?.attempts      ?? 0,
-        });
+        if (!s || s.attempts === 0) continue; // only include seen facts
+        facts.push({ key, a, b, masteredLevel: s.masteredLevel ?? 0, attempts: s.attempts ?? 0 });
+      }
+    } else {
+      const bLo = minTable === maxTable ? 1  : minTable;
+      const bHi = minTable === maxTable ? 12 : maxTable;
+
+      for (let a = minTable; a <= maxTable; a++) {
+        for (let b = bLo; b <= bHi; b++) {
+          let key, fa, fb;
+          if (operation === 'divide') {
+            key = `${a * b}d${a}`;
+            fa = a; fb = b;
+          } else if (operation === 'add') {
+            key = `${a}a${b}`;
+            fa = a; fb = b;
+          } else if (operation === 'subtract') {
+            if (b > a) continue;
+            key = `${a}s${b}`;
+            fa = a; fb = b;
+          } else {
+            key = `${a}x${b}`;
+            fa = a; fb = b;
+          }
+          const s = stats[key];
+          facts.push({ key, a: fa, b: fb,
+            masteredLevel: s?.masteredLevel ?? 0,
+            attempts:      s?.attempts      ?? 0,
+          });
+        }
       }
     }
 
     const mastered = facts.filter(f => f.masteredLevel >= 5).length;
     const seen     = facts.filter(f => f.masteredLevel >= 1).length;
-    return { facts, mastered, seen, total: facts.length, operation };
+    return { facts, mastered, seen, total: facts.length, operation, maxTable, isLargeRange };
   }
 
   // Returns array of table numbers where every fact has been answered correctly ≥1 time.

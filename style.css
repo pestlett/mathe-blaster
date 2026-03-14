@@ -1395,6 +1395,66 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   box-shadow: 0 0 12px rgba(255,215,0,0.3);
 }
 
+/* ---- Mastery band view (add/subtract large ranges) ---- */
+.mastery-bands {
+  width: 100%;
+  margin: 8px 0;
+}
+.mastery-band-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  font-size: 0.82rem;
+}
+.mastery-band-label {
+  width: 56px;
+  text-align: right;
+  color: rgba(255,255,255,0.7);
+  flex-shrink: 0;
+}
+.mastery-band-track {
+  flex: 1;
+  height: 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.mastery-band-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+.band-bar--high  { background: #4caf50; }
+.band-bar--mid   { background: #f7c948; }
+.band-bar--low   { background: #e57373; }
+.mastery-band-pct   { width: 32px; text-align: right; color: rgba(255,255,255,0.8); flex-shrink: 0; }
+.mastery-band-count { color: rgba(255,255,255,0.4); flex-shrink: 0; }
+.mastery-band-legend {
+  display: flex;
+  gap: 12px;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.band-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+.mastery-bands-empty {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 8px 0;
+}
+
 /* Parent Dashboard */
 .dash-player {
   font-size: 1rem;

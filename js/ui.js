@@ -691,8 +691,59 @@ const UI = (() => {
   }
 
   function _renderMasteryGrid(masteryData) {
-    const { facts, mastered, seen, total, operation = 'multiply' } = masteryData;
+    const { facts, mastered, seen, total, operation = 'multiply', isLargeRange = false, maxTable = 12 } = masteryData;
     if (total === 0) return '';
+
+    // Band view for large add/subtract ranges
+    if (isLargeRange && (operation === 'add' || operation === 'subtract')) {
+      const bandSize = maxTable > 100 ? 100 : 10;
+      // Group facts into bands by first operand (a)
+      const bandMap = {};
+      for (const f of facts) {
+        const bandStart = Math.floor(f.a / bandSize) * bandSize;
+        if (!bandMap[bandStart]) bandMap[bandStart] = [];
+        bandMap[bandStart].push(f);
+      }
+      const bandStarts = Object.keys(bandMap).map(Number).sort((x, y) => x - y);
+
+      if (bandStarts.length === 0) {
+        const titleKey = operation === 'add' ? 'masteryTitleAdd' : 'masteryTitleSubtract';
+        return `<div class="mastery-heading">${I18n.t(titleKey)} <span class="mastery-pct">0%</span></div>
+                <div class="mastery-bands-empty">${I18n.t('masteryBandsEmpty')}</div>`;
+      }
+
+      const bandRows = bandStarts.map(bs => {
+        const bandFacts = bandMap[bs];
+        const bandEnd   = bs + bandSize - 1;
+        const seenInBand     = bandFacts.length;
+        const masteredInBand = bandFacts.filter(f => f.masteredLevel >= 3).length;
+        const pct = seenInBand > 0 ? Math.round(masteredInBand / seenInBand * 100) : 0;
+        const barClass = pct >= 80 ? 'band-bar--high' : pct >= 40 ? 'band-bar--mid' : 'band-bar--low';
+        const label = `${bs}–${bandEnd}`;
+        return `<div class="mastery-band-row">
+      <span class="mastery-band-label">${label}</span>
+      <div class="mastery-band-track">
+        <div class="mastery-band-bar ${barClass}" style="width:${pct}%"></div>
+      </div>
+      <span class="mastery-band-pct">${pct}%</span>
+      <span class="mastery-band-count">(${seenInBand})</span>
+    </div>`;
+      }).join('');
+
+      const totalSeen = facts.length;
+      const totalMastered = facts.filter(f => f.masteredLevel >= 3).length;
+      const overallPct = totalSeen > 0 ? Math.round(totalMastered / totalSeen * 100) : 0;
+      const titleKey = operation === 'add' ? 'masteryTitleAdd' : 'masteryTitleSubtract';
+
+      return `
+    <div class="mastery-heading">${I18n.t(titleKey)} <span class="mastery-pct">${overallPct}%</span></div>
+    <div class="mastery-bands">${bandRows}</div>
+    <div class="mastery-band-legend">
+      <span class="band-swatch band-bar--high"></span>${I18n.t('masteryBandHigh')}
+      <span class="band-swatch band-bar--mid"></span>${I18n.t('masteryBandMid')}
+      <span class="band-swatch band-bar--low"></span>${I18n.t('masteryBandLow')}
+    </div>`;
+    }
 
     // Row label and dot tooltip depend on operation
     function _rowLabel(a) {

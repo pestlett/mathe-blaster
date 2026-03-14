@@ -289,6 +289,46 @@ describe('Klasse 3 Komplett achievement', () => {
   });
 });
 
+describe('getMastery — large add/subtract range (band view)', () => {
+  let ctx;
+  beforeEach(() => {
+    ctx = makeProgressCtx();
+    ctx.localStorage.clear();
+  });
+
+  test('returns isLargeRange=true for add with maxTable > 20', () => {
+    const result = ctx.Progress.getMastery(1, 99, 'add');
+    expect(result.isLargeRange).toBe(true);
+  });
+
+  test('returns isLargeRange=false for add with maxTable <= 20', () => {
+    const result = ctx.Progress.getMastery(1, 12, 'add');
+    expect(result.isLargeRange).toBe(false);
+  });
+
+  test('large range: only returns facts present in stats', () => {
+    // Pre-seed two add facts
+    ctx.Progress.recordAttempt('23a15', true, 2000);
+    ctx.Progress.recordAttempt('45a30', true, 2000);
+    const result = ctx.Progress.getMastery(1, 99, 'add');
+    expect(result.facts.length).toBe(2);
+    expect(result.facts.some(f => f.key === '23a15')).toBe(true);
+  });
+
+  test('large range subtract: only includes valid seen facts', () => {
+    ctx.Progress.recordAttempt('50s20', true, 2000);
+    const result = ctx.Progress.getMastery(1, 99, 'subtract');
+    expect(result.isLargeRange).toBe(true);
+    expect(result.facts.some(f => f.key === '50s20')).toBe(true);
+  });
+
+  test('small range add: returns all enumerated facts', () => {
+    const result = ctx.Progress.getMastery(1, 5, 'add');
+    expect(result.isLargeRange).toBe(false);
+    expect(result.total).toBeGreaterThan(0);
+  });
+});
+
 describe('Progress.getDailyParams', () => {
   let ctx;
   beforeEach(() => { ctx = makeProgressCtx(); });
