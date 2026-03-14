@@ -230,7 +230,7 @@ const Questions = (() => {
       }
     } else {
       // multiply (default or Zehner mode)
-      const { difficulty, zehner } = opts;
+      const { difficulty, zehner, halbschriftlich } = opts;
       if (zehner) {
         // Zehner mode: one factor from table range, other is a multiple of 10 or 100
         const tens = [10, 20, 30, 40, 50, 60, 70, 80, 90];
@@ -238,6 +238,29 @@ const Questions = (() => {
         const bVals = difficulty === 'easy' ? tens : [...tens, ...hundreds];
         for (let a = aRange.lo; a <= aRange.hi; a++) {
           for (const b of bVals) {
+            const answer = a * b;
+            const key    = `${a}x${b}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a, b, answer, key, display: `${a} × ${b}` });
+            }
+          }
+        }
+      } else if (halbschriftlich) {
+        // Halbschriftliche Multiplikation: single digit (table range) × multi-digit
+        // Easy: 2-digit multiplier (12–99); Medium/Hard: 2-digit AND 3-digit (12–999)
+        const hiB = difficulty === 'easy' ? 99 : 999;
+        const loB = 12;
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          const seen = new Set();
+          const target = difficulty === 'easy' ? 18 : 24;
+          let attempts = 0;
+          while (seen.size < target && attempts < target * 20) {
+            attempts++;
+            const b = _randInt(loB, hiB);
+            if (seen.has(b)) continue;
+            seen.add(b);
             const answer = a * b;
             const key    = `${a}x${b}`;
             if (excludeAnswers.includes(answer)) continue;
@@ -276,6 +299,11 @@ const Questions = (() => {
         const dividend = a * b;
         return { a: dividend, b: a, answer: b, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
       }
+      return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
+    }
+    if (opts.halbschriftlich && operation === 'multiply') {
+      const hiB = (opts.difficulty === 'easy') ? 99 : 999;
+      const b = _randInt(12, hiB);
       return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
     }
     if (operation === 'divide') {

@@ -37,6 +37,7 @@ const UI = (() => {
     let selectedOp = 'multiply';
     let selectedNumRange = 100;
     let selectedZehner = false;
+    let selectedHalbschriftlich = false;
 
     // Operation selector
     const opNote = document.getElementById('op-note');
@@ -87,8 +88,16 @@ const UI = (() => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('[data-zehner]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        selectedZehner = btn.dataset.zehner === 'true';
-        if (zehnerNote) zehnerNote.textContent = I18n.t(selectedZehner ? 'zehnerOnNote' : '');
+        const val = btn.dataset.zehner;
+        selectedZehner = val === 'true';
+        selectedHalbschriftlich = val === 'halbschriftlich';
+        if (zehnerNote) {
+          zehnerNote.textContent = selectedZehner
+            ? I18n.t('zehnerOnNote')
+            : selectedHalbschriftlich
+            ? I18n.t('zehnerHalbschriftlichNote')
+            : '';
+        }
       });
     });
 
@@ -348,14 +357,14 @@ const UI = (() => {
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
-        numRange: selectedNumRange, zehner: selectedZehner,
+        numRange: selectedNumRange, zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '',
-        zehner: selectedZehner });
+        zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich });
     });
 
     nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
@@ -394,14 +403,14 @@ const UI = (() => {
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerWord: triggerWdInput?.value?.trim(),
-        numRange: selectedNumRange, zehner: selectedZehner,
+        numRange: selectedNumRange, zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: false, runMode: true,
         triggerWord: triggerWdInput?.value?.trim() || '',
-        zehner: selectedZehner });
+        zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich });
     });
 
     // Daily challenge button
@@ -494,6 +503,15 @@ const UI = (() => {
         document.querySelectorAll('[data-zehner]').forEach(b => {
           b.classList.toggle('active', (b.dataset.zehner === 'true') === selectedZehner);
         });
+      }
+      if (saved.halbschriftlich) {
+        selectedHalbschriftlich = saved.halbschriftlich === true || saved.halbschriftlich === 'true';
+        if (selectedHalbschriftlich) {
+          selectedZehner = false;
+          document.querySelectorAll('[data-zehner]').forEach(b => {
+            b.classList.toggle('active', b.dataset.zehner === 'halbschriftlich');
+          });
+        }
       }
     }
     // Apply all dynamic strings in the current language (must run after settings restore)

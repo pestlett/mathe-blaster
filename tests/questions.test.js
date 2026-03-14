@@ -252,6 +252,43 @@ describe('Questions — Zehner mode (Phase 3)', () => {
   });
 });
 
+describe('Questions — Halbschriftlich mode (Phase 6)', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
+
+  test('easy: all b values are 2-digit (12–99)', () => {
+    const pool = ctx.Questions._buildPool(2, 5, {}, [], [], 'multiply', { difficulty: 'easy', halbschriftlich: true });
+    expect(pool.length).toBeGreaterThan(0);
+    const allTwoDigit = pool.every(q => q.b >= 12 && q.b <= 99);
+    expect(allTwoDigit).toBe(true);
+  });
+
+  test('medium: includes both 2-digit and 3-digit b values', () => {
+    const pool = ctx.Questions._buildPool(3, 5, {}, [], [], 'multiply', { difficulty: 'medium', halbschriftlich: true });
+    const hasTwoDigit   = pool.some(q => q.b >= 12  && q.b <= 99);
+    const hasThreeDigit = pool.some(q => q.b >= 100 && q.b <= 999);
+    expect(hasTwoDigit).toBe(true);
+    expect(hasThreeDigit).toBe(true);
+  });
+
+  test('answer equals a × b', () => {
+    const pool = ctx.Questions._buildPool(4, 4, {}, [], [], 'multiply', { halbschriftlich: true });
+    pool.forEach(q => expect(q.answer).toBe(q.a * q.b));
+  });
+
+  test('key format is axb', () => {
+    const pool = ctx.Questions._buildPool(3, 3, {}, [], [], 'multiply', { halbschriftlich: true });
+    pool.forEach(q => expect(q.key).toMatch(/^\d+x\d+$/));
+  });
+
+  test('zehner and normal modes are unaffected', () => {
+    const zehnerPool = ctx.Questions._buildPool(3, 5, {}, [], [], 'multiply', { zehner: true });
+    const normalPool = ctx.Questions._buildPool(3, 5, {}, [], [], 'multiply', {});
+    expect(zehnerPool.every(q => q.b % 10 === 0)).toBe(true);
+    expect(normalPool.every(q => q.b >= 3 && q.b <= 5)).toBe(true);
+  });
+});
+
 describe('Questions — large range sampling (Phase 5)', () => {
   let ctx;
   beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
