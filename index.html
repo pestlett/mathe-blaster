@@ -21,6 +21,7 @@
         <button class="lang-btn active" data-lang="en">EN</button>
         <button class="lang-btn" data-lang="de">DE</button>
         <button class="lang-btn" data-lang="es">ES</button>
+        <button id="btn-settings" class="settings-gear-btn" aria-label="Settings">⚙️</button>
       </div>
 
       <h1 class="game-title">
@@ -28,14 +29,6 @@
         <span class="title-accent" data-i18n="gameTitleAccent">Blaster!</span>
       </h1>
 
-      <div class="form-group">
-        <label for="input-name" data-i18n="yourName">Your Name</label>
-        <input type="text" id="input-name" data-i18n-ph="namePlaceholder" placeholder="Enter your name" maxlength="20" autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label for="input-age" data-i18n="yourAge">Your Age</label>
-        <input type="number" id="input-age" data-i18n-ph="agePlaceholder" placeholder="Age" min="1" max="132" style="width:100px">
-      </div>
       <div class="form-group">
         <label data-i18n="chooseTheme">Choose Your Theme</label>
         <div class="theme-cards">
@@ -137,73 +130,6 @@
         <input type="hidden" id="focus-mode-toggle" value="0">
         <input type="hidden" id="focus-table" value="10">
       </div>
-      <div class="form-group">
-        <label data-i18n="mode">Mode</label>
-        <div class="mode-btns">
-          <button class="mode-btn active" data-mode="normal" data-i18n="modeNormal">Normal</button>
-          <button class="mode-btn" data-mode="practice" data-i18n="modePractice">Practice</button>
-        </div>
-        <span class="setting-note" id="mode-note" data-i18n="modeNormalNote">Lose lives when objects hit the bottom</span>
-      </div>
-      <div class="form-group">
-        <label data-i18n="difficulty">Difficulty</label>
-        <div class="difficulty-btns">
-          <button class="diff-btn" data-diff="easy" data-i18n="diffEasy">Easy</button>
-          <button class="diff-btn active" data-diff="medium" data-i18n="diffMedium">Medium</button>
-          <button class="diff-btn" data-diff="hard" data-i18n="diffHard">Hard</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label id="hint-label"></label>
-        <input type="range" id="hint-threshold" min="1" max="5" value="3" class="range-slider" style="max-width:200px">
-        <span class="setting-note" data-i18n="hintNote">Shows a dot-grid picture when stuck</span>
-      </div>
-      <div class="form-group" id="voice-trigger-group">
-        <label data-i18n="voiceTriggerMode">Voice trigger word mode</label>
-        <div class="mode-btns" id="voice-trigger-btns">
-          <button type="button" class="mode-btn active" id="voice-trigger-off" data-i18n="voiceTriggerOff">Off — any spoken number fires</button>
-          <button type="button" class="mode-btn" id="voice-trigger-on" data-i18n="voiceTriggerOn">On — say "fire [answer]"</button>
-        </div>
-        <div id="voice-trigger-word-row" style="display:none; margin-top:6px">
-          <label data-i18n="voiceTriggerWord" style="font-size:0.85rem">Trigger word</label>
-          <div style="display:inline-flex; align-items:center; gap:8px; margin-left:8px; flex-wrap:wrap">
-            <input type="text" id="voice-trigger-word" maxlength="20" readonly
-                   style="width:100px; padding:4px 8px; border-radius:6px; border:1px solid #555; background:#2a2a2a; color:#fff; font-size:0.9rem; cursor:default"
-                   placeholder="fire">
-            <button type="button" id="voice-trigger-record-btn" class="trigger-record-btn" data-i18n="voiceTriggerRecord">🎙 Hold to record</button>
-          </div>
-          <span class="setting-note" data-i18n="voiceTriggerNote">Speak this word before your answer</span>
-        </div>
-      </div>
-      <!-- Help / How to Play -->
-      <details class="help-section">
-        <summary data-i18n="helpTitle">❓ How to Play</summary>
-        <div class="help-body">
-          <p data-i18n="helpIntro">Multiplication problems fall from the sky. Answer them before they hit the ground!</p>
-          <ul>
-            <li data-i18n="helpTarget">Swipe left/right (mobile) or use <strong>← →</strong> arrow keys to switch target</li>
-            <li data-i18n="helpType">Type the answer and press <strong>Enter</strong> or <strong>Fire!</strong> — on mobile, just say the answer aloud</li>
-            <li data-i18n="helpLives">You have 3 lives — lose one each time a problem hits the bottom (Normal mode)</li>
-            <li data-i18n="helpStreak">Answer fast for bonus points — streaks of <strong>3×</strong> and <strong>5×</strong> multiply your score</li>
-            <li data-i18n="helpFreeze">Catch the ❄️ <strong>Freeze</strong> item to slow all falling problems for 5s</li>
-            <li data-i18n="helpLifeUp">Catch the 💚 <strong>Life Up</strong> item to regain a lost life</li>
-            <li data-i18n="helpBoss">Every 5 levels a <strong>Boss</strong> appears — defeat it for 50 bonus points</li>
-            <li data-i18n="helpHint">A dot-grid hint appears after you miss the same question several times</li>
-            <li data-i18n="helpRepeat">Questions you get wrong come back more often — so you'll master them</li>
-            <li data-i18n="helpEndless">The game gets faster each level — it's a high-score challenge, not a race to the finish!</li>
-          </ul>
-          <p class="help-subhead" data-i18n="helpVoiceTitle">🎤 Voice input</p>
-          <ul>
-            <li data-i18n-html="helpVoiceNumber"><strong>Normal mode (default):</strong> say the answer — it submits automatically (e.g. "forty-eight" or "48")</li>
-            <li data-i18n-html="helpVoiceTrigger"><strong>Trigger mode:</strong> say your trigger word then the answer (e.g. "fire 48") — only that combination fires; a bare number just previews it. Enable above and set your preferred word.</li>
-            <li data-i18n-html="helpVoiceFire"><strong>fire / shoot / go / yes</strong> — submit the answer currently shown, or use as the trigger word prefix</li>
-            <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
-            <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>
-            <li data-i18n="helpVoiceClear"><strong>clear / delete</strong> — clear the answer box</li>
-          </ul>
-        </div>
-      </details>
-
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
       <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
@@ -348,6 +274,107 @@
       </div>
       <div class="overlay-btns">
         <button id="btn-back-achievements" class="btn-primary" data-i18n="back">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="settings-overlay">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h2 data-i18n="settingsTitle">Settings</h2>
+        <button id="btn-settings-close" class="settings-close-btn">✕</button>
+      </div>
+
+      <!-- Profile section: name + age -->
+      <div class="settings-section">
+        <h3 class="settings-section-title" data-i18n="settingsProfile">Profile</h3>
+        <div class="form-group">
+          <label for="input-name" data-i18n="yourName">Your Name</label>
+          <input type="text" id="input-name" data-i18n-ph="namePlaceholder" placeholder="Enter your name" maxlength="20" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="input-age" data-i18n="yourAge">Your Age</label>
+          <input type="number" id="input-age" data-i18n-ph="agePlaceholder" placeholder="Age" min="1" max="132" style="width:100px">
+        </div>
+      </div>
+
+      <!-- Game section: mode + difficulty + hint threshold -->
+      <div class="settings-section">
+        <h3 class="settings-section-title" data-i18n="settingsGame">Game</h3>
+        <div class="form-group">
+          <label data-i18n="mode">Mode</label>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-mode="normal" data-i18n="modeNormal">Normal</button>
+            <button class="mode-btn" data-mode="practice" data-i18n="modePractice">Practice</button>
+          </div>
+          <span class="setting-note" id="mode-note" data-i18n="modeNormalNote">Lose lives when objects hit the bottom</span>
+        </div>
+        <div class="form-group">
+          <label data-i18n="difficulty">Difficulty</label>
+          <div class="difficulty-btns">
+            <button class="diff-btn" data-diff="easy" data-i18n="diffEasy">Easy</button>
+            <button class="diff-btn active" data-diff="medium" data-i18n="diffMedium">Medium</button>
+            <button class="diff-btn" data-diff="hard" data-i18n="diffHard">Hard</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label id="hint-label"></label>
+          <input type="range" id="hint-threshold" min="1" max="5" value="3" class="range-slider" style="max-width:200px">
+          <span class="setting-note" data-i18n="hintNote">Shows a dot-grid picture when stuck</span>
+        </div>
+      </div>
+
+      <!-- Voice section -->
+      <div class="settings-section">
+        <div class="form-group" id="voice-trigger-group">
+          <label data-i18n="voiceTriggerMode">Voice trigger word mode</label>
+          <div class="mode-btns" id="voice-trigger-btns">
+            <button type="button" class="mode-btn active" id="voice-trigger-off" data-i18n="voiceTriggerOff">Off — any spoken number fires</button>
+            <button type="button" class="mode-btn" id="voice-trigger-on" data-i18n="voiceTriggerOn">On — say "fire [answer]"</button>
+          </div>
+          <div id="voice-trigger-word-row" style="display:none; margin-top:6px">
+            <label data-i18n="voiceTriggerWord" style="font-size:0.85rem">Trigger word</label>
+            <div style="display:inline-flex; align-items:center; gap:8px; margin-left:8px; flex-wrap:wrap">
+              <input type="text" id="voice-trigger-word" maxlength="20" readonly
+                     style="width:100px; padding:4px 8px; border-radius:6px; border:1px solid #555; background:#2a2a2a; color:#fff; font-size:0.9rem; cursor:default"
+                     placeholder="fire">
+              <button type="button" id="voice-trigger-record-btn" class="trigger-record-btn" data-i18n="voiceTriggerRecord">🎙 Hold to record</button>
+            </div>
+            <span class="setting-note" data-i18n="voiceTriggerNote">Speak this word before your answer</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help section -->
+      <div class="settings-section">
+        <details class="help-section">
+          <summary data-i18n="helpTitle">❓ How to Play</summary>
+          <div class="help-body">
+            <p data-i18n="helpIntro">Multiplication problems fall from the sky. Answer them before they hit the ground!</p>
+            <ul>
+              <li data-i18n="helpTarget">Swipe left/right (mobile) or use <strong>← →</strong> arrow keys to switch target</li>
+              <li data-i18n="helpType">Type the answer and press <strong>Enter</strong> or <strong>Fire!</strong> — on mobile, just say the answer aloud</li>
+              <li data-i18n="helpLives">You have 3 lives — lose one each time a problem hits the bottom (Normal mode)</li>
+              <li data-i18n="helpStreak">Answer fast for bonus points — streaks of <strong>3×</strong> and <strong>5×</strong> multiply your score</li>
+              <li data-i18n="helpFreeze">Catch the ❄️ <strong>Freeze</strong> item to slow all falling problems for 5s</li>
+              <li data-i18n="helpLifeUp">Catch the 💚 <strong>Life Up</strong> item to regain a lost life</li>
+              <li data-i18n="helpBoss">Every 5 levels a <strong>Boss</strong> appears — defeat it for 50 bonus points</li>
+              <li data-i18n="helpHint">A dot-grid hint appears after you miss the same question several times</li>
+              <li data-i18n="helpRepeat">Questions you get wrong come back more often — so you'll master them</li>
+              <li data-i18n="helpEndless">The game gets faster each level — it's a high-score challenge, not a race to the finish!</li>
+            </ul>
+            <p class="help-subhead" data-i18n="helpVoiceTitle">🎤 Voice input</p>
+            <ul>
+              <li data-i18n-html="helpVoiceNumber"><strong>Normal mode (default):</strong> say the answer — it submits automatically (e.g. "forty-eight" or "48")</li>
+              <li data-i18n-html="helpVoiceTrigger"><strong>Trigger mode:</strong> say your trigger word then the answer (e.g. "fire 48") — only that combination fires; a bare number just previews it. Enable above and set your preferred word.</li>
+              <li data-i18n-html="helpVoiceFire"><strong>fire / shoot / go / yes</strong> — submit the answer currently shown, or use as the trigger word prefix</li>
+              <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
+              <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>
+              <li data-i18n="helpVoiceClear"><strong>clear / delete</strong> — clear the answer box</li>
+            </ul>
+          </div>
+        </details>
       </div>
     </div>
   </div>

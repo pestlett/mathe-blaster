@@ -240,6 +240,10 @@ const I18n = (() => {
       // Subtraction achievements
       ach_sub_first_correct: ['First Difference', 'Answer your first subtraction question correctly'],
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Mastered all ×-tables (2–10), all ÷-tables (2–10), and practised addition & subtraction'],
+
+      settingsTitle:   'Settings',
+      settingsProfile: 'Profile',
+      settingsGame:    'Game',
     },
 
     de: {
@@ -472,6 +476,10 @@ const I18n = (() => {
       // Subtraction achievements
       ach_sub_first_correct: ['Erste Differenz',   'Erste Subtraktionsaufgabe richtig beantwortet'],
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Alle ×-Tabellen (2–10), alle ÷-Tabellen (2–10) gemeistert und Addition & Subtraktion geübt'],
+
+      settingsTitle:   'Einstellungen',
+      settingsProfile: 'Profil',
+      settingsGame:    'Spiel',
     },
 
     es: {
@@ -704,6 +712,10 @@ const I18n = (() => {
       // Subtraction achievements
       ach_sub_first_correct: ['Primera Resta',     'Responde tu primera pregunta de resta correctamente'],
       ach_klasse3_komplett: ['¡Klasse 3 Komplett! 🎓', 'Has dominado todas las tablas ×2–×10, ÷2–÷10 y practicado suma y resta'],
+
+      settingsTitle:   'Configuración',
+      settingsProfile: 'Perfil',
+      settingsGame:    'Juego',
     },
   };
 

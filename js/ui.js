@@ -144,6 +144,28 @@ const UI = (() => {
         _refreshDailyBtn();
       });
     });
+
+    // Settings modal
+    const settingsModal = document.getElementById('settings-modal');
+    const btnSettings = document.getElementById('btn-settings');
+    const btnSettingsClose = document.getElementById('btn-settings-close');
+
+    function openSettings() {
+      settingsModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSettings() {
+      settingsModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    btnSettings?.addEventListener('click', openSettings);
+    btnSettingsClose?.addEventListener('click', closeSettings);
+    settingsModal?.addEventListener('click', e => { if (e.target === settingsModal) closeSettings(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && settingsModal?.classList.contains('open')) closeSettings();
+    });
+
     // Apply saved language on load
     I18n.applyToDOM();
 
@@ -368,8 +390,16 @@ const UI = (() => {
     btnStart.addEventListener('click', () => {
       const name = nameInput.value.trim();
       const age = parseInt(ageInput.value);
-      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
-      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      if (!name) {
+        openSettings();
+        setTimeout(() => { nameInput.focus(); nameInput.classList.add('field-error'); }, 50);
+        return;
+      }
+      if (!age || age < 1 || age > 132) {
+        openSettings();
+        setTimeout(() => { ageInput.focus(); ageInput.classList.add('field-error'); }, 50);
+        return;
+      }
 
       let min, max;
       if (selectedOp === 'add' || selectedOp === 'subtract') {
@@ -419,8 +449,16 @@ const UI = (() => {
     btnRunMode.addEventListener('click', () => {
       const name = nameInput.value.trim();
       const age = parseInt(ageInput.value);
-      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
-      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      if (!name) {
+        openSettings();
+        setTimeout(() => { nameInput.focus(); nameInput.classList.add('field-error'); }, 50);
+        return;
+      }
+      if (!age || age < 1 || age > 132) {
+        openSettings();
+        setTimeout(() => { ageInput.focus(); ageInput.classList.add('field-error'); }, 50);
+        return;
+      }
       let min, max;
       if (selectedOp === 'add' || selectedOp === 'subtract') {
         min = 1; max = selectedNumRange;
@@ -482,8 +520,16 @@ const UI = (() => {
     btnDaily.addEventListener('click', () => {
       const name = nameInput.value.trim();
       const age = parseInt(ageInput.value);
-      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
-      if (!age || age < 1 || age > 132) { ageInput.focus(); ageInput.classList.add('field-error'); return; }
+      if (!name) {
+        openSettings();
+        setTimeout(() => { nameInput.focus(); nameInput.classList.add('field-error'); }, 50);
+        return;
+      }
+      if (!age || age < 1 || age > 132) {
+        openSettings();
+        setTimeout(() => { ageInput.focus(); ageInput.classList.add('field-error'); }, 50);
+        return;
+      }
       const dp = Progress.getDailyParams();
       Progress.setPlayer(name, age);
       Progress.saveName(name);
@@ -577,6 +623,7 @@ const UI = (() => {
     // Apply all dynamic strings in the current language (must run after settings restore)
     _refreshDynamicOnboarding(selectedMode);
     _refreshDailyBtn();
+    if (!nameInput.value.trim()) openSettings();
   }
 
   // ---- HUD ----
