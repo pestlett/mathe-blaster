@@ -778,7 +778,8 @@ const UI = (() => {
       achEl.innerHTML = `<div class="ach-title">${I18n.t('newAchievements')}</div>` +
         newAchievements.map(a => {
           const txt = I18n.achText(a.id);
-          return `<div class="ach-badge"><strong>${txt.label}</strong> — ${txt.desc}</div>`;
+          const cls = a.milestone ? 'ach-badge ach-badge--milestone' : 'ach-badge';
+          return `<div class="${cls}"><strong>${txt.label}</strong> — ${txt.desc}</div>`;
         }).join('');
     } else {
       achEl.innerHTML = '';

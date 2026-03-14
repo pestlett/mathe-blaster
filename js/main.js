@@ -1484,4 +1484,8 @@ function endGame() {
     () => UI.showLeaderboard(() => UI.showScreen('onboarding')),
     runData
   );
+  // Special confetti burst for the Klasse 3 Komplett milestone
+  if (newAchievements.some(a => a.id === 'klasse3_komplett')) {
+    state.confetti = spawnConfetti(window.innerWidth);
+  }
 }

@@ -241,6 +241,54 @@ describe('Progress extended tables unlock', () => {
   });
 });
 
+describe('Klasse 3 Komplett achievement', () => {
+  function makeFullStats() {
+    const s = {};
+    // × tables 2–10 (each needs at least 1 cleanCorrect)
+    for (let a = 2; a <= 10; a++) {
+      for (let b = 1; b <= 12; b++) {
+        s[`${a}x${b}`] = { attempts: 1, correct: 1, cleanCorrect: 1, totalTimeMs: 3000, masteredLevel: 1 };
+      }
+    }
+    // ÷ tables 2–10 (each divisor × quotients 1–12)
+    for (let a = 2; a <= 10; a++) {
+      for (let b = 1; b <= 12; b++) {
+        s[`${a*b}d${a}`] = { attempts: 1, correct: 1, cleanCorrect: 1, totalTimeMs: 3000, masteredLevel: 1 };
+      }
+    }
+    // one + and one −
+    s['12a5'] = { attempts: 1, correct: 1, totalTimeMs: 2000, masteredLevel: 1 };
+    s['17s5'] = { attempts: 1, correct: 1, totalTimeMs: 2000, masteredLevel: 1 };
+    return s;
+  }
+
+  test('unlocks when all × and ÷ tables (2–10) done and + and − tried', () => {
+    const ctx = makeProgressCtx();
+    const ach = ctx.Progress.ACHIEVEMENTS.find(a => a.id === 'klasse3_komplett');
+    expect(ach).toBeDefined();
+    const s = makeFullStats();
+    expect(ach.check({}, s)).toBe(true);
+  });
+
+  test('does not unlock when ÷ tables incomplete', () => {
+    const ctx = makeProgressCtx();
+    const ach = ctx.Progress.ACHIEVEMENTS.find(a => a.id === 'klasse3_komplett');
+    const s = makeFullStats();
+    // Remove a ÷ table fact
+    delete s['12d2']; // remove one fact from ÷2 table
+    expect(ach.check({}, s)).toBe(false);
+  });
+
+  test('does not unlock when + never tried', () => {
+    const ctx = makeProgressCtx();
+    const ach = ctx.Progress.ACHIEVEMENTS.find(a => a.id === 'klasse3_komplett');
+    const s = makeFullStats();
+    // Remove addition
+    delete s['12a5'];
+    expect(ach.check({}, s)).toBe(false);
+  });
+});
+
 describe('Progress.getDailyParams', () => {
   let ctx;
   beforeEach(() => { ctx = makeProgressCtx(); });

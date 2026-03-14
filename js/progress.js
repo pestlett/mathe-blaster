@@ -78,6 +78,17 @@ const Progress = (() => {
     { id: 'add_first_correct', label: 'First Sum',        desc: 'Answer your first addition question correctly',    check: (_, s) => Object.keys(s).some(k => /^\d+a\d+$/.test(k) && (s[k].correct || 0) >= 1) },
     // Subtraction achievements
     { id: 'sub_first_correct', label: 'First Difference', desc: 'Answer your first subtraction question correctly', check: (_, s) => Object.keys(s).some(k => /^\d+s\d+$/.test(k) && (s[k].correct || 0) >= 1) },
+    // Klasse 3 Komplett milestone
+    { id: 'klasse3_komplett', label: 'Klasse 3 Komplett! 🎓', milestone: true,
+      desc: 'Master all ×-tables (2–10), all ÷-tables (2–10), and try addition & subtraction',
+      check: (_, s) => {
+        for (let t = 2; t <= 10; t++) { if (!tableComplete(s, t)) return false; }
+        for (let t = 2; t <= 10; t++) { if (!tableDivideComplete(s, t)) return false; }
+        const hasAdd = Object.keys(s).some(k => /^\d+a\d+$/.test(k) && (s[k].correct || 0) >= 1);
+        const hasSub = Object.keys(s).some(k => /^\d+s\d+$/.test(k) && (s[k].correct || 0) >= 1);
+        return hasAdd && hasSub;
+      }
+    },
   ];
 
   // A multiplication fact is "cleanly known" if answered correctly at least once
