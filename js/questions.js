@@ -117,7 +117,7 @@ const Questions = (() => {
       : { lo: minTable, hi: maxTable };
 
     if (operation === 'divide') {
-      const { difficulty, zehner } = opts;
+      const { difficulty, zehner, halbschriftlich } = opts;
       if (zehner) {
         // Zehner division: (a × b) ÷ a = b, where b is a multiple of 10 or 100
         const tens = [10, 20, 30, 40, 50, 60, 70, 80, 90];
@@ -128,6 +128,32 @@ const Questions = (() => {
           for (const b of bVals) {
             const dividend = a * b;
             const answer   = b;
+            const key      = `${dividend}d${a}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys, 3);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a: dividend, b: a, answer, key, display: `${dividend} ÷ ${a}` });
+            }
+          }
+        }
+      } else if (halbschriftlich) {
+        // Halbschriftliche Division: (divisor × quotient) ÷ divisor = quotient
+        // divisor = a (from table range), quotient is multi-digit (no remainder)
+        // Easy: 2-digit quotient (12–99); Medium/Hard: 2-digit AND 3-digit (12–999)
+        const hiQ = difficulty === 'easy' ? 99 : 999;
+        const loQ = 12;
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          if (a === 0) continue;
+          const seen = new Set();
+          const target = difficulty === 'easy' ? 18 : 24;
+          let attempts = 0;
+          while (seen.size < target && attempts < target * 20) {
+            attempts++;
+            const quotient = _randInt(loQ, hiQ);
+            if (seen.has(quotient)) continue;
+            seen.add(quotient);
+            const dividend = a * quotient;
+            const answer   = quotient;
             const key      = `${dividend}d${a}`;
             if (excludeAnswers.includes(answer)) continue;
             const w = _weight(stats, key, wrongKeys, 3);
@@ -305,6 +331,12 @@ const Questions = (() => {
       const hiB = (opts.difficulty === 'easy') ? 99 : 999;
       const b = _randInt(12, hiB);
       return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
+    }
+    if (opts.halbschriftlich && operation === 'divide') {
+      const hiQ = (opts.difficulty === 'easy') ? 99 : 999;
+      const quotient = _randInt(12, hiQ);
+      const dividend = a * quotient;
+      return { a: dividend, b: a, answer: quotient, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
     }
     if (operation === 'divide') {
       const b = Math.floor(Math.random() * 12) + 1;

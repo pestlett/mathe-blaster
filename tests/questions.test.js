@@ -345,3 +345,49 @@ describe('Questions — large range sampling (Phase 5)', () => {
     expect(count).toBe(16);
   });
 });
+
+describe('Questions — Halbschriftlich division (Phase 7)', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
+
+  test('easy: all quotients are 2-digit (12–99)', () => {
+    const pool = ctx.Questions._buildPool(2, 5, {}, [], [], 'divide', { difficulty: 'easy', halbschriftlich: true });
+    expect(pool.length).toBeGreaterThan(0);
+    const allTwoDigit = pool.every(q => q.answer >= 12 && q.answer <= 99);
+    expect(allTwoDigit).toBe(true);
+  });
+
+  test('medium: includes both 2-digit and 3-digit quotients', () => {
+    const pool = ctx.Questions._buildPool(3, 5, {}, [], [], 'divide', { difficulty: 'medium', halbschriftlich: true });
+    const hasTwoDigit   = pool.some(q => q.answer >= 12  && q.answer <= 99);
+    const hasThreeDigit = pool.some(q => q.answer >= 100 && q.answer <= 999);
+    expect(hasTwoDigit).toBe(true);
+    expect(hasThreeDigit).toBe(true);
+  });
+
+  test('dividend equals divisor × quotient (no remainder)', () => {
+    const pool = ctx.Questions._buildPool(4, 4, {}, [], [], 'divide', { halbschriftlich: true });
+    expect(pool.length).toBeGreaterThan(0);
+    pool.forEach(q => {
+      // q.a = dividend, q.b = divisor, q.answer = quotient
+      expect(q.a).toBe(q.b * q.answer);
+    });
+  });
+
+  test('key format is dividenddDivisor', () => {
+    const pool = ctx.Questions._buildPool(3, 3, {}, [], [], 'divide', { halbschriftlich: true });
+    pool.forEach(q => expect(q.key).toMatch(/^\d+d\d+$/));
+  });
+
+  test('display is "dividend ÷ divisor"', () => {
+    const pool = ctx.Questions._buildPool(4, 4, {}, [], [], 'divide', { halbschriftlich: true });
+    pool.forEach(q => expect(q.display).toMatch(/^\d+ ÷ \d+$/));
+  });
+
+  test('zehner divide mode unaffected', () => {
+    const pool = ctx.Questions._buildPool(3, 5, {}, [], [], 'divide', { difficulty: 'easy', zehner: true });
+    expect(pool.length).toBeGreaterThan(0);
+    // In zehner divide easy, the answer (quotient) is a multiple of 10
+    pool.forEach(q => expect(q.answer % 10).toBe(0));
+  });
+});
