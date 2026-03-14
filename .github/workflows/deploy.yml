@@ -67,9 +67,14 @@ jobs:
           git commit -m "chore: release v${VERSION}"
           git push
 
-  # ── Deploy: runs after bump (same run) OR when chore:release re-triggers ─
+  # ── Deploy: runs after bump succeeds, OR directly on chore:release commits ─
   deploy:
     needs: bump-version
+    if: |
+      always() && (
+        needs.bump-version.result == 'success' ||
+        startsWith(github.event.head_commit.message, 'chore: release')
+      )
     runs-on: ubuntu-latest
     environment:
       name: github-pages
