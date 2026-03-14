@@ -2,30 +2,31 @@
 
 ## After every change
 **Always commit and push when a task is complete.**
-1. Run `npm test` — do not commit if tests fail
-2. Stage the changed files
-3. Commit with a concise message (what changed and why)
-4. Push to `main` — this triggers CI tests and deploys to GitHub Pages
+1. Run `git pull origin main --rebase` — pull latest `main` first and resolve any conflicts before pushing
+2. Run `npm test` — do not commit if tests fail
+3. Stage the changed files
+4. Commit with a concise message (what changed and why)
+5. Push to `main` — this triggers CI tests and deploys to GitHub Pages
 
 ## Versioning
 The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
 
-**PATCH is bumped automatically on every deploy by CI** — you never need to touch version numbers for normal changes.
+**⚠️ Never manually edit version numbers** — not in `package.json`, `js/version.js`, or `sw.js`. CI handles all of this automatically on every deploy.
 
-| Manual bump | When |
-|-------------|------|
-| `MINOR` (0.**x**.0) | New feature or mechanic — update `package.json` before merging |
-| `MAJOR` (**x**.0.0) | Major redesign — update `package.json` before merging |
-
-**Do not edit `js/version.js` or `sw.js` for version changes** — CI overwrites them on every deploy. The deploy workflow:
-1. Runs `npm version patch` → increments PATCH in `package.json`
+The deploy workflow (`deploy.yml`) does this on every push to `main`:
+1. Runs `npm version patch` → increments PATCH in `package.json` (e.g. `0.7.1` → `0.7.2`)
 2. Injects the new version into `js/version.js` and `sw.js`
 3. Commits `chore: release vX.Y.Z` back to `main`
 4. Deploys the site
 
-This means concurrent feature branches never collide on version numbers.
+The only exception is a deliberate MINOR or MAJOR bump (new feature set or redesign). In that case, manually update `package.json` **only** — CI will increment PATCH from that new baseline going forward.
 
-The footer displays the version automatically from `js/version.js`.
+| Manual bump | When | How |
+|-------------|------|-----|
+| `MINOR` (0.**x**.0) | New feature or mechanic | Edit `package.json` only, in the same commit as the feature |
+| `MAJOR` (**x**.0.0) | Major redesign | Edit `package.json` only |
+
+`js/version.js` and `sw.js` are **always** overwritten by CI — any manual changes to them will be lost on the next deploy.
 
 ## File structure
 | File | Purpose |
