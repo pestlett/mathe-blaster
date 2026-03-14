@@ -61,14 +61,18 @@ const I18n = (() => {
       voiceTriggerMode: 'Voice trigger word mode',
       voiceTriggerOn:   'On — say "fire [answer]"',
       voiceTriggerOff:  'Off — any spoken number fires',
-      voiceTriggerWord: 'Trigger word',
-      voiceTriggerNote: 'Speak this word before your answer (e.g. "fire 48")',
+      voiceTriggerWord:   'Trigger word',
+      voiceTriggerRecord: '🎙 Hold to record',
+      voiceTriggerNote:   'Speak this word before your answer (e.g. "fire 48")',
 
       // HUD
       levelLabel:        'Level ',
       hintWrongTries:    'wrong tries',
 
       // In-game
+      lastChanceMsg:     'Last chance!',
+      savedMsg:          'Saved! 🛡️',
+      firstTimeMsg:      'New! {q} ✓',
       answerPlaceholder: 'Answer...',
       lifeUpPlaceholder: 'Answer for +1 life!',
       freezePlaceholder: 'Answer to freeze!',
@@ -79,7 +83,7 @@ const I18n = (() => {
       tablesFocus:       '{table}× table',
       practiceSuffix:    '· Practice',
       streakDisplay:     '{streak} streak! {mult}',
-      tryAgain:          'Try again!',
+      tryAgain:          'Nearly! The answer is',
       paused:            'Paused',
       resume:            'Resume',
       backToMenu:        'Back to Menu',
@@ -88,6 +92,9 @@ const I18n = (() => {
 
       // Game over
       gameOver:          'Game Over!',
+      goExcellent:       'Amazing work, {name}! 🌟',
+      goGood:            'Great effort, {name}! Keep going! 💪',
+      goKeepTrying:      "Don't give up, {name}! You're getting better! ❤️",
       goScore:           'Score: ',
       goLevel:           'Level reached: ',
       goAccuracy:        'Accuracy: ',
@@ -102,6 +109,8 @@ const I18n = (() => {
 
       // Mastery
       tableMastered:        '⭐ {table}× table mastered!',
+      masteryMasteredCount: '{n} fully mastered',
+      tableClearedBanner:   '{table}× table — well done! ⭐',
       masteryTitle:         'Table Progress',
       masteryWinBanner:     'ALL TABLES MASTERED!',
       masteryLegendDone:    ' Mastered  ',
@@ -210,13 +219,17 @@ const I18n = (() => {
       voiceTriggerMode: 'Stimmbefehlswort-Modus',
       voiceTriggerOn:   'An — "[Befehl] [Antwort]" sagen',
       voiceTriggerOff:  'Aus — jede Zahl wird gewertet',
-      voiceTriggerWord: 'Stimmbefehl',
-      voiceTriggerNote: 'Dieses Wort vor der Antwort sprechen (z. B. "feuer 48")',
+      voiceTriggerWord:   'Stimmbefehl',
+      voiceTriggerRecord: '🎙 Halten zum Aufnehmen',
+      voiceTriggerNote:   'Dieses Wort vor der Antwort sprechen (z. B. "feuer 48")',
 
       // HUD
       levelLabel:        'Level ',
       hintWrongTries:    'falsche Versuche',
 
+      lastChanceMsg:     'Letzte Chance!',
+      savedMsg:          'Gerettet! 🛡️',
+      firstTimeMsg:      'Neu! {q} ✓',
       answerPlaceholder: 'Antwort...',
       lifeUpPlaceholder: 'Antwort für +1 Leben!',
       freezePlaceholder: 'Antwort zum Einfrieren!',
@@ -227,7 +240,7 @@ const I18n = (() => {
       tablesFocus:       '{table}×-Tabelle',
       practiceSuffix:    '· Übung',
       streakDisplay:     '{streak} Serie! {mult}',
-      tryAgain:          'Nochmal!',
+      tryAgain:          'Fast! Die Antwort ist',
       paused:            'Pause',
       resume:            'Weiter',
       backToMenu:        'Zum Menü',
@@ -235,6 +248,9 @@ const I18n = (() => {
       bossDefeated:      'Boss!',
 
       gameOver:          'Spiel vorbei!',
+      goExcellent:       'Tolle Arbeit, {name}! 🌟',
+      goGood:            'Gut gemacht, {name}! Weiter so! 💪',
+      goKeepTrying:      'Nicht aufgeben, {name}! Du wirst besser! ❤️',
       goScore:           'Punkte: ',
       goLevel:           'Level erreicht: ',
       goAccuracy:        'Genauigkeit: ',
@@ -248,6 +264,8 @@ const I18n = (() => {
       achievementsBtn:   'Erfolge',
 
       tableMastered:        '⭐ {table}× Tabelle gemeistert!',
+      masteryMasteredCount: '{n} vollständig gemeistert',
+      tableClearedBanner:   '{table}×-Tabelle — toll gemacht! ⭐',
       masteryTitle:         'Tabellenfortschritt',
       masteryWinBanner:     'ALLE TABELLEN GEMEISTERT!',
       masteryLegendDone:    ' Gemeistert  ',
@@ -352,13 +370,17 @@ const I18n = (() => {
       voiceTriggerMode: 'Modo de palabra activadora',
       voiceTriggerOn:   'Activado — di "[orden] [respuesta]"',
       voiceTriggerOff:  'Desactivado — cualquier número funciona',
-      voiceTriggerWord: 'Palabra activadora',
-      voiceTriggerNote: 'Di esta palabra antes de la respuesta (p. ej. "fuego 48")',
+      voiceTriggerWord:   'Palabra activadora',
+      voiceTriggerRecord: '🎙 Mantén para grabar',
+      voiceTriggerNote:   'Di esta palabra antes de la respuesta (p. ej. "fuego 48")',
 
       // HUD
       levelLabel:        'Nivel ',
       hintWrongTries:    'intentos fallidos',
 
+      lastChanceMsg:     '¡Última oportunidad!',
+      savedMsg:          '¡Salvado! 🛡️',
+      firstTimeMsg:      '¡Nuevo! {q} ✓',
       answerPlaceholder: 'Respuesta...',
       lifeUpPlaceholder: '¡Responde por +1 vida!',
       freezePlaceholder: '¡Responde para congelar!',
@@ -369,7 +391,7 @@ const I18n = (() => {
       tablesFocus:       'tabla del {table}×',
       practiceSuffix:    '· Práctica',
       streakDisplay:     '¡{streak} seguidos! {mult}',
-      tryAgain:          '¡Inténtalo de nuevo!',
+      tryAgain:          '¡Casi! La respuesta es',
       paused:            'Pausado',
       resume:            'Continuar',
       backToMenu:        'Volver al Menú',
@@ -377,6 +399,9 @@ const I18n = (() => {
       bossDefeated:      '¡Jefe!',
 
       gameOver:          '¡Fin del juego!',
+      goExcellent:       '¡Trabajo increíble, {name}! 🌟',
+      goGood:            '¡Gran esfuerzo, {name}! ¡Sigue así! 💪',
+      goKeepTrying:      '¡No te rindas, {name}! ¡Estás mejorando! ❤️',
       goScore:           'Puntos: ',
       goLevel:           'Nivel alcanzado: ',
       goAccuracy:        'Precisión: ',
@@ -390,6 +415,8 @@ const I18n = (() => {
       achievementsBtn:   'Logros',
 
       tableMastered:        '⭐ ¡Tabla del {table}× dominada!',
+      masteryMasteredCount: '{n} completamente dominadas',
+      tableClearedBanner:   '¡Tabla del {table}× — muy bien! ⭐',
       masteryTitle:         'Progreso de tablas',
       masteryWinBanner:     '¡TODAS LAS TABLAS DOMINADAS!',
       masteryLegendDone:    ' Dominado  ',

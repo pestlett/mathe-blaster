@@ -123,9 +123,12 @@
         </div>
         <div id="voice-trigger-word-row" style="display:none; margin-top:6px">
           <label data-i18n="voiceTriggerWord" style="font-size:0.85rem">Trigger word</label>
-          <input type="text" id="voice-trigger-word" maxlength="20"
-                 style="width:100px; margin-left:8px; padding:4px 8px; border-radius:6px; border:1px solid #555; background:#333; color:#fff; font-size:0.9rem"
-                 placeholder="fire">
+          <div style="display:inline-flex; align-items:center; gap:8px; margin-left:8px; flex-wrap:wrap">
+            <input type="text" id="voice-trigger-word" maxlength="20" readonly
+                   style="width:100px; padding:4px 8px; border-radius:6px; border:1px solid #555; background:#2a2a2a; color:#fff; font-size:0.9rem; cursor:default"
+                   placeholder="fire">
+            <button type="button" id="voice-trigger-record-btn" class="trigger-record-btn" data-i18n="voiceTriggerRecord">🎙 Hold to record</button>
+          </div>
           <span class="setting-note" data-i18n="voiceTriggerNote">Speak this word before your answer</span>
         </div>
       </div>
