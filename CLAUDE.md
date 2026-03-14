@@ -8,6 +8,10 @@
 3. Do all work inside that worktree directory
 4. **Periodically pull during long tasks**: run `git fetch origin main && git rebase origin/main` every few steps to stay current and catch conflicts early
 5. When done, merge directly into `main` — **do not open pull requests or MRs**
+6. After merging, clean up the branch:
+   - Delete the local branch: `git branch -d feat/<task-name>`
+   - Delete the remote branch: `git push origin --delete feat/<task-name>`
+   - Remove the worktree: `git worktree remove ../multiplication-<task-name>`
 
 ## After every change
 **Always commit and push when a task is complete.**
