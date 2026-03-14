@@ -777,6 +777,26 @@ const UI = (() => {
     showLevelUp(I18n.t('firstTimeMsg', { q: question }), null);
   }
 
+  // ---- Help / SOS button ----
+  function updateHelpBtn(cooldown, max) {
+    const btn = document.getElementById('btn-help');
+    if (!btn) return;
+    if (cooldown <= 0) {
+      btn.textContent = '💡';
+      btn.title = 'Help — reveal the answer (H)';
+      btn.disabled = false;
+      btn.classList.remove('help-cooldown');
+      btn.style.removeProperty('--help-progress');
+    } else {
+      const secs = Math.ceil(cooldown);
+      btn.textContent = `💡 ${secs}s`;
+      btn.title = `Help on cooldown — ${secs}s remaining`;
+      btn.disabled = true;
+      btn.classList.add('help-cooldown');
+      btn.style.setProperty('--help-progress', `${((max - cooldown) / max * 100).toFixed(1)}%`);
+    }
+  }
+
   return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn };
 })();
