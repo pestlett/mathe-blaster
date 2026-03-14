@@ -117,19 +117,37 @@ const Questions = (() => {
       : { lo: minTable, hi: maxTable };
 
     if (operation === 'divide') {
-      // Generate from valid multiplication pairs: (a×b) ÷ a = b
-      // aRange controls the divisor; bRange controls the multiplier/quotient
-      // Base weight 3: division requires more effort than multiplication
-      for (let a = aRange.lo; a <= aRange.hi; a++) {
-        if (a === 0) continue;
-        for (let b = bRange.lo; b <= bRange.hi; b++) {
-          const dividend = a * b;
-          const answer   = b;
-          const key      = `${dividend}d${a}`;
-          if (excludeAnswers.includes(answer)) continue;
-          const w = _weight(stats, key, wrongKeys, 3);
-          for (let i = 0; i < w; i++) {
-            pool.push({ a: dividend, b: a, answer, key, display: `${dividend} ÷ ${a}` });
+      const { difficulty, zehner } = opts;
+      if (zehner) {
+        // Zehner division: (a × b) ÷ a = b, where b is a multiple of 10 or 100
+        const tens = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+        const hundreds = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+        const bVals = difficulty === 'easy' ? tens : [...tens, ...hundreds];
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          if (a === 0) continue;
+          for (const b of bVals) {
+            const dividend = a * b;
+            const answer   = b;
+            const key      = `${dividend}d${a}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys, 3);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a: dividend, b: a, answer, key, display: `${dividend} ÷ ${a}` });
+            }
+          }
+        }
+      } else {
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          if (a === 0) continue;
+          for (let b = bRange.lo; b <= bRange.hi; b++) {
+            const dividend = a * b;
+            const answer   = b;
+            const key      = `${dividend}d${a}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys, 3);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a: dividend, b: a, answer, key, display: `${dividend} ÷ ${a}` });
+            }
           }
         }
       }
@@ -211,15 +229,34 @@ const Questions = (() => {
         }
       }
     } else {
-      // multiply (default)
-      for (let a = aRange.lo; a <= aRange.hi; a++) {
-        for (let b = bRange.lo; b <= bRange.hi; b++) {
-          const answer = a * b;
-          const key    = `${a}x${b}`;
-          if (excludeAnswers.includes(answer)) continue;
-          const w = _weight(stats, key, wrongKeys);
-          for (let i = 0; i < w; i++) {
-            pool.push({ a, b, answer, key, display: `${a} × ${b}` });
+      // multiply (default or Zehner mode)
+      const { difficulty, zehner } = opts;
+      if (zehner) {
+        // Zehner mode: one factor from table range, other is a multiple of 10 or 100
+        const tens = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+        const hundreds = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+        const bVals = difficulty === 'easy' ? tens : [...tens, ...hundreds];
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          for (const b of bVals) {
+            const answer = a * b;
+            const key    = `${a}x${b}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a, b, answer, key, display: `${a} × ${b}` });
+            }
+          }
+        }
+      } else {
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          for (let b = bRange.lo; b <= bRange.hi; b++) {
+            const answer = a * b;
+            const key    = `${a}x${b}`;
+            if (excludeAnswers.includes(answer)) continue;
+            const w = _weight(stats, key, wrongKeys);
+            for (let i = 0; i < w; i++) {
+              pool.push({ a, b, answer, key, display: `${a} × ${b}` });
+            }
           }
         }
       }
@@ -228,8 +265,19 @@ const Questions = (() => {
     return pool;
   }
 
-  function _fallback(minTable, maxTable, operation) {
+  function _fallback(minTable, maxTable, operation, opts = {}) {
     const a = Math.floor(Math.random() * (maxTable - minTable + 1)) + minTable;
+    if (opts.zehner) {
+      const bVals = opts.difficulty === 'easy'
+        ? [10,20,30,40,50,60,70,80,90]
+        : [10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900];
+      const b = bVals[Math.floor(Math.random() * bVals.length)];
+      if (operation === 'divide') {
+        const dividend = a * b;
+        return { a: dividend, b: a, answer: b, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
+      }
+      return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
+    }
     if (operation === 'divide') {
       const b = Math.floor(Math.random() * 12) + 1;
       const dividend = a * b;
@@ -253,10 +301,10 @@ const Questions = (() => {
     let pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, opts);
     // If difficulty filter leaves pool empty, retry without difficulty constraint
     if (pool.length === 0 && opts.difficulty) {
-      pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, {});
+      pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, { ...opts, difficulty: undefined });
     }
     if (pool.length === 0) {
-      return _fallback(minTable, maxTable, operation);
+      return _fallback(minTable, maxTable, operation, opts);
     }
     return pool[Math.floor(Math.random() * pool.length)];
   }

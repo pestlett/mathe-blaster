@@ -202,6 +202,56 @@ describe('Questions — subtraction borrow filter', () => {
   });
 });
 
+describe('Questions — Zehner mode (Phase 3)', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
+
+  test('multiply Zehner easy: all b values are multiples of 10 (not 100)', () => {
+    const pool = ctx.Questions._buildPool(2, 9, {}, [], [], 'multiply', { difficulty: 'easy', zehner: true });
+    expect(pool.length).toBeGreaterThan(0);
+    const allTens = pool.every(q => q.b % 10 === 0 && q.b < 100);
+    expect(allTens).toBe(true);
+  });
+
+  test('multiply Zehner medium: includes both ×10 and ×100 pairs', () => {
+    const pool = ctx.Questions._buildPool(2, 9, {}, [], [], 'multiply', { difficulty: 'medium', zehner: true });
+    const hasTens     = pool.some(q => q.b >= 10  && q.b < 100);
+    const hasHundreds = pool.some(q => q.b >= 100 && q.b < 1000);
+    expect(hasTens).toBe(true);
+    expect(hasHundreds).toBe(true);
+  });
+
+  test('multiply Zehner: answer equals a × b', () => {
+    const pool = ctx.Questions._buildPool(3, 3, {}, [], [], 'multiply', { zehner: true });
+    pool.forEach(q => expect(q.answer).toBe(q.a * q.b));
+  });
+
+  test('divide Zehner easy: quotient is a multiple of 10', () => {
+    const pool = ctx.Questions._buildPool(2, 9, {}, [], [], 'divide', { difficulty: 'easy', zehner: true });
+    expect(pool.length).toBeGreaterThan(0);
+    // answer = quotient = b (a multiple of 10)
+    const allTens = pool.every(q => q.answer % 10 === 0 && q.answer < 100);
+    expect(allTens).toBe(true);
+  });
+
+  test('divide Zehner: display is dividend ÷ divisor format', () => {
+    const pool = ctx.Questions._buildPool(4, 4, {}, [], [], 'divide', { zehner: true });
+    pool.forEach(q => {
+      expect(q.display).toMatch(/^\d+ ÷ \d+$/);
+      expect(q.answer * 4).toBe(q.a); // answer × divisor = dividend
+    });
+  });
+
+  test('non-zehner multiply unchanged', () => {
+    const pool = ctx.Questions._buildPool(3, 3, {}, [], [], 'multiply', { zehner: false });
+    // Single table 3: a is always 3, b ranges 1–12 (standard mode)
+    const allA3 = pool.every(q => q.a === 3);
+    const allSmallB = pool.every(q => q.b >= 1 && q.b <= 12);
+    expect(allA3).toBe(true);
+    expect(allSmallB).toBe(true);
+  });
+});
+
 describe('Questions — large range sampling (Phase 5)', () => {
   let ctx;
   beforeEach(() => { ctx = makeQCtxWithBuildPool(); });

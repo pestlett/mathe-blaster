@@ -36,12 +36,15 @@ const UI = (() => {
     let selectedMode = 'normal';
     let selectedOp = 'multiply';
     let selectedNumRange = 100;
+    let selectedZehner = false;
 
     // Operation selector
     const opNote = document.getElementById('op-note');
     const tablesLabel = document.getElementById('tables-label');
     const numrangeGroup = document.getElementById('numrange-group');
     const numrangeNote  = document.getElementById('numrange-note');
+    const zehnerGroup = document.getElementById('zehner-group');
+    const zehnerNote  = document.getElementById('zehner-note');
     const tablesSection = document.getElementById('tables-section');
     const opNoteKeys = {
       multiply: 'opNoteMultiply', divide: 'opNoteDivide',
@@ -62,19 +65,30 @@ const UI = (() => {
       if (numrangeNote && isAddSub) numrangeNote.textContent = I18n.t(
         selectedNumRange >= 1000 ? 'numRange1000Note' : 'numRange100Note'
       );
+      const isMulDiv = op === 'multiply' || op === 'divide';
+      if (zehnerGroup) zehnerGroup.hidden = !isMulDiv;
     }
     document.querySelectorAll('.op-btn').forEach(btn => {
       btn.addEventListener('click', () => _applyOp(btn.dataset.op));
     });
 
-    document.querySelectorAll('.numrange-btn').forEach(btn => {
+    document.querySelectorAll('[data-max]').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.numrange-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[data-max]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedNumRange = parseInt(btn.dataset.max);
         if (numrangeNote) numrangeNote.textContent = I18n.t(
           selectedNumRange >= 1000 ? 'numRange1000Note' : 'numRange100Note'
         );
+      });
+    });
+
+    document.querySelectorAll('[data-zehner]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-zehner]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedZehner = btn.dataset.zehner === 'true';
+        if (zehnerNote) zehnerNote.textContent = I18n.t(selectedZehner ? 'zehnerOnNote' : '');
       });
     });
 
@@ -334,13 +348,14 @@ const UI = (() => {
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim(),
-        numRange: selectedNumRange,
+        numRange: selectedNumRange, zehner: selectedZehner,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
-        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '' });
+        triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '',
+        zehner: selectedZehner });
     });
 
     nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
@@ -379,13 +394,14 @@ const UI = (() => {
         singleTable: focusSingleTable, hintThreshold: parseInt(hintThreshInput.value),
         lastPlayer: name, lastAge: age,
         triggerWord: triggerWdInput?.value?.trim(),
-        numRange: selectedNumRange,
+        numRange: selectedNumRange, zehner: selectedZehner,
       });
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: false, runMode: true,
-        triggerWord: triggerWdInput?.value?.trim() || '' });
+        triggerWord: triggerWdInput?.value?.trim() || '',
+        zehner: selectedZehner });
     });
 
     // Daily challenge button
@@ -469,8 +485,14 @@ const UI = (() => {
       if (saved.triggerWord && triggerWdInput) triggerWdInput.value = saved.triggerWord;
       if (saved.numRange) {
         selectedNumRange = parseInt(saved.numRange);
-        document.querySelectorAll('.numrange-btn').forEach(b => {
+        document.querySelectorAll('[data-max]').forEach(b => {
           b.classList.toggle('active', parseInt(b.dataset.max) === selectedNumRange);
+        });
+      }
+      if (saved.zehner !== undefined) {
+        selectedZehner = saved.zehner === true || saved.zehner === 'true';
+        document.querySelectorAll('[data-zehner]').forEach(b => {
+          b.classList.toggle('active', (b.dataset.zehner === 'true') === selectedZehner);
         });
       }
     }
