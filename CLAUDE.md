@@ -10,21 +10,20 @@
 ## Versioning
 The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
 
-| Bump | When |
-|------|------|
-| `PATCH` (0.0.**x**) | Bug fix, copy change, style tweak |
-| `MINOR` (0.**x**.0) | New feature or mechanic |
-| `MAJOR` (**x**.0.0) | Major redesign or breaking change |
+**PATCH is bumped automatically on every deploy by CI** — you never need to touch version numbers for normal changes.
 
-**`package.json` is the single source of truth for the version.**
-CI automatically injects it into `js/version.js` and `sw.js` at deploy time.
+| Manual bump | When |
+|-------------|------|
+| `MINOR` (0.**x**.0) | New feature or mechanic — update `package.json` before merging |
+| `MAJOR` (**x**.0.0) | Major redesign — update `package.json` before merging |
 
-**On every release, update ONE place only:**
-- `package.json` — `"version": "x.y.z"`
+**Do not edit `js/version.js` or `sw.js` for version changes** — CI overwrites them on every deploy. The deploy workflow:
+1. Runs `npm version patch` → increments PATCH in `package.json`
+2. Injects the new version into `js/version.js` and `sw.js`
+3. Commits `chore: release vX.Y.Z` back to `main`
+4. Deploys the site
 
-Do **not** manually edit `js/version.js` or `sw.js` for version changes — CI overwrites them. Updating them locally is fine for dev convenience but has no effect on what gets deployed.
-
-> **Why?** When multiple feature branches are in flight simultaneously, manually versioning in each branch causes collisions (two branches both picking the same version number). Centralising in `package.json` and letting CI inject it at build time means the deployed version always matches exactly what is in `package.json` on `main` at the time of deploy.
+This means concurrent feature branches never collide on version numbers.
 
 The footer displays the version automatically from `js/version.js`.
 

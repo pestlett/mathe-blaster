@@ -5,10 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Default: least-privilege. deploy job overrides what it needs.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -38,23 +37,44 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push version-bump commit back to main
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v4
+        with:
+          # Use GITHUB_TOKEN so the version-bump push doesn't re-trigger workflows
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Inject version from package.json
+      - name: Bump patch version and inject into source files
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Increment patch in package.json (0.7.0 → 0.7.1, etc.)
+          npm version patch --no-git-tag-version
           VERSION=$(node -p "require('./package.json').version")
-          echo "const APP_VERSION = '${VERSION}';" > js/version.js
+
+          # Inject into the two derived files
+          echo "// Version injected by CI from package.json — do not edit manually." > js/version.js
+          echo "const APP_VERSION = '${VERSION}';" >> js/version.js
           sed -i "s|const CACHE = .*|const CACHE = 'multiblaster-v${VERSION}';|" sw.js
-          echo "Deploying version ${VERSION}"
+
+          # Commit back to main — GITHUB_TOKEN pushes do not re-trigger workflows
+          git add package.json js/version.js sw.js
+          git commit -m "chore: release v${VERSION}"
+          git push
+
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
 
       - name: Copy site files
         run: |
