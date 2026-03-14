@@ -558,23 +558,43 @@ const UI = (() => {
   }
 
   function _renderMasteryGrid(masteryData) {
-    const { facts, mastered, seen, total } = masteryData;
+    const { facts, mastered, seen, total, operation = 'multiply' } = masteryData;
     if (total === 0) return '';
-    // Group by A value
+
+    // Row label and dot tooltip depend on operation
+    function _rowLabel(a) {
+      if (operation === 'divide')   return `÷${a}`;
+      if (operation === 'add')      return `${a}+`;
+      if (operation === 'subtract') return `${a}−`;
+      return `${a}×`;
+    }
+    function _dotTooltip(f) {
+      if (operation === 'divide')   return `${f.a * f.b}÷${f.a}=${f.b} (${f.masteredLevel}/5)`;
+      if (operation === 'add')      return `${f.a}+${f.b}=${f.a + f.b} (${f.masteredLevel}/5)`;
+      if (operation === 'subtract') return `${f.a}−${f.b}=${f.a - f.b} (${f.masteredLevel}/5)`;
+      return `${f.a}×${f.b}=${f.a * f.b} (${f.masteredLevel}/5)`;
+    }
+
+    // Group by A value (= table number for × and ÷, first operand for + and −)
     const aValues = [...new Set(facts.map(f => f.a))].sort((x, y) => x - y);
     const rows = aValues.map(a => {
       const row = facts.filter(f => f.a === a).sort((x, y) => x.b - y.b);
       const dots = row.map(f =>
-        `<span class="mastery-dot ${_masteryDotClass(f)}" title="${f.a}×${f.b}=${f.a*f.b} (${f.masteredLevel}/5)"></span>`
+        `<span class="mastery-dot ${_masteryDotClass(f)}" title="${_dotTooltip(f)}"></span>`
       ).join('');
-      return `<div class="mastery-row"><span class="mastery-label">${a}×</span>${dots}</div>`;
+      return `<div class="mastery-row"><span class="mastery-label">${_rowLabel(a)}</span>${dots}</div>`;
     }).join('');
+
     const seenCount = seen ?? 0;
     const pct = Math.round(seenCount / total * 100);
+    const titleKey = operation === 'divide' ? 'masteryTitleDivide'
+      : operation === 'add' ? 'masteryTitleAdd'
+      : operation === 'subtract' ? 'masteryTitleSubtract'
+      : 'masteryTitle';
     const masteredSubtitle = mastered > 0
       ? `<div class="mastery-subtitle">${I18n.t('masteryMasteredCount', { n: mastered })}</div>` : '';
     return `
-      <div class="mastery-heading">${I18n.t('masteryTitle')} <span class="mastery-pct">${pct}%</span></div>
+      <div class="mastery-heading">${I18n.t(titleKey)} <span class="mastery-pct">${pct}%</span></div>
       ${masteredSubtitle}
       <div class="mastery-grid">${rows}</div>
       <div class="mastery-legend">
@@ -816,8 +836,9 @@ const UI = (() => {
   }
 
   // ---- Table cleared banner (all facts in a table answered ≥1 time) ----
-  function showTableClearedBanner(table) {
-    showLevelUp(I18n.t('tableClearedBanner', { table }), null);
+  function showTableClearedBanner(table, operation = 'multiply') {
+    const key = operation === 'divide' ? 'tableClearedBannerDivide' : 'tableClearedBanner';
+    showLevelUp(I18n.t(key, { table }), null);
   }
 
   // ---- Saved! (answered correctly during grace period) ----

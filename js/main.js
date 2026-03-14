@@ -318,7 +318,8 @@ function maybeSpeak() {
 // unlocked.
 function checkTableMastery() {
   if (state.phase !== 'PLAYING') return;
-  const { facts } = Progress.getMastery(state.minTable, state.maxTable);
+  const op = state.operation || 'multiply';
+  const { facts } = Progress.getMastery(state.minTable, state.maxTable, op);
   const aValues = [...new Set(facts.map(f => f.a))];
   let allDone = true;
 
@@ -331,11 +332,12 @@ function checkTableMastery() {
     state.masteredTablesAnnounced.add(a);
     state.confetti = spawnConfetti(window.innerWidth);
     vibrate([40, 60, 80, 60, 40]);
-    UI.showLevelUp(I18n.t('tableMastered', { table: a }), null);
+    const masteredKey = op === 'divide' ? 'tableMasteredDivide' : 'tableMastered';
+    UI.showLevelUp(I18n.t(masteredKey, { table: a }), null);
   }
 
-  // Unlock extended tables when every table in range is done
-  if (allDone && aValues.length > 0) {
+  // Unlock extended tables when every × table in range is done (multiply only)
+  if (allDone && aValues.length > 0 && op === 'multiply') {
     Progress.unlockExtendedTables();
     state.masteryWin = true; // flag for game-over summary only
   }
@@ -631,7 +633,7 @@ function startGame(settings) {
   state.voiceActive = false;
   state.masteryWin = false;
   state.masteredTablesAnnounced = new Set();
-  state.seenTablesAnnounced = new Set(Progress.getTableBadges(settings.minTable, settings.maxTable));
+  state.seenTablesAnnounced = new Set(Progress.getTableBadges(settings.minTable, settings.maxTable, settings.operation || 'multiply'));
   state.confetti = [];
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
@@ -1188,11 +1190,11 @@ function submitAnswer() {
     checkTableMastery();
 
     // Check for newly cleared tables (all facts answered correctly ≥1 time)
-    const newBadges = Progress.getTableBadges(state.minTable, state.maxTable);
+    const newBadges = Progress.getTableBadges(state.minTable, state.maxTable, state.operation);
     for (const table of newBadges) {
       if (!state.seenTablesAnnounced.has(table)) {
         state.seenTablesAnnounced.add(table);
-        UI.showTableClearedBanner(table);
+        UI.showTableClearedBanner(table, state.operation);
       }
     }
 
@@ -1450,7 +1452,7 @@ function endGame() {
     };
   }
 
-  const masteryData = Progress.getMastery(state.minTable, state.maxTable);
+  const masteryData = Progress.getMastery(state.minTable, state.maxTable, state.operation);
 
   UI.showGameOver(
     session,

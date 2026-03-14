@@ -63,13 +63,33 @@ const Progress = (() => {
     { id: 'table_10', label: 'Perfect Ten',     desc: 'Answer every ×10 fact correctly at least once', check: (_, s) => tableComplete(s, 10) },
     { id: 'table_11', label: 'Going to Eleven', desc: 'Answer every ×11 fact correctly at least once', check: (_, s) => tableComplete(s, 11) },
     { id: 'table_12', label: 'Dozen Done',      desc: 'Answer every ×12 fact correctly at least once', check: (_, s) => tableComplete(s, 12) },
+    // Division achievements
+    { id: 'div_first_correct', label: 'First Division', desc: 'Answer your first division question correctly',    check: (_, s) => Object.keys(s).some(k => /^\d+d\d+$/.test(k) && (s[k].correct || 0) >= 1) },
+    { id: 'div_table_2',  label: 'Half It Down',    desc: 'Answer every ÷2 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 2)  },
+    { id: 'div_table_3',  label: 'Third Degree',    desc: 'Answer every ÷3 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 3)  },
+    { id: 'div_table_4',  label: 'Quarter Master',  desc: 'Answer every ÷4 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 4)  },
+    { id: 'div_table_5',  label: 'Fifth Gear',      desc: 'Answer every ÷5 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 5)  },
+    { id: 'div_table_6',  label: 'Six Splitter',    desc: 'Answer every ÷6 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 6)  },
+    { id: 'div_table_7',  label: 'Lucky Divisor',   desc: 'Answer every ÷7 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 7)  },
+    { id: 'div_table_8',  label: 'Eighth Wonder',   desc: 'Answer every ÷8 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 8)  },
+    { id: 'div_table_9',  label: 'Nine Slices',     desc: 'Answer every ÷9 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 9)  },
+    { id: 'div_table_10', label: 'Perfect Split',   desc: 'Answer every ÷10 fact correctly at least once', check: (_, s) => tableDivideComplete(s, 10) },
   ];
 
-  // A fact is "cleanly known" if it has been answered correctly at least once
-  // with no hint showing AND no wrong attempt on that same fact in the last 10 s.
+  // A multiplication fact is "cleanly known" if answered correctly at least once
+  // with no hint AND no wrong attempt in the last 10 s.
   function tableComplete(stats, n) {
     for (let b = 1; b <= 12; b++) {
       const s = stats[`${n}x${b}`];
+      if (!s || (s.cleanCorrect || 0) < 1) return false;
+    }
+    return true;
+  }
+
+  // Same check for division: all ÷n facts (n÷n through 12n÷n) cleanly answered
+  function tableDivideComplete(stats, divisor) {
+    for (let quotient = 1; quotient <= 12; quotient++) {
+      const s = stats[`${divisor * quotient}d${divisor}`];
       if (!s || (s.cleanCorrect || 0) < 1) return false;
     }
     return true;
@@ -236,29 +256,49 @@ const Progress = (() => {
   // ---- Mastery overview ----
   // Returns every fact in the game range with its masteredLevel,
   // plus aggregate counts for win-condition checking.
-  function getMastery(minTable, maxTable) {
+  // operation: 'multiply' | 'divide' | 'add' | 'subtract'
+  // For multiply/add/subtract: f.a = first operand (table/range), f.b = second operand
+  // For divide: f.a = divisor (the "table"), f.b = quotient
+  function getMastery(minTable, maxTable, operation = 'multiply') {
     const stats = load().stats;
     const bLo = minTable === maxTable ? 1  : minTable;
     const bHi = minTable === maxTable ? 12 : maxTable;
     const facts = [];
+
     for (let a = minTable; a <= maxTable; a++) {
       for (let b = bLo; b <= bHi; b++) {
-        const key = `${a}x${b}`;
-        const s   = stats[key];
-        facts.push({ key, a, b,
+        let key, fa, fb;
+        if (operation === 'divide') {
+          key = `${a * b}d${a}`;  // dividend÷divisor; a=divisor, b=quotient
+          fa = a; fb = b;         // fa=divisor for row-grouping (same role as table in ×)
+        } else if (operation === 'add') {
+          key = `${a}a${b}`;
+          fa = a; fb = b;
+        } else if (operation === 'subtract') {
+          if (b > a) continue;    // skip invalid (no negatives)
+          key = `${a}s${b}`;
+          fa = a; fb = b;
+        } else {
+          key = `${a}x${b}`;
+          fa = a; fb = b;
+        }
+        const s = stats[key];
+        facts.push({ key, a: fa, b: fb,
           masteredLevel: s?.masteredLevel ?? 0,
           attempts:      s?.attempts      ?? 0,
         });
       }
     }
+
     const mastered = facts.filter(f => f.masteredLevel >= 5).length;
     const seen     = facts.filter(f => f.masteredLevel >= 1).length;
-    return { facts, mastered, seen, total: facts.length };
+    return { facts, mastered, seen, total: facts.length, operation };
   }
 
-  // Returns array of "a" table numbers where every fact has been answered correctly ≥1 time
-  function getTableBadges(minTable, maxTable) {
-    const { facts } = getMastery(minTable, maxTable);
+  // Returns array of table numbers where every fact has been answered correctly ≥1 time.
+  // For multiply: table = multiplier (a). For divide: table = divisor (a). Etc.
+  function getTableBadges(minTable, maxTable, operation = 'multiply') {
+    const { facts } = getMastery(minTable, maxTable, operation);
     const aValues = [...new Set(facts.map(f => f.a))];
     return aValues.filter(a => {
       const tableFacts = facts.filter(f => f.a === a);

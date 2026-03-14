@@ -3,18 +3,19 @@
 const Questions = (() => {
   const OP_SYMBOL = { multiply: '×', divide: '÷', add: '+', subtract: '−' };
 
-  function _weight(stats, key, wrongKeys) {
+  // baseWeight: 2 for multiply/add/subtract, 3 for divide (harder cognitive load)
+  function _weight(stats, key, wrongKeys, baseWeight = 2) {
     if (wrongKeys.has(key)) return 16;
     const s = stats[key];
     if (s && s.attempts > 0) {
       const mastered = s.masteredLevel || 0;
       if (mastered >= 4) return 1;
-      if (mastered >= 2) return 2;
+      if (mastered >= 2) return baseWeight;
       const acc = s.correct / s.attempts;
       const avgTime = s.totalTimeMs / s.attempts;
-      return (acc < 0.6 || avgTime > 8000) ? 6 : 2;
+      return (acc < 0.6 || avgTime > 8000) ? 6 : baseWeight;
     }
-    return 2;
+    return baseWeight;
   }
 
   // Build a weighted pool of question pairs.
@@ -34,6 +35,7 @@ const Questions = (() => {
     if (operation === 'divide') {
       // Generate from valid multiplication pairs: (a×b) ÷ a = b
       // aRange controls the divisor; bRange controls the multiplier/quotient
+      // Base weight 3: division requires more effort than multiplication
       for (let a = aRange.lo; a <= aRange.hi; a++) {
         if (a === 0) continue;
         for (let b = bRange.lo; b <= bRange.hi; b++) {
@@ -41,7 +43,7 @@ const Questions = (() => {
           const answer   = b;
           const key      = `${dividend}d${a}`;
           if (excludeAnswers.includes(answer)) continue;
-          const w = _weight(stats, key, wrongKeys);
+          const w = _weight(stats, key, wrongKeys, 3);
           for (let i = 0; i < w; i++) {
             pool.push({ a: dividend, b: a, answer, key, display: `${dividend} ÷ ${a}` });
           }
