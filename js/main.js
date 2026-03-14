@@ -757,6 +757,9 @@ function update(dt) {
     // Detect first frame of dying (object hit bottom)
     if (obj.dying && !obj._dieHandled) {
       obj._dieHandled = true;
+      if (Targeting.getTarget() === obj) {
+        document.getElementById('answer-input').value = '';
+      }
       if (obj.isLifeUp) {
         // Life-up missed — just disappears, no penalty
       } else {
