@@ -798,11 +798,13 @@ const UI = (() => {
   }
 
   // ---- Boss Victory ----
-  function showBossVictory(stars, score, onContinue, onFinish) {
+  function showBossVictory(stars, score, name, age, onContinue, onFinish) {
     const overlay = document.getElementById('boss-victory-overlay');
     const starStr = stars !== null ? '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
     document.getElementById('boss-victory-stars').textContent = starStr;
-    document.getElementById('boss-victory-sub').textContent = `Score: ${score}`;
+    const article = (age === 8 || age === 11 || age === 18 || (age >= 80 && age <= 89)) ? 'an' : 'a';
+    document.getElementById('boss-victory-sub').textContent =
+      `Congratulations, ${name}! That was incredible, especially for ${article} ${age} year old! 🌟`;
     document.getElementById('btn-keep-going').onclick = () => { overlay.classList.remove('visible'); onContinue(); };
     document.getElementById('btn-finish-game').onclick = () => { overlay.classList.remove('visible'); onFinish(); };
     overlay.classList.add('visible');

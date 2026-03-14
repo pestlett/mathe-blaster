@@ -1069,7 +1069,7 @@ function submitAnswer() {
         // Pause and let the player choose: keep going or finish
         Engine.pause();
         Voice.stop();
-        UI.showBossVictory(bossStars, state.score,
+        UI.showBossVictory(bossStars, state.score, state.name, state.age,
           // Keep going
           () => {
             state.level++;
