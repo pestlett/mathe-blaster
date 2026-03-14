@@ -11,11 +11,10 @@ function focusAnswerInput() {
 const DIFFICULTY = {
   // baseSpeed reduced ~25% to give voice-input users time to react.
   // Speed still ramps per level so it gets challenging quickly.
-  easy:   { maxObjects: 3, baseSpeed: 40,  maxSpeed: 130 },
-  medium: { maxObjects: 4, baseSpeed: 58,  maxSpeed: 190 },
-  hard:   { maxObjects: 5, baseSpeed: 80,  maxSpeed: 260 }
+  easy:   { maxObjects: 3, baseSpeed: 40,  maxSpeed: 130, lives: 6 },
+  medium: { maxObjects: 4, baseSpeed: 58,  maxSpeed: 190, lives: 4 },
+  hard:   { maxObjects: 5, baseSpeed: 80,  maxSpeed: 260, lives: 3 }
 };
-const MAX_LIVES = 3;
 const CORRECT_PER_LEVEL = 10;
 const SPEED_INCREASE_PER_LEVEL = 0.18;
 
@@ -32,8 +31,8 @@ let state = {
   practiceMode: false, // no lives lost, no game over
   score: 0,
   level: 1,
-  lives: MAX_LIVES,
-  maxLives: MAX_LIVES,
+  lives: 3,
+  maxLives: 3,
   correctThisLevel: 0,
   attemptsThisLevel: 0,
   levelStars: [],       // stars earned per level [0]=level1 etc.
@@ -48,6 +47,7 @@ let state = {
   lifeUpTimer: 0,   // accumulates seconds toward next life-up spawn
   freezeTimer: 0,   // accumulates seconds toward next freeze spawn
   freezeActive: 0,  // seconds remaining on active freeze
+  gameTimeSecs: 0,  // total seconds played this session (drives spawn stagger)
   answerStartTime: 0,
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
 };
@@ -542,10 +542,12 @@ function startGame(settings) {
   state.practiceMode = settings.practiceMode || false;
   state.isDaily = settings.isDaily || false;
   state.runMode = settings.runMode || false;
+  const startDiff = DIFFICULTY[settings.difficulty] || DIFFICULTY.medium;
   state.score = 0;
   state.level = 1;
-  state.lives = MAX_LIVES;
-  state.maxLives = MAX_LIVES;
+  state.lives = startDiff.lives;
+  state.maxLives = startDiff.lives;
+  state.gameTimeSecs = 0;
   state.correctThisLevel = 0;
   state.attemptsThisLevel = 0;
   state.levelStars = [];
@@ -622,6 +624,9 @@ function startGame(settings) {
 // ---- UPDATE ----
 function update(dt) {
   if (state.phase !== 'PLAYING' && state.phase !== 'ENDING') return;
+
+  // Track total game time (used for spawn stagger)
+  state.gameTimeSecs += dt;
 
   // Tick down active freeze
   if (state.freezeActive > 0) {
@@ -798,7 +803,7 @@ function update(dt) {
 
   // Spawn life-up item — at most one on screen, only when injured, every ~20s
   const hasLifeUp = state.objects.some(o => o.isLifeUp && !o.dead && !o.dying && !o.destroyed);
-  if (!hasLifeUp && state.lives < MAX_LIVES) {
+  if (!hasLifeUp && state.lives < state.maxLives) {
     state.lifeUpTimer += dt;
     if (state.lifeUpTimer >= 20) {
       state.lifeUpTimer = 0;
@@ -814,8 +819,11 @@ function update(dt) {
   }
 
   // Spawn new question objects (skip during level transition or TTS)
+  // Stagger start: allow 1 object immediately, add a slot every 4s so the screen
+  // doesn't fill instantly at game start. Fully ramped after (maxObj-1)*4 seconds.
+  const staggerMax = Math.min(maxObj, 1 + Math.floor(state.gameTimeSecs / 4));
   const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze).length;
-  if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < maxObj) {
+  if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < staggerMax) {
     const stats = Progress.getStats();
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
     const q = Questions.pick(state.minTable, state.maxTable, stats, excludeAnswers, state.wrongQueue);
@@ -1016,7 +1024,7 @@ function submitAnswer() {
   if (target.isLifeUp) {
     if (val === target.answer) {
       Objects.triggerDestruction(target, '#2ed573');
-      state.lives = Math.min(MAX_LIVES, state.lives + 1);
+      state.lives = Math.min(state.maxLives, state.lives + 1);
       UI.updateHUD(state);
       Audio.play('levelUp');
       input.value = '';
