@@ -1032,7 +1032,7 @@ function submitAnswer() {
   if (target.isBoss) {
     if (val === target.answer) {
       const particleColor = Themes.particleColorForTheme(state.theme);
-      Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime);
+      Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime, { hintActive: !!target.hintActive });
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
       state.totalCorrect++;
       state.streak++;
@@ -1080,6 +1080,7 @@ function submitAnswer() {
     } else {
       target.scale = Math.min(1.5, (target.scale ?? 1.0) + 0.15); // grow on wrong answer
       target.wrongAttempts = (target.wrongAttempts || 0) + 1;
+      Progress.recordWrong(target.key);
       Audio.play('wrong');
       UI.shakeInput();
       UI.showTryAgain(target.question, target.answer);
@@ -1151,7 +1152,7 @@ function submitAnswer() {
       UI.showLevelUp('💡 Help recharged!', null);
     }
 
-    Progress.recordAttempt(target.key, true, elapsed);
+    Progress.recordAttempt(target.key, true, elapsed, { hintActive: !!target.hintActive });
     checkTableMastery();
 
     // Check for newly cleared tables (all facts answered correctly ≥1 time)

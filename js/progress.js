@@ -51,7 +51,29 @@ const Progress = (() => {
     { id: 'score_1000',     label: 'Thousand Club',      desc: 'Score 1000 points in one game',        check: (d) => d.bestScore >= 1000 },
     { id: 'no_miss',        label: 'Flawless',           desc: 'Finish a game without missing a question', check: (d) => d.flawlessGames >= 1 },
     { id: 'sessions_5',     label: 'Regular',            desc: 'Play 5 sessions',                      check: (d) => (d.sessionsPlayed || 0) >= 5 },
+    // Times table mastery achievements
+    { id: 'table_2',  label: 'Twice As Nice',   desc: 'Answer every ×2 fact correctly at least once',  check: (_, s) => tableComplete(s, 2)  },
+    { id: 'table_3',  label: 'Triple Threat',   desc: 'Answer every ×3 fact correctly at least once',  check: (_, s) => tableComplete(s, 3)  },
+    { id: 'table_4',  label: 'Four the Win',    desc: 'Answer every ×4 fact correctly at least once',  check: (_, s) => tableComplete(s, 4)  },
+    { id: 'table_5',  label: 'High Five',       desc: 'Answer every ×5 fact correctly at least once',  check: (_, s) => tableComplete(s, 5)  },
+    { id: 'table_6',  label: 'Six Pack',        desc: 'Answer every ×6 fact correctly at least once',  check: (_, s) => tableComplete(s, 6)  },
+    { id: 'table_7',  label: 'Lucky Seven',     desc: 'Answer every ×7 fact correctly at least once',  check: (_, s) => tableComplete(s, 7)  },
+    { id: 'table_8',  label: 'Eight Is Great',  desc: 'Answer every ×8 fact correctly at least once',  check: (_, s) => tableComplete(s, 8)  },
+    { id: 'table_9',  label: 'Cloud Nine',      desc: 'Answer every ×9 fact correctly at least once',  check: (_, s) => tableComplete(s, 9)  },
+    { id: 'table_10', label: 'Perfect Ten',     desc: 'Answer every ×10 fact correctly at least once', check: (_, s) => tableComplete(s, 10) },
+    { id: 'table_11', label: 'Going to Eleven', desc: 'Answer every ×11 fact correctly at least once', check: (_, s) => tableComplete(s, 11) },
+    { id: 'table_12', label: 'Dozen Done',      desc: 'Answer every ×12 fact correctly at least once', check: (_, s) => tableComplete(s, 12) },
   ];
+
+  // A fact is "cleanly known" if it has been answered correctly at least once
+  // with no hint showing AND no wrong attempt on that same fact in the last 10 s.
+  function tableComplete(stats, n) {
+    for (let b = 1; b <= 12; b++) {
+      const s = stats[`${n}x${b}`];
+      if (!s || (s.cleanCorrect || 0) < 1) return false;
+    }
+    return true;
+  }
 
   function load() {
     try {
@@ -78,7 +100,8 @@ const Progress = (() => {
   }
 
   // Record an attempt for a question key like "7x8"
-  function recordAttempt(key, correct, timeMs) {
+  // opts.hintActive — true if the dot-grid hint was showing when answered
+  function recordAttempt(key, correct, timeMs, opts = {}) {
     const d = load();
     if (!d.stats[key]) d.stats[key] = { attempts: 0, correct: 0, totalTimeMs: 0, lastSeen: 0, masteredLevel: 0 };
     const s = d.stats[key];
@@ -87,12 +110,26 @@ const Progress = (() => {
       s.correct++;
       // Spaced repetition: build mastery up to level 5
       s.masteredLevel = Math.min(5, (s.masteredLevel || 0) + 1);
+      // Clean correct: no hint active AND last wrong on this fact was >10 s ago (or never)
+      const sinceWrong = s.lastWrongAt ? (Date.now() - s.lastWrongAt) : Infinity;
+      if (!opts.hintActive && sinceWrong > 10000) {
+        s.cleanCorrect = (s.cleanCorrect || 0) + 1;
+      }
     } else {
-      // Wrong answer drops mastery
+      // Wrong answer drops mastery and stamps the time (used for clean-correct check)
       s.masteredLevel = Math.max(0, (s.masteredLevel || 0) - 1);
+      s.lastWrongAt = Date.now();
     }
     s.totalTimeMs += timeMs;
     s.lastSeen = Date.now();
+    save(d);
+  }
+
+  // Stamp a wrong attempt timestamp without a full attempt record (used for typed wrong answers)
+  function recordWrong(key) {
+    const d = load();
+    if (!d.stats[key]) d.stats[key] = { attempts: 0, correct: 0, totalTimeMs: 0, lastSeen: 0, masteredLevel: 0 };
+    d.stats[key].lastWrongAt = Date.now();
     save(d);
   }
 
@@ -106,7 +143,7 @@ const Progress = (() => {
     const newly = [];
     if (!d.achievements) d.achievements = {};
     for (const a of ACHIEVEMENTS) {
-      if (!d.achievements[a.id] && a.check(d.lifetime || {})) {
+      if (!d.achievements[a.id] && a.check(d.lifetime || {}, d.stats || {})) {
         d.achievements[a.id] = Date.now();
         newly.push(a);
       }
@@ -293,5 +330,5 @@ const Progress = (() => {
     return newlyUnlocked;
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks };
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks };
 })();
