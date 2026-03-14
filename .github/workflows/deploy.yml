@@ -9,11 +9,8 @@ on:
 permissions:
   contents: read
 
-# Two concurrency groups so the chore:release workflow never cancels the bump workflow:
-#   pages-bump  — test + version bump (one at a time per branch)
-#   pages-deploy — Pages deployment (cancels any queued deploy, keeps latest)
 concurrency:
-  group: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore: release') && 'pages-deploy' || 'pages-bump' }}
+  group: pages
   cancel-in-progress: true
 
 jobs:
