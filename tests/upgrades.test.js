@@ -583,7 +583,7 @@ describe('drawUpgrades with stackable upgrades', () => {
   });
 
   test('non-stackable non-owned upgrade still appears', () => {
-    const pool = drawUpgrades(8, allUnlocked, ['chain']);
+    const pool = drawUpgrades(20, allUnlocked, ['chain']);
     expect(pool.find(u => u.id === 'streakBoost')).toBeDefined();
   });
 });

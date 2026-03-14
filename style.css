@@ -150,7 +150,7 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Theme cards */
 .theme-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 12px;
 }
 .theme-card {
@@ -185,6 +185,9 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .sky-preview {
   background: linear-gradient(to bottom, #74c0fc 0%, #a9d8ff 100%);
+}
+.cats-preview {
+  background: linear-gradient(to bottom, #ffecd2 0%, #fcb69f 60%, #8b5e3c 100%);
 }
 
 .setting-note {

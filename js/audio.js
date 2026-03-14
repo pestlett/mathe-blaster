@@ -75,6 +75,12 @@ const Audio = (() => {
       tempo: 0.16,
       type: 'triangle',
       gain: 0.09
+    },
+    cats: {
+      notes: [64, 67, 69, 72, 71, 69, 67, 64, 62, 64, 67, 69], // E minor pentatonic, playful
+      tempo: 0.28,
+      type: 'triangle',
+      gain: 0.07
     }
   };
 
@@ -205,6 +211,37 @@ const Audio = (() => {
       freeze() {
         const c = getCtx(); const t = c.currentTime;
         [1200, 1000, 800, 1400].forEach((f, i) => playTone(f, 'triangle', t + i * 0.06, 0.1, 0.1));
+      }
+    },
+    cats: {
+      fire() {
+        const c = getCtx(); const t = c.currentTime;
+        // Quick paw swipe sound
+        playTone(600, 'triangle', t, 0.05, 0.1);
+        playTone(900, 'triangle', t + 0.04, 0.08, 0.08);
+      },
+      correct() {
+        const c = getCtx(); const t = c.currentTime;
+        // Happy purring tones
+        [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'triangle', t + i * 0.07, 0.12, 0.09));
+      },
+      wrong() {
+        const c = getCtx(); const t = c.currentTime;
+        // Cat hiss
+        playNoise(t, 0.25, 3000, 0.08);
+        playTone(250, 'sawtooth', t + 0.05, 0.3, 0.07);
+      },
+      lifeLost() {
+        const c = getCtx(); const t = c.currentTime;
+        [400, 330, 280, 220, 180].forEach((f, i) => playTone(f, 'triangle', t + i * 0.1, 0.14, 0.12));
+      },
+      levelUp() {
+        const c = getCtx(); const t = c.currentTime;
+        [523, 659, 784, 1047, 1319].forEach((f, i) => playTone(f, 'triangle', t + i * 0.08, 0.12, 0.09));
+      },
+      freeze() {
+        const c = getCtx(); const t = c.currentTime;
+        [1400, 1100, 900, 1600].forEach((f, i) => playTone(f, 'triangle', t + i * 0.06, 0.1, 0.09));
       }
     }
   };

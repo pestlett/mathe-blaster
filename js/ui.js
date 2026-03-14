@@ -410,7 +410,7 @@ const UI = (() => {
   }
 
   function renderLives(lives, max, theme) {
-    const icons = { space: '🛡', ocean: '🐟', sky: '❤' };
+    const icons = { space: '🛡', ocean: '🐟', sky: '❤', cats: '🐾' };
     const icon = icons[theme] || '❤';
     let html = '';
     for (let i = 0; i < max; i++) {
