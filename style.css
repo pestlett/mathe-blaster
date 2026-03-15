@@ -504,6 +504,9 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .home-btns .btn-secondary {
   flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  padding: 10px 8px;
 }
 @media (max-width: 480px) {
   .home-btns {
