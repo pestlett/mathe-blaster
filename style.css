@@ -1344,10 +1344,16 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .overlay-btns {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+}
+.overlay-btn-row {
+  display: flex;
+  gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 16px;
 }
 .overlay-btns .btn-primary {
   width: auto;
