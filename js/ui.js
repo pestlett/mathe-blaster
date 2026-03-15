@@ -942,7 +942,7 @@ const UI = (() => {
 
     document.getElementById('btn-play-again').onclick = onPlayAgain;
     document.getElementById('btn-leaderboard').onclick = onLeaderboard;
-    document.getElementById('btn-achievements').onclick = () => showAchievements(() => showScreen('onboarding'));
+    document.getElementById('btn-achievements').onclick = () => showAchievements(() => showScreen('gameover'));
     showScreen('gameover');
   }
 

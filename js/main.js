@@ -1489,7 +1489,7 @@ function endGame() {
     newAchievements,
     masteryData,
     () => { UI.showScreen('onboarding'); },
-    () => UI.showLeaderboard(() => UI.showScreen('onboarding')),
+    () => UI.showLeaderboard(() => UI.showScreen('gameover')),
     runData
   );
   // Special confetti burst for the Klasse 3 Komplett milestone
