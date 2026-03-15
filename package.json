@@ -1,6 +1,6 @@
 {
   "name": "multiplication",
-  "version": "0.7.81",
+  "version": "0.7.82",
   "description": "Mathe Blaster! — browser game",
   "scripts": {
     "test": "jest",
