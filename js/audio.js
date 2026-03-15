@@ -7,6 +7,35 @@ const Audio = (() => {
   let currentTheme = 'space';
   let muted = false;
 
+  // ---- Adaptive music state ----
+  let currentMusicState  = 'calm';
+  let pendingMusicState  = null;
+  let _preSpecialState   = 'calm';
+  let _levelTempoMult    = 1.0;
+  let _runModeActive     = false;
+  let layerGains         = {};   // { melody, bass, harmony, boss, run } → GainNode
+  let masterGain         = null;
+  let _hopefulTimeout    = null;
+  let _streakEnergyActive = false;
+
+  const STATE_TEMPO_MULT = {
+    calm:    1.0,
+    tense:   1.1,
+    urgent:  1.25,
+    boss:    1.35,
+    freeze:  0.55,
+    hopeful: 1.0,
+  };
+
+  const STATE_LAYERS = {
+    calm:    { melody: 1,   bass: 0,   harmony: 0, boss: 0, run: 0 },
+    tense:   { melody: 1,   bass: 1,   harmony: 0, boss: 0, run: 0 },
+    urgent:  { melody: 1,   bass: 1,   harmony: 1, boss: 0, run: 0 },
+    boss:    { melody: 0,   bass: 0.7, harmony: 0, boss: 1, run: 0 },
+    freeze:  { melody: 0.5, bass: 0.5, harmony: 0, boss: 0, run: 0 },
+    hopeful: { melody: 1,   bass: 0,   harmony: 1, boss: 0, run: 0 },
+  };
+
   function getCtx() {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === 'suspended') ctx.resume();
@@ -19,19 +48,20 @@ const Audio = (() => {
     return 440 * Math.pow(2, (note - 69) / 12);
   }
 
-  function playTone(freq, type, startTime, duration, gain = 0.15, destination = null) {
+  function playTone(freq, type, startTime, duration, gain = 0.15, destination = null, attack = 0.02) {
     const c = getCtx();
     const osc = c.createOscillator();
     const env = c.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, startTime);
     env.gain.setValueAtTime(0, startTime);
-    env.gain.linearRampToValueAtTime(gain, startTime + 0.02);
+    env.gain.linearRampToValueAtTime(gain, startTime + attack);
     env.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(env);
     env.connect(destination || c.destination);
     osc.start(startTime);
     osc.stop(startTime + duration + 0.05);
+    musicNodes.push(osc);
     return osc;
   }
 
@@ -57,65 +87,184 @@ const Audio = (() => {
   }
 
   // ---- Music sequences ----
+  // Each theme has 6 layers: melody, bass, harmony, boss, hopeful, run
   const SEQUENCES = {
     space: {
-      notes: [57, 60, 62, 64, 57, 60, 64, 60, 55, 57, 60, 55], // Am arpeggio
-      tempo: 0.22,
-      type: 'sawtooth',
-      gain: 0.06
+      melody:  { notes: [57,60,62,64,57,60,64,60,55,57,60,55], tempo: 0.22, type: 'sawtooth', gain: 0.06 },
+      bass:    { notes: [45,45,40,40,43,43,40,45],             tempo: 0.44, type: 'sine',     gain: 0.04 },
+      harmony: { notes: [69,72,71,69,67,69,72,67],             tempo: 0.22, type: 'sawtooth', gain: 0.04 },
+      boss:    { notes: [64,62,60,57,55,57,60,55,52,55,57,52], tempo: 0.18, type: 'sawtooth', gain: 0.07 },
+      hopeful: { notes: [57,60,64,69],                         tempo: 0.22, type: 'sawtooth', gain: 0.08 },
+      run:     { notes: [45,52,45,52,43,50,43,50],             tempo: 0.44, type: 'sine',     gain: 0.03 },
     },
     ocean: {
-      notes: [60, 62, 64, 67, 69, 67, 64, 62, 60, 64, 67, 64], // C major pentatonic
-      tempo: 0.38,
-      type: 'sine',
-      gain: 0.08
+      melody:  { notes: [60,62,64,67,69,67,64,62,60,64,67,64], tempo: 0.38, type: 'sine', gain: 0.08 },
+      bass:    { notes: [36,36,43,43,36,38,40,36],             tempo: 0.76, type: 'sine', gain: 0.05 },
+      harmony: { notes: [72,74,76,79,81,79,76,72],             tempo: 0.38, type: 'sine', gain: 0.05 },
+      boss:    { notes: [60,67,64,60,67,72,67,64,60,62,64,67], tempo: 0.30, type: 'sine', gain: 0.08 },
+      hopeful: { notes: [60,64,67,72],                         tempo: 0.38, type: 'sine', gain: 0.09 },
+      run:     { notes: [36,43,36,43,36,38,40,36],             tempo: 0.76, type: 'sine', gain: 0.04 },
     },
     sky: {
-      notes: [60, 64, 67, 72, 67, 64, 65, 69, 72, 67, 64, 60], // C major bright
-      tempo: 0.16,
-      type: 'triangle',
-      gain: 0.09
+      melody:  { notes: [60,64,67,72,67,64,65,69,72,67,64,60], tempo: 0.16, type: 'triangle', gain: 0.09 },
+      bass:    { notes: [48,48,55,55,53,53,55,48],             tempo: 0.32, type: 'triangle', gain: 0.05 },
+      harmony: { notes: [76,79,81,84,83,81,79,76],             tempo: 0.16, type: 'triangle', gain: 0.05 },
+      boss:    { notes: [60,62,63,65,63,62,60,58,57,58,60,62], tempo: 0.13, type: 'triangle', gain: 0.09 },
+      hopeful: { notes: [67,72,76,84],                         tempo: 0.16, type: 'triangle', gain: 0.10 },
+      run:     { notes: [48,55,48,55,53,60,53,48],             tempo: 0.32, type: 'triangle', gain: 0.04 },
     },
     cats: {
-      notes: [64, 67, 69, 72, 71, 69, 67, 64, 62, 64, 67, 69], // E minor pentatonic, playful
-      tempo: 0.28,
-      type: 'triangle',
-      gain: 0.07
-    }
+      melody:  { notes: [64,67,69,72,71,69,67,64,62,64,67,69], tempo: 0.28, type: 'triangle', gain: 0.07 },
+      bass:    { notes: [40,43,40,47,40,43,47,40],             tempo: 0.56, type: 'triangle', gain: 0.04 },
+      harmony: { notes: [76,79,81,83,81,79,76,74],             tempo: 0.28, type: 'triangle', gain: 0.04 },
+      boss:    { notes: [64,67,69,71,69,67,64,62,60,62,64,67], tempo: 0.22, type: 'triangle', gain: 0.08 },
+      hopeful: { notes: [64,67,71,76],                         tempo: 0.28, type: 'triangle', gain: 0.08 },
+      run:     { notes: [40,47,40,47,40,43,47,40],             tempo: 0.56, type: 'triangle', gain: 0.03 },
+    },
   };
+
+  function resolveLayerGain(layer) {
+    const stateWeight = (STATE_LAYERS[currentMusicState] || STATE_LAYERS.calm)[layer] || 0;
+    if (layer === 'run') return _runModeActive ? 1 : 0;
+    return stateWeight;
+  }
+
+  function fadeLayerTo(gainNode, target, duration) {
+    const c = getCtx();
+    gainNode.gain.cancelScheduledValues(c.currentTime);
+    gainNode.gain.setValueAtTime(gainNode.gain.value, c.currentTime);
+    gainNode.gain.linearRampToValueAtTime(target, c.currentTime + duration);
+  }
 
   function stopMusic() {
     if (musicTimeout) clearTimeout(musicTimeout);
     musicTimeout = null;
+    if (_hopefulTimeout) { clearTimeout(_hopefulTimeout); _hopefulTimeout = null; }
     musicNodes.forEach(n => { try { n.stop(); } catch {} });
     musicNodes = [];
+    Object.values(layerGains).forEach(g => { try { g.disconnect(); } catch {} });
+    layerGains = {};
+    if (masterGain) { try { masterGain.disconnect(); } catch {} masterGain = null; }
   }
 
   function playMusic(theme) {
     if (muted) return;
     stopMusic();
     currentTheme = theme;
+    currentMusicState = 'calm';
+    pendingMusicState = null;
+    _levelTempoMult   = 1.0;
     const seq = SEQUENCES[theme];
     if (!seq) return;
-    scheduleLoop(seq, 0);
+
+    const c = getCtx();
+    masterGain = c.createGain();
+    masterGain.gain.setValueAtTime(1, c.currentTime);
+    masterGain.connect(c.destination);
+
+    for (const layer of ['melody', 'bass', 'harmony', 'boss', 'run']) {
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, c.currentTime);
+      g.connect(masterGain);
+      layerGains[layer] = g;
+    }
+
+    scheduleLoop(0);
   }
 
-  function scheduleLoop(seq, offset) {
+  function scheduleLoop(offset) {
     const c = getCtx();
-    const start = c.currentTime + offset;
-    const totalDuration = seq.notes.length * seq.tempo;
-    seq.notes.forEach((midi, i) => {
-      const t = start + i * seq.tempo;
-      playTone(noteToFreq(midi), seq.type, t, seq.tempo * 0.75, seq.gain);
-      // Add bass for space
-      if (currentTheme === 'space') {
-        playTone(noteToFreq(midi - 12), 'sine', t, seq.tempo * 0.9, 0.04);
+    const seq = SEQUENCES[currentTheme];
+    if (!seq) return;
+
+    // Apply pending state at loop boundary
+    if (pendingMusicState !== null) {
+      currentMusicState = pendingMusicState;
+      pendingMusicState = null;
+    }
+
+    const stateMult   = STATE_TEMPO_MULT[currentMusicState] || 1.0;
+    const levelMult   = (currentMusicState === 'freeze') ? 1.0 : _levelTempoMult;
+    const effectiveMult = stateMult * levelMult;
+
+    // Fade each layer to its target gain
+    for (const layer of ['melody', 'bass', 'harmony', 'boss', 'run']) {
+      if (layerGains[layer]) {
+        fadeLayerTo(layerGains[layer], resolveLayerGain(layer), 0.5);
       }
-    });
-    // Schedule next loop
+    }
+
+    const streakBurst = _streakEnergyActive;
+    _streakEnergyActive = false;
+
+    // Schedule notes for all layers
+    let maxDuration = 0;
+    for (const layer of ['melody', 'bass', 'harmony', 'boss', 'run']) {
+      const layerSeq = seq[layer];
+      if (!layerSeq || !layerGains[layer]) continue;
+
+      // Divide base tempo by effectiveMult: higher mult = faster = shorter per-note interval
+      const adjustedTempo = layerSeq.tempo / effectiveMult;
+      const loopDuration = layerSeq.notes.length * adjustedTempo;
+      if (loopDuration > maxDuration) maxDuration = loopDuration;
+
+      if (resolveLayerGain(layer) === 0) continue; // skip silent layers
+
+      const start = c.currentTime + offset;
+      layerSeq.notes.forEach((midi, i) => {
+        const t = start + i * adjustedTempo;
+        const gainVal = streakBurst ? layerSeq.gain * 1.3 : layerSeq.gain;
+        const attack  = streakBurst ? 0.005 : 0.02;
+        playTone(noteToFreq(midi), layerSeq.type, t, adjustedTempo * 0.75, gainVal, layerGains[layer], attack);
+      });
+    }
+
+    if (maxDuration === 0) {
+      const adjustedTempo = seq.melody.tempo / effectiveMult;
+      maxDuration = seq.melody.notes.length * adjustedTempo;
+    }
+
     musicTimeout = setTimeout(() => {
-      if (!muted) scheduleLoop(seq, 0);
-    }, totalDuration * 1000 - 100);
+      if (!muted) scheduleLoop(0);
+    }, maxDuration * 1000 - 100);
+  }
+
+  // ---- Public adaptive music controls ----
+
+  function setMusicState(newState, onRevert) {
+    if (newState === 'boss' || newState === 'freeze') {
+      // Save pre-special state (don't overwrite if already in a special state)
+      if (currentMusicState !== 'boss' && currentMusicState !== 'freeze' && currentMusicState !== 'hopeful') {
+        _preSpecialState = currentMusicState;
+      }
+      pendingMusicState = newState;
+    } else if (newState === 'hopeful') {
+      if (_hopefulTimeout) clearTimeout(_hopefulTimeout);
+      currentMusicState = 'hopeful';
+      pendingMusicState = null;
+      _hopefulTimeout = setTimeout(() => {
+        _hopefulTimeout = null;
+        if (onRevert) onRevert();
+        else pendingMusicState = _preSpecialState;
+      }, 4000);
+    } else {
+      pendingMusicState = newState;
+    }
+  }
+
+  function notifyStreak(/* n */) {
+    _streakEnergyActive = true;
+  }
+
+  function notifyLevel(level) {
+    _levelTempoMult = Math.min(1.25, 1.0 + (level - 1) * 0.02);
+  }
+
+  function setRunMode(bool) {
+    _runModeActive = bool;
+    if (layerGains.run) {
+      fadeLayerTo(layerGains.run, bool ? 1 : 0, 0.5);
+    }
   }
 
   // ---- Sound Effects ----
@@ -123,28 +272,57 @@ const Audio = (() => {
     space: {
       fire() {
         const c = getCtx(); const t = c.currentTime;
-        playTone(880, 'square', t, 0.08, 0.12);
-        playTone(440, 'square', t + 0.06, 0.1, 0.08);
+        const osc = c.createOscillator(); const env = c.createGain();
+        osc.type = 'square'; osc.frequency.setValueAtTime(880, t);
+        env.gain.setValueAtTime(0.12, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        osc.connect(env); env.connect(c.destination); osc.start(t); osc.stop(t + 0.13);
+        const osc2 = c.createOscillator(); const env2 = c.createGain();
+        osc2.type = 'square'; osc2.frequency.setValueAtTime(440, t + 0.06);
+        env2.gain.setValueAtTime(0.08, t + 0.06); env2.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+        osc2.connect(env2); env2.connect(c.destination); osc2.start(t + 0.06); osc2.stop(t + 0.21);
       },
       correct() {
         const c = getCtx(); const t = c.currentTime;
-        [880, 1100, 1320].forEach((f, i) => playTone(f, 'sawtooth', t + i * 0.06, 0.12, 0.1));
+        [880, 1100, 1320].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(f, t + i * 0.06);
+          env.gain.setValueAtTime(0.1, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.12);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.17);
+        });
       },
       wrong() {
         const c = getCtx(); const t = c.currentTime;
-        playTone(180, 'square', t, 0.25, 0.12);
+        const osc = c.createOscillator(); const env = c.createGain();
+        osc.type = 'square'; osc.frequency.setValueAtTime(180, t);
+        env.gain.setValueAtTime(0.12, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.connect(env); env.connect(c.destination); osc.start(t); osc.stop(t + 0.30);
       },
       lifeLost() {
         const c = getCtx(); const t = c.currentTime;
-        [300, 220, 150, 100].forEach((f, i) => playTone(f, 'sawtooth', t + i * 0.1, 0.15, 0.15));
+        [300, 220, 150, 100].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(f, t + i * 0.1);
+          env.gain.setValueAtTime(0.15, t + i * 0.1); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.15);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.20);
+        });
       },
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
-        [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'triangle', t + i * 0.1, 0.15, 0.12));
+        [523, 659, 784, 1047].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.1);
+          env.gain.setValueAtTime(0.12, t + i * 0.1); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.15);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.20);
+        });
       },
       freeze() {
         const c = getCtx(); const t = c.currentTime;
-        [1200, 1000, 800, 1400].forEach((f, i) => playTone(f, 'sine', t + i * 0.06, 0.1, 0.1));
+        [1200, 1000, 800, 1400].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + i * 0.06);
+          env.gain.setValueAtTime(0.1, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
+        });
       }
     },
     ocean: {
@@ -161,23 +339,46 @@ const Audio = (() => {
       },
       correct() {
         const c = getCtx(); const t = c.currentTime;
-        [400, 600, 800, 600, 400].forEach((f, i) => playTone(f, 'sine', t + i * 0.07, 0.1, 0.1));
+        [400, 600, 800, 600, 400].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + i * 0.07);
+          env.gain.setValueAtTime(0.1, t + i * 0.07); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.15);
+        });
       },
       wrong() {
         const c = getCtx(); const t = c.currentTime;
-        playTone(120, 'sine', t, 0.4, 0.15);
+        const osc = c.createOscillator(); const env = c.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(120, t);
+        env.gain.setValueAtTime(0.15, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc.connect(env); env.connect(c.destination); osc.start(t); osc.stop(t + 0.45);
       },
       lifeLost() {
         const c = getCtx(); const t = c.currentTime;
-        [200, 160, 120, 80].forEach((f, i) => playTone(f, 'sine', t + i * 0.12, 0.18, 0.18));
+        [200, 160, 120, 80].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + i * 0.12);
+          env.gain.setValueAtTime(0.18, t + i * 0.12); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.18);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.12); osc.stop(t + i * 0.12 + 0.23);
+        });
       },
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
-        [300, 400, 500, 600, 700].forEach((f, i) => playTone(f, 'sine', t + i * 0.1, 0.12, 0.1));
+        [300, 400, 500, 600, 700].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + i * 0.1);
+          env.gain.setValueAtTime(0.1, t + i * 0.1); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.12);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.17);
+        });
       },
       freeze() {
         const c = getCtx(); const t = c.currentTime;
-        [1000, 800, 600, 1200].forEach((f, i) => playTone(f, 'sine', t + i * 0.07, 0.1, 0.1));
+        [1000, 800, 600, 1200].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + i * 0.07);
+          env.gain.setValueAtTime(0.1, t + i * 0.07); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.15);
+        });
       }
     },
     sky: {
@@ -187,7 +388,12 @@ const Audio = (() => {
       },
       correct() {
         const c = getCtx(); const t = c.currentTime;
-        [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'triangle', t + i * 0.07, 0.12, 0.1));
+        [523, 659, 784, 1047].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.07);
+          env.gain.setValueAtTime(0.1, t + i * 0.07); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.12);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.17);
+        });
       },
       wrong() {
         const c = getCtx(); const t = c.currentTime;
@@ -202,46 +408,90 @@ const Audio = (() => {
       },
       lifeLost() {
         const c = getCtx(); const t = c.currentTime;
-        [500, 400, 350, 300, 200].forEach((f, i) => playTone(f, 'triangle', t + i * 0.1, 0.15, 0.12));
+        [500, 400, 350, 300, 200].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.1);
+          env.gain.setValueAtTime(0.12, t + i * 0.1); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.15);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.20);
+        });
       },
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
-        [659, 784, 880, 1047, 1319].forEach((f, i) => playTone(f, 'triangle', t + i * 0.09, 0.12, 0.1));
+        [659, 784, 880, 1047, 1319].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.09);
+          env.gain.setValueAtTime(0.1, t + i * 0.09); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.09 + 0.12);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.09); osc.stop(t + i * 0.09 + 0.17);
+        });
       },
       freeze() {
         const c = getCtx(); const t = c.currentTime;
-        [1200, 1000, 800, 1400].forEach((f, i) => playTone(f, 'triangle', t + i * 0.06, 0.1, 0.1));
+        [1200, 1000, 800, 1400].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.06);
+          env.gain.setValueAtTime(0.1, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
+        });
       }
     },
     cats: {
       fire() {
         const c = getCtx(); const t = c.currentTime;
         // Quick paw swipe sound
-        playTone(600, 'triangle', t, 0.05, 0.1);
-        playTone(900, 'triangle', t + 0.04, 0.08, 0.08);
+        const osc = c.createOscillator(); const env = c.createGain();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(600, t);
+        env.gain.setValueAtTime(0.1, t); env.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.connect(env); env.connect(c.destination); osc.start(t); osc.stop(t + 0.10);
+        const osc2 = c.createOscillator(); const env2 = c.createGain();
+        osc2.type = 'triangle'; osc2.frequency.setValueAtTime(900, t + 0.04);
+        env2.gain.setValueAtTime(0.08, t + 0.04); env2.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc2.connect(env2); env2.connect(c.destination); osc2.start(t + 0.04); osc2.stop(t + 0.17);
       },
       correct() {
         const c = getCtx(); const t = c.currentTime;
         // Happy purring tones
-        [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'triangle', t + i * 0.07, 0.12, 0.09));
+        [523, 659, 784, 1047].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.07);
+          env.gain.setValueAtTime(0.09, t + i * 0.07); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.12);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.17);
+        });
       },
       wrong() {
         const c = getCtx(); const t = c.currentTime;
         // Cat hiss
         playNoise(t, 0.25, 3000, 0.08);
-        playTone(250, 'sawtooth', t + 0.05, 0.3, 0.07);
+        const osc = c.createOscillator(); const env = c.createGain();
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(250, t + 0.05);
+        env.gain.setValueAtTime(0.07, t + 0.05); env.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(env); env.connect(c.destination); osc.start(t + 0.05); osc.stop(t + 0.40);
       },
       lifeLost() {
         const c = getCtx(); const t = c.currentTime;
-        [400, 330, 280, 220, 180].forEach((f, i) => playTone(f, 'triangle', t + i * 0.1, 0.14, 0.12));
+        [400, 330, 280, 220, 180].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.1);
+          env.gain.setValueAtTime(0.12, t + i * 0.1); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.14);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.19);
+        });
       },
       levelUp() {
         const c = getCtx(); const t = c.currentTime;
-        [523, 659, 784, 1047, 1319].forEach((f, i) => playTone(f, 'triangle', t + i * 0.08, 0.12, 0.09));
+        [523, 659, 784, 1047, 1319].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.08);
+          env.gain.setValueAtTime(0.09, t + i * 0.08); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.12);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.17);
+        });
       },
       freeze() {
         const c = getCtx(); const t = c.currentTime;
-        [1400, 1100, 900, 1600].forEach((f, i) => playTone(f, 'triangle', t + i * 0.06, 0.1, 0.09));
+        [1400, 1100, 900, 1600].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.06);
+          env.gain.setValueAtTime(0.09, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
+        });
       }
     }
   };
@@ -260,5 +510,6 @@ const Audio = (() => {
     if (muted) stopMusic();
   }
 
-  return { playMusic, stopMusic, play, setTheme, setMuted, getCtx };
+  return { playMusic, stopMusic, play, setTheme, setMuted, getCtx,
+           setMusicState, notifyStreak, notifyLevel, setRunMode };
 })();

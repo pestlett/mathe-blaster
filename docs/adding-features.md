@@ -64,9 +64,9 @@ A new visual theme (e.g. `forest`, `city`) requires changes in:
    - Add to the `render()` dispatcher
 
 2. **`js/audio.js`**
-   - Add a music sequence object (notes, waveform, tempo, gain)
-   - Add SFX variants for `fire`, `correct`, `wrong`, `lifeLost`, `levelUp`, `freeze`
-   - Add to the `playMusic()` and `play()` dispatchers
+   - Add **all 6 layer sequences** (`melody`, `bass`, `harmony`, `boss`, `hopeful`, `run`) to `SEQUENCES[theme]` — each with `notes`, `tempo`, `type`, and `gain`
+   - Add SFX variants for `fire`, `correct`, `wrong`, `lifeLost`, `levelUp`, `freeze` to `SFX[theme]`
+   - The adaptive music system (`scheduleLoop`, `setMusicState`, etc.) picks up new themes automatically — no other changes needed in the music logic
 
 3. **`js/upgrades.js`**
    - Add theme-specific names for all 12 upgrades (the `names` and `desc` objects)

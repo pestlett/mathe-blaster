@@ -62,7 +62,7 @@ Game ends
 | `objects.js` | Object/particle physics, factory functions | Spawning schedule |
 | `targeting.js` | Arrow-key target reference | Object physics |
 | `themes.js` | Canvas background rendering per theme | UI elements |
-| `audio.js` | Web Audio synthesis, SFX, music | Triggering (main.js calls play()) |
+| `audio.js` | Web Audio synthesis, SFX, adaptive layered music | Triggering (main.js calls play(), setMusicState(), notifyStreak(), notifyLevel(), setRunMode()) |
 | `progress.js` | localStorage read/write, mastery, achievements | In-memory state |
 | `upgrades.js` | Upgrade definitions, synergies, adjacency | Applying during play (main.js reads state flags) |
 | `ui.js` | DOM screen management, HUD, overlays, onboarding | Canvas |
@@ -129,6 +129,38 @@ Chain kill = base points only (no hot zone / time bonus)
 - Stars awarded: ≥90% accuracy = 3★, ≥70% = 2★, else 1★
 - In run mode: every 3rd level triggers ante check → upgrade picker or run end
 - Boss spawns at level 5, 10, 15, …
+
+## Adaptive Music System
+
+`audio.js` implements a dynamic, layered music system that reacts to gameplay state.
+
+### Layers
+Each theme has 6 named layers: `melody`, `bass`, `harmony`, `boss`, `hopeful` (notes only), `run`. Each layer has its own `GainNode`; all route through a single `masterGain → ctx.destination`. Layer gains are smoothly faded over 0.5 s via `linearRampToValueAtTime`.
+
+### Music States
+| State | Trigger | Layers active | Tempo mult |
+|-------|---------|---------------|-----------|
+| `calm` | Full health | melody only | ×1.0 |
+| `tense` | 1+ life lost | melody + bass | ×1.1 |
+| `urgent` | 1 life remaining | melody + bass + harmony | ×1.25 |
+| `boss` | Boss active | bass + boss melody | ×1.35 |
+| `freeze` | Freeze item collected | melody + bass at half gain | ×0.55 |
+| `hopeful` | Life gained (4 s transient) | melody + harmony | ×1.0 |
+
+`_levelTempoMult` adds +2% per level (capped ×1.25). Not applied during `freeze`.
+
+State transitions are beat-synchronised (pending state applied at the next loop boundary). `hopeful` is the only state that takes effect immediately.
+
+### Public API additions
+| Function | Purpose |
+|----------|---------|
+| `setMusicState(state, onRevert?)` | Request a state change; `hopeful` reverts after 4 s via `onRevert` callback |
+| `notifyStreak(n)` | Triggers a one-loop gain burst (+30%) with snappy attack on the next loop |
+| `notifyLevel(level)` | Updates `_levelTempoMult` (+2% per level, capped ×1.25) |
+| `setRunMode(bool)` | Fades `run` layer in/out immediately |
+
+### Hook points in `main.js`
+`syncMusicIntensity()` recalculates the appropriate state from `state.lives` and live boss presence. Called on: life lost, boss defeated, freeze ended. `setMusicState('boss')` called on boss spawn; `setMusicState('freeze')` on freeze collected; `setMusicState('hopeful', syncMusicIntensity)` on life gained. `Audio.notifyStreak()` called at streak milestones 3, 5, 8. `Audio.notifyLevel()` called on each level-up. `Audio.setRunMode()` called at game start.
 
 ## Canvas Layout
 

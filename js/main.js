@@ -87,6 +87,18 @@ function tutorialQuestionSpeechEnabled() {
   return !tutorialActive() || !!tutorialState.allowQuestionSpeech;
 }
 
+// ---- Adaptive music ----
+let _prevFreezeActive = 0;
+
+function syncMusicIntensity() {
+  if (state.practiceMode) return;
+  const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
+  if (hasBoss) { Audio.setMusicState('boss'); return; }
+  if (state.lives <= 1)                Audio.setMusicState('urgent');
+  else if (state.lives < state.maxLives) Audio.setMusicState('tense');
+  else                                   Audio.setMusicState('calm');
+}
+
 // ---- Haptic feedback ----
 function vibrate(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
@@ -1468,6 +1480,8 @@ function startGame(settings) {
   Themes.init(state.theme, window.innerWidth, window.innerHeight);
   Audio.setTheme(state.theme);
   Audio.playMusic(state.theme);
+  Audio.setRunMode(state.runMode);
+  Audio.notifyLevel(state.level);
 
   document.getElementById('answer-input').value = '';
   hideSuggestion();
@@ -1493,8 +1507,10 @@ function update(dt) {
   state.gameTimeSecs += dt;
 
   // Tick down active freeze
+  _prevFreezeActive = state.freezeActive;
   if (state.freezeActive > 0) {
     state.freezeActive = Math.max(0, state.freezeActive - dt);
+    if (state.freezeActive === 0) syncMusicIntensity(); // freeze ended
   }
 
   // Tick down magnet and reveal bonuses
@@ -1635,6 +1651,7 @@ function update(dt) {
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
             Audio.play('lifeLost');
+            syncMusicIntensity();
             vibrate(200);
             UI.updateHUD(state);
             if (state.lives <= 0 && state.phase === 'PLAYING') {
@@ -1680,6 +1697,7 @@ function update(dt) {
   const isBossLevel = !state.tutorialMode && state.level > 1 && state.level % 5 === 0 && state.correctThisLevel === 0 && !state._bossSpawnedThisLevel;
   if (isBossLevel && !hasBoss) {
     state._bossSpawnedThisLevel = true;
+    Audio.setMusicState('boss');
     const stats = Progress.getStats();
     // Scale number of questions with level: 2 at L5, 3 at L10, 4 at L15, cap at 5
     const numQ = Math.min(5, 1 + Math.floor(state.level / 5));
@@ -1972,6 +1990,7 @@ function submitAnswer() {
       state.correctThisLevel++;
       state.streak++;
       state.maxStreak = Math.max(state.maxStreak, state.streak);
+      if ([3, 5, 8].includes(state.streak)) Audio.notifyStreak(state.streak);
       state.score += 15;
       target.questionIndex++;
       target.scale = Math.max(0.3, target.scale - 0.25); // shrink on each hit
@@ -1995,6 +2014,7 @@ function submitAnswer() {
         }
         if (!state.tutorialMode) checkTableMastery();
         Audio.play('levelUp');
+        syncMusicIntensity();
         vibrate([60, 80, 120]);
         state.confetti = spawnConfetti(window.innerWidth);
 
@@ -2072,6 +2092,7 @@ function submitAnswer() {
       state.freezeActive = 5;
       UI.updateHUD(state);
       Audio.play('freeze');
+      Audio.setMusicState('freeze');
       input.value = '';
       input.placeholder = I18n.t('answerPlaceholder');
       Targeting.syncTarget(state.objects);
@@ -2101,6 +2122,7 @@ function submitAnswer() {
         setTimeout(() => livesEl.classList.remove('life-gained'), 600);
       }
       Audio.play('levelUp');
+      Audio.setMusicState('hopeful', syncMusicIntensity);
       input.value = '';
       input.placeholder = I18n.t('answerPlaceholder');
       Targeting.syncTarget(state.objects);
@@ -2199,6 +2221,7 @@ function submitAnswer() {
     state.streak++;
     state.maxStreak = Math.max(state.maxStreak, state.streak);
     state.correctThisLevel++;
+    if ([3, 5, 8].includes(state.streak)) Audio.notifyStreak(state.streak);
 
     // Streak recharges help every 3 in a row
     if (state.streak % 3 === 0 && state.helpCooldown > 0) {
@@ -2514,6 +2537,7 @@ function submitAnswer() {
       state.correctThisLevel = 0;
       state.attemptsThisLevel = 0;
       Audio.play('levelUp');
+      Audio.notifyLevel(state.level);
       vibrate([40, 60, 80]);
       state.levelTransitionTimer = 1.0;
       state.confetti = spawnConfetti(window.innerWidth);
