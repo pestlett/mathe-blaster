@@ -251,6 +251,7 @@ const I18n = (() => {
       settingsTitle:   'Settings',
       settingsProfile: 'Profile',
       settingsGame:    'Game',
+      settingsSave:    'Save',
     },
 
     de: {
@@ -494,6 +495,7 @@ const I18n = (() => {
       settingsTitle:   'Einstellungen',
       settingsProfile: 'Profil',
       settingsGame:    'Spiel',
+      settingsSave:    'Speichern',
     },
 
     es: {
@@ -737,6 +739,7 @@ const I18n = (() => {
       settingsTitle:   'Configuración',
       settingsProfile: 'Perfil',
       settingsGame:    'Juego',
+      settingsSave:    'Guardar',
     },
   };
 

@@ -167,6 +167,32 @@ const UI = (() => {
     btnSettingsClose?.addEventListener('click', closeSettings);
     settingsModal?.addEventListener('click', e => { if (e.target === settingsModal) closeSettings(); });
 
+    document.getElementById('btn-settings-save')?.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      const age = parseInt(ageInput.value);
+      if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
+      nameInput.classList.remove('field-error');
+      ageInput.classList.remove('field-error');
+      const existing = Progress.loadSettings() || {};
+      Progress.setPlayer(name, age);
+      Progress.saveName(name);
+      Progress.saveSettings({
+        ...existing,
+        mode: selectedMode,
+        diff: selectedDiff,
+        hintThreshold: parseInt(hintThreshInput.value),
+        lastPlayer: name,
+        lastAge: age,
+        triggerMode: _triggerModeOn,
+        triggerWord: triggerWdInput?.value?.trim(),
+      });
+      const btn = document.getElementById('btn-settings-save');
+      const orig = btn.textContent;
+      btn.textContent = '✓';
+      btn.disabled = true;
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; closeSettings(); }, 700);
+    });
+
     // Help modal
     const helpModal = document.getElementById('help-modal');
     const btnHelpModal = document.getElementById('btn-help-modal');
