@@ -271,6 +271,7 @@ function hideSuggestion() {
 // ---- Read question aloud (speechSynthesis) ----
 let _lastSpokenTarget = null;
 let _speakTimer       = null;
+let _lastHelpBtnKey   = null;
 let _ttsStartTime     = 0; // tracks when TTS actually started playing (utt.onstart)
 let _ttsSafetyTimer   = null;
 
@@ -1267,7 +1268,18 @@ function useHelp() {
   state.helpCooldown = state.helpCooldownMax;
   Audio.play('levelUp');
   vibrate(60);
-  UI.updateHelpBtn(state.helpCooldown, state.helpCooldownMax);
+  refreshHelpBtn();
+}
+
+function refreshHelpBtn() {
+  const t = Targeting.getTarget();
+  const special = !t || t.isFreeze || t.isLifeUp || t.isBoss ||
+                  t.isLightning || t.isScoreStar || t.isShield ||
+                  t.isMagnet || t.isReveal;
+  const key = `${Math.ceil(state.helpCooldown)}|${special ? 1 : 0}`;
+  if (key === _lastHelpBtnKey) return;
+  _lastHelpBtnKey = key;
+  UI.updateHelpBtn(state.helpCooldown, state.helpCooldownMax, special);
 }
 
 function togglePause() {
@@ -1306,6 +1318,7 @@ function startTutorial(settings) {
 }
 
 function startGame(settings) {
+  _lastHelpBtnKey = null;
   TutorialRun.stop();
   Progress.setPlayer(settings.name, settings.age);
   state.tutorialMode = !!settings.tutorialMode;
@@ -1489,7 +1502,7 @@ function update(dt) {
     state.helpCooldown = Math.max(0, state.helpCooldown - dt);
     // Update button only on integer-second boundaries (avoids per-frame DOM writes)
     if (Math.ceil(state.helpCooldown) !== Math.ceil(prev)) {
-      UI.updateHelpBtn(state.helpCooldown, state.helpCooldownMax);
+      refreshHelpBtn();
     }
   }
 
@@ -1806,6 +1819,7 @@ function update(dt) {
   }
 
   UI.updateHUD(state);
+  refreshHelpBtn();
 
   // Update input placeholder — hint when a life-up is targeted
   const currentTarget = Targeting.getTarget();
@@ -2149,7 +2163,7 @@ function submitAnswer() {
     // Streak recharges help every 3 in a row
     if (state.streak % 3 === 0 && state.helpCooldown > 0) {
       state.helpCooldown = 0;
-      UI.updateHelpBtn(0, state.helpCooldownMax);
+      refreshHelpBtn();
       UI.showLevelUp('💡 Help recharged!', null);
     }
 

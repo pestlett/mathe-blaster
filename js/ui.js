@@ -1681,22 +1681,28 @@ const UI = (() => {
   }
 
   // ---- Help / SOS button ----
-  function updateHelpBtn(cooldown, max) {
+  function updateHelpBtn(cooldown, max, targetIsSpecial = false) {
     const btn = document.getElementById('btn-help');
     if (!btn) return;
-    if (cooldown <= 0) {
-      btn.textContent = '💡';
-      btn.title = 'Help — reveal the answer (H)';
-      btn.disabled = false;
-      btn.classList.remove('help-cooldown');
-      btn.style.removeProperty('--help-progress');
-    } else {
+    if (cooldown > 0) {
       const secs = Math.ceil(cooldown);
       btn.textContent = `💡 ${secs}s`;
       btn.title = `Help on cooldown — ${secs}s remaining`;
       btn.disabled = true;
       btn.classList.add('help-cooldown');
       btn.style.setProperty('--help-progress', `${((max - cooldown) / max * 100).toFixed(1)}%`);
+    } else if (targetIsSpecial) {
+      btn.textContent = '💡';
+      btn.title = 'Help — not available for this type';
+      btn.disabled = true;
+      btn.classList.remove('help-cooldown');
+      btn.style.removeProperty('--help-progress');
+    } else {
+      btn.textContent = '💡';
+      btn.title = 'Help — reveal the answer (H)';
+      btn.disabled = false;
+      btn.classList.remove('help-cooldown');
+      btn.style.removeProperty('--help-progress');
     }
   }
 
