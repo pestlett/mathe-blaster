@@ -381,8 +381,16 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       useHelp();
     }
-    // Keep input focused on desktop
-    if (!['ArrowLeft','ArrowRight','Enter','Tab',' ','h','H'].includes(e.key)) {
+    // Redirect digit / backspace to answer input regardless of what has focus
+    if (/^\d$/.test(e.key) && document.activeElement !== answerInput) {
+      e.preventDefault();
+      answerInput.value += e.key;
+      answerInput.focus();
+    } else if (e.key === 'Backspace' && document.activeElement !== answerInput) {
+      e.preventDefault();
+      answerInput.value = answerInput.value.slice(0, -1);
+      answerInput.focus();
+    } else if (!['ArrowLeft','ArrowRight','Enter','Tab',' ','h','H'].includes(e.key)) {
       focusAnswerInput();
     }
   });
