@@ -413,6 +413,7 @@ const TutorialRun = {
       allowQuestionSpeech: false,
       completionHandled: false,
       userQuestionsRemaining: 2,
+      playerTurnLevel: null,
       triggerWord: (settings.triggerWord || '').trim() || 'fire',
       lifeLossResolver: null,
       shieldAbsorbResolver: null,
@@ -443,6 +444,8 @@ const TutorialRun = {
     Voice.stop();
     state.phase = 'ONBOARDING';
     this.stop();
+    document.getElementById('pause-overlay').classList.remove('visible');
+    document.getElementById('btn-mic').classList.remove('above-overlay');
     UI.showScreen('onboarding');
   },
 
@@ -675,7 +678,8 @@ const TutorialRun = {
 
   onRegularCorrect() {
     if (!tutorialActive() || !tutorialState.playerControl) return;
-    if (state.level === 4) {
+    const ptl = tutorialState.playerTurnLevel;
+    if (state.level === ptl) {
       tutorialState.userQuestionsRemaining = Math.max(0, tutorialState.userQuestionsRemaining - 1);
       if (tutorialState.userQuestionsRemaining > 0) {
         UI.showTutorialOverlay(
@@ -686,7 +690,7 @@ const TutorialRun = {
           I18n.t('tutorialYourTurnTitle')
         );
         setTimeout(() => {
-          if (tutorialActive() && tutorialState.playerControl && state.level === 4) {
+          if (tutorialActive() && tutorialState.playerControl && state.level === tutorialState.playerTurnLevel) {
             this.spawnPlayerQuestion();
           }
         }, 700);
@@ -695,7 +699,7 @@ const TutorialRun = {
   },
 
   spawnPlayerQuestion() {
-    if (!tutorialActive() || !tutorialState.playerControl || state.level !== 4) return;
+    if (!tutorialActive() || !tutorialState.playerControl || state.level !== tutorialState.playerTurnLevel) return;
     const liveQuestions = state.objects.filter(o =>
       !o.dead && !o.dying && !o.destroyed &&
       !o.isFreeze && !o.isLifeUp && !o.isLightning && !o.isScoreStar &&
@@ -711,6 +715,7 @@ const TutorialRun = {
     this.clearScene();
     await this.narrate(I18n.t('tutorialNowYouTry'), { title: I18n.t('tutorialYourTurnTitle') });
     if (!tutorialActive()) return;
+    tutorialState.playerTurnLevel = state.level;
     state.correctThisLevel = 8;
     state.attemptsThisLevel = 8;
     UI.showTutorialOverlay(
@@ -723,7 +728,7 @@ const TutorialRun = {
 
   async onLevelChanged(level) {
     if (!tutorialActive() || !tutorialState.playerControl) return;
-    if (level === 5 && !tutorialState.bossSpawned) {
+    if (level === (tutorialState.playerTurnLevel ?? 4) + 1 && !tutorialState.bossSpawned) {
       tutorialState.bossSpawned = true;
       tutorialState.inputLocked = true;
       tutorialState.playerControl = false;
