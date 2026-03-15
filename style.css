@@ -1602,14 +1602,15 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   border-radius: 4px;
   display: flex;
   align-items: center;
+  will-change: filter;
   justify-content: center;
   font-size: 0.65rem;
   font-weight: 600;
   color: rgba(255,255,255,0.7);
   cursor: default;
-  transition: transform .1s;
+  transition: filter .1s;
 }
-.dash-matrix-cell:hover { transform: scale(1.15); z-index: 1; }
+.dash-matrix-cell:hover { filter: brightness(1.4); }
 .dash-matrix-cell.unseen  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.2); }
 .dash-matrix-cell.started { background: rgba(255,140,0,0.4); }
 .dash-matrix-cell.learning{ background: rgba(255,200,0,0.45); }
@@ -1642,6 +1643,10 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
 
 /* Weakest facts */
 .dash-weak-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
   margin-bottom: 12px;
 }
 
