@@ -795,8 +795,9 @@ const TutorialRun = {
     state.attemptsThisLevel = 8;
     this.clearScene();
     const voiceDemo = this.pickQuestion();
+    const voiceLineKey = isMobile() ? 'tutorialVoiceLineMobile' : 'tutorialVoiceLine';
     await this.narrate(
-      I18n.t('tutorialVoiceLine', { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
+      I18n.t(voiceLineKey, { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
       { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'], overlayPosition: 'top' }
     );
     if (!tutorialActive()) return;
