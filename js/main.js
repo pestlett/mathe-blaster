@@ -776,7 +776,8 @@ const TutorialRun = {
     this.resumeDemo();
     await this.waitForQuestionSpeechCycle();
     await this.demoVoicePhrase(`${tutorialState.triggerWord} ${voiceDemo.answer}`, voiceDemo.answer);
-    await this.wait(1600);
+    this.spawnQuestion('center', { y: 90, speed: 28 }); // keep canvas alive after voice demo
+    await this.wait(900);
 
     await this.narrate(I18n.t('tutorialControlsLine'), {
       title: I18n.t('tutorialOverlayTitle'),
@@ -913,19 +914,22 @@ const TutorialRun = {
     await this.wait(500);
     this.resetBonusDemoState();
 
-    this.spawnQuestion('left', { y: 150, speed: 28 });
-    this.spawnQuestion('center', { y: 115, speed: 28 });
-    this.spawnQuestion('right', { y: 180, speed: 28 });
+    this.spawnQuestion('left',  { y: 140, speed: 26 });
+    this.spawnQuestion('right', { y: 170, speed: 26 });
+    this.spawnQuestion('left',  { y: 200, speed: 26 });
+    this.spawnQuestion('right', { y: 230, speed: 26 });
     await this.narrate(I18n.t('tutorialMagnetLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       overlayPosition: 'bottom',
     });
     if (!tutorialActive()) return;
-    this.spawnItem('magnet', 'center', { y: 120, speed: 42 });
+    this.spawnItem('magnet', 'center', { y: 60, speed: 52 }); // fast — gets collected first
     this.resumeDemo();
-    await this.wait(350);
-    await this.typeAnswer(Targeting.getTarget()?.answer);
-    await this.wait(1600);
+    await this.wait(300);
+    await this.typeAnswer(Targeting.getTarget()?.answer); // collect magnet
+    await this.wait(1800); // let magnet pull questions to centre
+    await this.typeAnswer(Targeting.getTarget()?.answer); // answer one → splash!
+    await this.wait(2200); // watch the chain destroy
     this.resetBonusDemoState();
 
     this.spawnQuestion('left', { y: 160, speed: 30 });
@@ -2199,6 +2203,29 @@ function submitAnswer() {
     Objects.triggerDestruction(target, particleColor);
     Audio.play('correct');
     vibrate(40);
+
+    // Magnet splash: while magnet is active a correct answer chain-destroys all
+    // nearby question objects — this is the payoff for pulling them together
+    if (state.magnetActive > 0) {
+      const splashRadius = 130;
+      const splashObjs = state.objects.filter(obj =>
+        obj !== target && !obj.dead && !obj.dying && !obj.destroyed && !obj.isBoss &&
+        !obj.isFreeze && !obj.isLifeUp && !obj.isLightning && !obj.isScoreStar &&
+        !obj.isShield && !obj.isMagnet && !obj.isReveal &&
+        Math.hypot(obj.x - target.x, obj.y - target.y) <= splashRadius
+      );
+      if (splashObjs.length > 0) {
+        splashObjs.forEach((obj, i) => {
+          setTimeout(() => {
+            if (!obj.dead && !obj.destroyed) {
+              Objects.triggerDestruction(obj, particleColor);
+              state.score += Math.round(pts * 0.4);
+            }
+          }, (i + 1) * 130);
+        });
+        UI.showLevelUp(`🧲 ${splashObjs.length} pulled in!`, null);
+      }
+    }
 
     // Encouragement banners
     if (wasGracing) UI.showSaved();
