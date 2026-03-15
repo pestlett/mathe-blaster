@@ -2509,6 +2509,64 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   .voice-suggestion {
     padding: 14px 24px;
   }
+
+  /* ---- Mobile HUD: 2-row grid layout ----
+     Desktop has 3 side-by-side columns that squash on narrow screens.
+     On mobile we switch to a 2-column grid:
+       left col  (row 1): name + score
+       left col  (row 2): level + tables + bonus pills
+       right col (both rows): lives, then mute/pause/exit buttons
+  */
+  #hud-overlay {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "left  right"
+      "center right";
+    padding: 6px 10px;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: start;
+  }
+
+  #hud-left   { grid-area: left;   flex-direction: row; align-items: center; gap: 6px; flex-wrap: wrap; }
+  #hud-center { grid-area: center; flex-direction: row; align-items: center; gap: 6px; flex-wrap: wrap; }
+  #hud-right  { grid-area: right;  align-items: flex-end; gap: 3px; }
+
+  /* Compact text — still readable at arm's length */
+  #hud-name  { font-size: 0.75rem; }
+  #hud-score { font-size: 1rem; }
+  #hud-level { font-size: 0.85rem; }
+  #hud-tables {
+    font-size: 0.7rem;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #hud-lives { font-size: 1.1rem; gap: 3px; }
+
+  /* Bonus pills: smaller on mobile */
+  .hud-bonus-pill  { font-size: 0.8rem; padding: 1px 6px 1px 4px; }
+  .hud-bonus-bar-wrap { height: 22px; }
+
+  /* Keep buttons tappable (min 44 × 44 px touch target) */
+  #btn-mute,
+  #btn-pause {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    margin-top: 0;
+    min-height: 36px;
+    min-width: 36px;
+  }
+
+  .btn-tutorial-exit {
+    font-size: 0.65rem;
+    padding: 4px 7px;
+    margin-top: 2px;
+    min-height: 30px;
+  }
 }
 
 /* ============================================================
