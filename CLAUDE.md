@@ -1,5 +1,18 @@
 # Mathe Blaster! — Development Guide
 
+## Autonomous Decision-Making — Consult Agents Before Asking the User
+
+**Before asking the user any question, first check whether an agent can answer it.**
+The goal is to complete tasks without interrupting the user unless truly necessary.
+
+| Question type | Agent to consult |
+|--------------|-----------------|
+| Is this PIKAS-compliant? | `pikas-validator` |
+| What should the DE/ES translation be? | `i18n-translator` |
+| Which files to update, how to name things, whether to add tests, is this in scope? | `project-advisor` |
+
+Only escalate to the user when the question requires **product intent** that cannot be inferred from existing conventions, code patterns, or these docs (e.g. choosing between two product directions). Everything else should be answerable by an agent or by reading the codebase.
+
 ## Pedagogical Source of Truth — PIKAS
 **All game design decisions follow the PIKAS framework** (German federal primary
 school maths curriculum, Klassen 1–4). Before adding or changing any game
@@ -77,6 +90,7 @@ when relevant, or can be called explicitly:
 |-------|---------|
 | `pikas-validator` | Validates any proposed content or mechanic against the PIKAS curriculum — returns GO / NO-GO / GO WITH CONDITIONS |
 | `i18n-translator` | Produces accurate DE + ES translations in the correct primary-school register, writes directly to `js/i18n.js` |
+| `project-advisor` | Answers judgment calls about scope, naming, testing, documentation, and architecture so the user doesn't need to be interrupted |
 
 ## Versioning
 The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
