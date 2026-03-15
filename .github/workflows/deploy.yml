@@ -9,10 +9,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
   # ── Phase 1: runs on every push EXCEPT chore:release ─────────────────────
   test:
@@ -37,6 +33,10 @@ jobs:
     needs: test
     if: "!startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
+    # Unique group per run — never cancelled by the chore:release push it creates.
+    concurrency:
+      group: bump-${{ github.run_id }}
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
@@ -71,6 +71,10 @@ jobs:
   deploy:
     if: "startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
+    # Cancel any queued deploy if a newer chore:release commit arrives.
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
