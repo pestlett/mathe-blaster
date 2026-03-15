@@ -2543,33 +2543,86 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   gap: 4px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 .hud-upgrades.hidden { display: none; }
 
 .hud-upgrade-pip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 3px;
+  border-radius: 13px;
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.3);
-  font-size: 14px;
+  font-size: 15px;
   cursor: default;
   transition: transform 0.1s;
 }
 
+.pip-count {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: 1px;
+  opacity: 0.9;
+  vertical-align: super;
+}
+
 @keyframes upgradePipFlash {
-  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,230,80,0); }
-  20%  { transform: scale(1.6); box-shadow: 0 0 10px 4px rgba(255,230,80,0.8); }
-  60%  { transform: scale(1.2); box-shadow: 0 0 6px 2px rgba(255,230,80,0.4); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,230,80,0); }
+  0%   { transform: scale(1) rotate(0deg);   box-shadow: 0 0 0 0 rgba(255,230,80,0); }
+  12%  { transform: scale(1.8) rotate(-10deg); box-shadow: 0 0 14px 6px rgba(255,230,80,0.95); }
+  28%  { transform: scale(1.5) rotate(8deg);  box-shadow: 0 0 10px 4px rgba(255,230,80,0.7); }
+  44%  { transform: scale(1.35) rotate(-5deg); box-shadow: 0 0 8px 3px rgba(255,230,80,0.5); }
+  62%  { transform: scale(1.15) rotate(2deg);  box-shadow: 0 0 5px 2px rgba(255,230,80,0.3); }
+  100% { transform: scale(1) rotate(0deg);   box-shadow: 0 0 0 0 rgba(255,230,80,0); }
 }
 
 .hud-upgrade-pip.hud-upgrade-flash {
-  animation: upgradePipFlash 0.5s ease-out forwards;
+  animation: upgradePipFlash 0.6s ease-out forwards;
+  z-index: 10;
+}
+
+/* Mobile: smaller pips */
+@media (max-width: 480px) {
+  .hud-upgrade-pip {
+    min-width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    font-size: 12px;
+    padding: 0 2px;
+  }
+  .pip-count { font-size: 8px; }
+  .hud-upgrades { gap: 3px; margin-top: 2px; }
+}
+
+/* Shop no-slot and stacks badges */
+.shop-noslot-badge {
+  display: inline-block;
+  background: rgba(100,220,100,0.2);
+  border: 1px solid rgba(100,220,100,0.5);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 0.65em;
+  font-weight: 700;
+  color: #7defa7;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.shop-stacks-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 0.65em;
+  opacity: 0.75;
+  vertical-align: middle;
+  margin-left: 2px;
 }
 
 /* Run mode game-over section */

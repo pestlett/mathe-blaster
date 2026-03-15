@@ -939,9 +939,17 @@ const UI = (() => {
     // Run mode upgrade strip
     const hudUpgradesEl = document.getElementById('hud-upgrades');
     if (hudUpgradesEl) {
-      if (state.runMode && state.activeUpgrades && state.activeUpgrades.length > 0) {
-        hudUpgradesEl.innerHTML = state.activeUpgrades.map(u =>
-          `<span class="hud-upgrade-pip" data-id="${u.id}" title="${upgradeNameForTheme(u, state.theme)}">${u.icon || '?'}</span>`
+      const slottedUpgrades = state.activeUpgrades
+        ? state.activeUpgrades.filter(u => !u.noSlot)
+        : [];
+      if (state.runMode && slottedUpgrades.length > 0) {
+        // Deduplicate by id, show count badge for stacks
+        const seen = new Map();
+        for (const u of slottedUpgrades) {
+          seen.set(u.id, { u, count: (seen.get(u.id)?.count || 0) + 1 });
+        }
+        hudUpgradesEl.innerHTML = [...seen.values()].map(({ u, count }) =>
+          `<span class="hud-upgrade-pip" data-id="${u.id}" title="${upgradeNameForTheme(u, state.theme)}">${u.icon || '?'}${count > 1 ? `<span class="pip-count">${count}</span>` : ''}</span>`
         ).join('');
         hudUpgradesEl.classList.remove('hidden');
       } else {
@@ -1887,7 +1895,7 @@ const UI = (() => {
       // Header
       const header = document.createElement('div');
       header.className = 'upgrade-picker-title';
-      const slotsUsed = orderArr.length;
+      const slotsUsed = orderArr.filter(u => !u.noSlot).length;
       const slotsTotal = maxSlots;
       header.innerHTML = `Power Shop <span class="shop-coin-display">🪙 ${currentCoins}</span> <span class="shop-slot-display">${slotsUsed}/${slotsTotal} slots</span>`;
       card.appendChild(header);
@@ -1901,18 +1909,24 @@ const UI = (() => {
         const hints = getSynergyHintsForUpgrade(upg.id, orderArr.map(u => u.id), theme);
         const canAfford = currentCoins >= (upg.price || 0);
         const isFreeCard = isFreeStarter && !freeUsed;
-        const slotsLeft = maxSlots - orderArr.length;
-        const slotsFull = slotsLeft <= 0 && !upg.stackable;
+        const slotsLeft = maxSlots - orderArr.filter(u => !u.noSlot).length;
+        const slotsFull = slotsLeft <= 0 && !upg.noSlot;
+        const ownedCount = orderArr.filter(u => u.id === upg.id).length;
+        const atMaxStacks = upg.maxStacks != null && ownedCount >= upg.maxStacks;
 
         const opBadge = upg.operations && !upg.operations.includes('all')
           ? `<span class="shop-op-badge">${upg.operations.map(o => ({multiply:'×',divide:'÷',add:'+',subtract:'−'})[o] || o).join('/')}</span>`
+          : '';
+        const noSlotBadge = upg.noSlot ? `<span class="shop-noslot-badge">no slot</span>` : '';
+        const stacksBadge = upg.maxStacks != null
+          ? `<span class="shop-stacks-badge">${ownedCount}/${upg.maxStacks}</span>`
           : '';
 
         const card2 = document.createElement('div');
         card2.className = 'shop-card' +
           (hints.some(h => h.type === 'positive') ? ' upgrade-option-synergy' : '') +
           (hints.some(h => h.type === 'negative') ? ' upgrade-option-conflict' : '') +
-          (!canAfford && !isFreeCard ? ' shop-card-unaffordable' : '');
+          ((!canAfford && !isFreeCard) || slotsFull || atMaxStacks ? ' shop-card-unaffordable' : '');
 
         let hintHtml = '';
         for (const h of hints) {
@@ -1921,11 +1935,20 @@ const UI = (() => {
           </div>`;
         }
 
-        const btnLabel = isFreeCard ? 'Free!' : `Buy 🪙${upg.price || 0}`;
-        const btnDisabled = (!isFreeCard && !canAfford) || slotsFull ? 'disabled' : '';
+        let btnLabel, btnDisabled;
+        if (atMaxStacks) {
+          btnLabel = 'Maxed';
+          btnDisabled = 'disabled';
+        } else if (slotsFull) {
+          btnLabel = 'Slots full';
+          btnDisabled = 'disabled';
+        } else {
+          btnLabel = isFreeCard ? 'Free!' : `Buy 🪙${upg.price || 0}`;
+          btnDisabled = (!isFreeCard && !canAfford) ? 'disabled' : '';
+        }
 
         card2.innerHTML = `
-          <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '✨'}</span> ${name}</div>
+          <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '✨'}</span> ${name} ${noSlotBadge} ${stacksBadge}</div>
           ${opBadge}
           <div class="upgrade-desc">${desc}</div>
           ${hintHtml}
@@ -1933,21 +1956,17 @@ const UI = (() => {
         `;
 
         card2.querySelector('.shop-buy-btn').addEventListener('click', () => {
+          if (atMaxStacks || slotsFull) return;
           if (!isFreeCard && !canAfford) return;
-          if (slotsFull) return;
-          if (!isFreeCard) {
-            currentCoins -= upg.price || 0;
-          }
+          if (!isFreeCard) currentCoins -= upg.price || 0;
           freeUsed = true;
           boughtList.push(upg);
           orderArr.push(upg);
-          // Remove bought non-stackable from shop options
-          if (!upg.stackable) {
-            const idx = options.indexOf(upg);
-            if (idx >= 0) options.splice(idx, 1);
-          }
+          // Always remove from shop options after purchase
+          const idx = options.indexOf(upg);
+          if (idx >= 0) options.splice(idx, 1);
           _showUpgradeAcquired(upg, theme, () => {
-            renderShop(); // re-render after animation so player can buy more
+            renderShop();
           });
         });
 
