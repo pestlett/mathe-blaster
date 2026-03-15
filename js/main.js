@@ -2030,6 +2030,15 @@ function submitAnswer() {
           state.answerStartTime = Date.now();
           Targeting.syncTarget(state.objects);
           TutorialRun.onBossDefeated();
+        } else if (state.runMode) {
+          // Run mode has no end — automatically continue
+          state.level++;
+          state.correctThisLevel = 0;
+          state.attemptsThisLevel = 0;
+          state.levelTransitionTimer = 1.0;
+          state.unpauseFreezeTimer = 1.5;
+          if (!_typingMode) Voice.start();
+          focusAnswerInput();
         } else {
           // Pause and let the player choose: keep going or finish
           Engine.pause();
