@@ -808,16 +808,21 @@ input[type="number"]::-webkit-outer-spin-button {
   line-height: 1;
 }
 .hud-bonus-bar-wrap {
-  width: 32px;
-  height: 4px;
+  width: 4px;
+  height: 30px;
   background: rgba(255,255,255,0.18);
   border-radius: 3px;
   overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
 .hud-bonus-bar-fill {
-  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   border-radius: 3px;
-  transition: width 0.1s linear;
+  transition: height 0.1s linear;
 }
 
 /* life-gain flash on HUD hearts */
@@ -974,6 +979,8 @@ input[type="number"]::-webkit-outer-spin-button {
   z-index: 35;
   width: min(520px, calc(100vw - 28px));
   pointer-events: none;
+  opacity: 1;
+  transition: opacity 80ms ease-out;
 }
 
 .tutorial-overlay.top {

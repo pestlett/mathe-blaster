@@ -858,6 +858,8 @@ const UI = (() => {
     const titleEl = document.getElementById('tutorial-overlay-title');
     const textEl = document.getElementById('tutorial-overlay-text');
     if (!overlay || !titleEl || !textEl) return;
+    // Cancel any pending fade-out and make immediately visible
+    overlay.style.opacity = '';
     titleEl.textContent = title || I18n.t('tutorialOverlayTitle');
     textEl.textContent = text || '';
     overlay.classList.toggle('bottom', position === 'bottom');
@@ -868,8 +870,17 @@ const UI = (() => {
   function hideTutorialOverlay() {
     const overlay = document.getElementById('tutorial-overlay');
     if (!overlay) return;
-    overlay.classList.remove('bottom', 'top');
-    overlay.classList.add('hidden');
+    // Fade to transparent, then remove from layout after 80ms
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      // Only hide if still faded (showTutorialOverlay resets opacity, so this guard
+      // prevents hiding an overlay that was shown again before the timeout fired)
+      if (overlay.style.opacity === '0') {
+        overlay.style.opacity = '';
+        overlay.classList.remove('bottom', 'top');
+        overlay.classList.add('hidden');
+      }
+    }, 85);
   }
 
   function refreshTutorialEntryPoints() {
@@ -890,7 +901,7 @@ const UI = (() => {
     const b = _hudBonusIcons[type];
     const icon = b[theme] || b.space;
     const bar = pct !== null
-      ? `<span class="hud-bonus-bar-wrap"><span class="hud-bonus-bar-fill" style="width:${Math.round(pct * 100)}%;background:${b.color}"></span></span>`
+      ? `<span class="hud-bonus-bar-wrap"><span class="hud-bonus-bar-fill" style="height:${Math.round(pct * 100)}%;background:${b.color}"></span></span>`
       : '';
     return `<div class="hud-bonus-pill" style="border-color:${b.color}88"><span class="bp-icon">${icon}</span>${bar}</div>`;
   }
