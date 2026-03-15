@@ -22,6 +22,7 @@ const SPEED_INCREASE_PER_LEVEL = 0.18;
 let state = {
   phase: 'ONBOARDING', // ONBOARDING | PLAYING | GAME_OVER
   voiceActive: false,  // true while SpeechRecognition is actively listening
+  tutorialMode: false,
   name: 'Player',
   age: null,
   theme: 'space',
@@ -66,6 +67,21 @@ let state = {
   answerStartTime: 0,
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
 };
+
+const TUTORIAL_SEED = 20260315;
+let tutorialState = null;
+
+function tutorialActive() {
+  return !!(tutorialState && tutorialState.active);
+}
+
+function tutorialLocksInput() {
+  return !!(tutorialState && tutorialState.active && tutorialState.inputLocked);
+}
+
+function tutorialQuestionSpeechEnabled() {
+  return !tutorialActive() || !!tutorialState.allowQuestionSpeech;
+}
 
 // ---- Haptic feedback ----
 function vibrate(pattern) {
@@ -317,6 +333,7 @@ function speakQuestion(text) {
 
 function maybeSpeak() {
   if (state.phase !== 'PLAYING') return;
+  if (!tutorialQuestionSpeechEnabled()) return;
   const target = Targeting.getTarget();
   Voice.setActiveQuestion(target?.key || '');
   if (target && target !== _lastSpokenTarget) {
@@ -324,6 +341,615 @@ function maybeSpeak() {
     speakQuestion(target.question);
   }
 }
+
+function speakNarrationLine(text) {
+  return new Promise(resolve => {
+    if (!text) { resolve(); return; }
+    if (!window.speechSynthesis) {
+      setTimeout(resolve, Math.max(900, Math.min(5000, text.length * 45)));
+      return;
+    }
+    state.ttsFreezeActive = false;
+    window.speechSynthesis.cancel();
+    clearTimeout(_ttsSafetyTimer);
+    const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
+    utt.rate = 0.96;
+    utt.pitch = 1.04;
+    utt.volume = 0.9;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    utt.onend = finish;
+    utt.onerror = finish;
+    setTimeout(finish, Math.max(4000, text.length * 90));
+    window.speechSynthesis.speak(utt);
+  });
+}
+
+function speakTutorialPhrase(text) {
+  return new Promise(resolve => {
+    if (!text) { resolve(); return; }
+    if (!window.speechSynthesis) {
+      setTimeout(resolve, Math.max(900, Math.min(5000, text.length * 45)));
+      return;
+    }
+    Voice.muteResults(true);
+    state.ttsFreezeActive = true;
+    window.speechSynthesis.cancel();
+    const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
+    utt.rate = 0.94;
+    utt.pitch = 1.03;
+    utt.volume = 0.88;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      state.ttsFreezeActive = false;
+      Voice.muteResults(false);
+      resolve();
+    };
+    utt.onend = finish;
+    utt.onerror = finish;
+    setTimeout(finish, Math.max(2500, text.length * 90));
+    window.speechSynthesis.speak(utt);
+  });
+}
+
+const TutorialRun = {
+  start(settings) {
+    this.stop();
+    tutorialState = {
+      active: true,
+      inputLocked: true,
+      playerControl: false,
+      allowQuestionSpeech: false,
+      completionHandled: false,
+      userQuestionsRemaining: 2,
+      triggerWord: (settings.triggerWord || '').trim() || 'fire',
+      lifeLossResolver: null,
+      shieldAbsorbResolver: null,
+      bossSpawned: false,
+    };
+    UI.showTutorialOverlay(I18n.t('tutorialPreparing'));
+    this.run().catch(err => console.error('[tutorial] run failed', err));
+  },
+
+  stop() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    state.ttsFreezeActive = false;
+    this.clearHighlights();
+    UI.hideTutorialOverlay();
+    tutorialState = null;
+  },
+
+  async wait(ms) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+  },
+
+  clearHighlights() {
+    document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
+  },
+
+  setHighlights(ids = []) {
+    this.clearHighlights();
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('tutorial-highlight');
+    });
+  },
+
+  async narrate(text, { title = null, resume = false, highlightIds = [], overlayPosition = 'top' } = {}) {
+    if (!tutorialActive()) return;
+    tutorialState.inputLocked = true;
+    tutorialState.allowQuestionSpeech = false;
+    Engine.pause();
+    Voice.stop();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    state.ttsFreezeActive = false;
+    this.setHighlights(highlightIds);
+    UI.showTutorialOverlay(text, title || I18n.t('tutorialOverlayTitle'), overlayPosition);
+    await speakNarrationLine(text);
+    if (!tutorialActive()) return;
+    UI.hideTutorialOverlay(); // starts 80ms fade-out
+    await this.wait(90);      // let the fade complete before moving on
+    if (!tutorialActive()) return;
+    this.clearHighlights();
+    if (resume) {
+      Engine.resume();
+    }
+  },
+
+  resumeDemo() {
+    if (!tutorialActive()) return;
+    tutorialState.inputLocked = true;
+    tutorialState.playerControl = false;
+    Engine.resume();
+  },
+
+  resumePlayerControl() {
+    if (!tutorialActive()) return;
+    tutorialState.inputLocked = false;
+    tutorialState.playerControl = true;
+    tutorialState.allowQuestionSpeech = true;
+    Engine.resume();
+    if (!_typingMode) Voice.start();
+  },
+
+  clearScene() {
+    state.objects = [];
+    Targeting.reset();
+    document.getElementById('answer-input').value = '';
+    hideSuggestion();
+    _lastSpokenTarget = null;
+    state.answerStartTime = Date.now();
+    UI.updateHUD(state);
+  },
+
+  resetBonusDemoState() {
+    this.clearScene();
+    state.freezeActive = 0;
+    state.magnetActive = 0;
+    state.revealBonusActive = 0;
+    state.scoreStarActive = false;
+    state.shieldBonusActive = false;
+    state.bonusFlash = null;
+    state.unpauseFreezeTimer = 0;
+    UI.updateHUD(state);
+  },
+
+  slotX(slot = 'center') {
+    const w = window.innerWidth;
+    if (slot === 'left') return Math.round(w * 0.24);
+    if (slot === 'right') return Math.round(w * 0.76);
+    return Math.round(w * 0.5);
+  },
+
+  pickQuestion(extraExcluded = []) {
+    const excludeAnswers = state.objects
+      .filter(o => !o.dead && !o.dying && !o.destroyed)
+      .map(o => o.answer)
+      .concat(extraExcluded);
+    return _pickQuestion(excludeAnswers);
+  },
+
+  addObject(obj, slot = 'center', y = 110, speed = 58) {
+    if (!obj) return null;
+    obj.x = this.slotX(slot);
+    obj.y = y;
+    obj.speed = speed;
+    obj.wobbleOffset = 0;
+    obj.wobbleX = 0;
+    state.objects.push(obj);
+    Targeting.syncTarget(state.objects);
+    Targeting.setTarget(obj);
+    Targeting.syncTarget(state.objects);
+    state.answerStartTime = Date.now();
+    return obj;
+  },
+
+  spawnQuestion(slot = 'center', opts = {}) {
+    const q = opts.question || this.pickQuestion(opts.excludeAnswers || []);
+    const obj = Objects.create(q, window.innerWidth, window.innerHeight, opts.speed || 58, []);
+    return this.addObject(obj, slot, opts.y ?? 110, opts.speed || 58);
+  },
+
+  spawnItem(type, slot = 'center', opts = {}) {
+    const q = opts.question || this.pickQuestion(opts.excludeAnswers || []);
+    const map = {
+      freeze: Objects.createFreeze,
+      lifeup: Objects.createLifeUp,
+      lightning: Objects.createLightning,
+      scoreStar: Objects.createScoreStar,
+      shield: Objects.createShield,
+      magnet: Objects.createMagnet,
+      reveal: Objects.createReveal,
+    };
+    const factory = map[type];
+    if (!factory) return null;
+    const obj = factory(q, window.innerWidth, opts.speed || 56, []);
+    return this.addObject(obj, slot, opts.y ?? 110, opts.speed || 56);
+  },
+
+  async typeAnswer(answer) {
+    const input = document.getElementById('answer-input');
+    input.value = '';
+    const chars = String(answer).split('');
+    for (const ch of chars) {
+      input.value += ch;
+      await this.wait(180);
+    }
+    await this.wait(220);
+    submitAnswer();
+  },
+
+  async voiceAnswer(answer) {
+    const input = document.getElementById('answer-input');
+    input.value = String(answer);
+    showSuggestion(answer, false);
+    await this.wait(550);
+    submitAnswer();
+  },
+
+  async waitForQuestionSpeechCycle(timeoutMs = 7000) {
+    if (!tutorialActive()) return;
+    const startedAt = Date.now();
+    let sawSpeechStart = !!state.ttsFreezeActive;
+    while (!sawSpeechStart && Date.now() - startedAt < timeoutMs) {
+      await this.wait(50);
+      sawSpeechStart = !!state.ttsFreezeActive;
+    }
+    if (!sawSpeechStart) {
+      await this.wait(1200);
+      return;
+    }
+    while (state.ttsFreezeActive && Date.now() - startedAt < timeoutMs) {
+      await this.wait(50);
+    }
+    await this.wait(320);
+  },
+
+  async demoVoicePhrase(phrase, answer) {
+    if (!tutorialActive()) return;
+    UI.showTutorialOverlay(
+      I18n.t('tutorialVoiceDemoLine', { phrase }),
+      I18n.t('tutorialOverlayTitle'),
+      'bottom'
+    );
+    await speakTutorialPhrase(phrase);
+    if (!tutorialActive()) return;
+    await this.wait(250);
+    await this.voiceAnswer(answer);
+  },
+
+  async pulseButton(id, duration = 700) {
+    const btn = document.getElementById(id);
+    if (!btn) { await this.wait(duration); return; }
+    if (typeof btn.animate === 'function') {
+      btn.animate([
+        { transform: 'scale(1)', boxShadow: '0 0 0 rgba(247,201,72,0)' },
+        { transform: 'scale(1.14)', boxShadow: '0 0 18px rgba(247,201,72,0.6)' },
+        { transform: 'scale(1)', boxShadow: '0 0 0 rgba(247,201,72,0)' },
+      ], { duration, easing: 'ease-in-out' });
+    }
+    await this.wait(duration);
+  },
+
+
+  waitForLifeLoss() {
+    return new Promise(resolve => {
+      if (!tutorialActive()) { resolve(); return; }
+      tutorialState.lifeLossResolver = resolve;
+    });
+  },
+
+  waitForShieldAbsorb() {
+    return new Promise(resolve => {
+      if (!tutorialActive()) { resolve(); return; }
+      tutorialState.shieldAbsorbResolver = resolve;
+    });
+  },
+
+  onLifeLost() {
+    if (!tutorialActive()) return;
+    if (tutorialState.lifeLossResolver) {
+      tutorialState.lifeLossResolver();
+      tutorialState.lifeLossResolver = null;
+    }
+  },
+
+  onShieldAbsorbed() {
+    if (!tutorialActive()) return;
+    if (tutorialState.shieldAbsorbResolver) {
+      tutorialState.shieldAbsorbResolver();
+      tutorialState.shieldAbsorbResolver = null;
+    }
+  },
+
+  onRegularCorrect() {
+    if (!tutorialActive() || !tutorialState.playerControl) return;
+    if (state.level === 4) {
+      tutorialState.userQuestionsRemaining = Math.max(0, tutorialState.userQuestionsRemaining - 1);
+      if (tutorialState.userQuestionsRemaining > 0) {
+        UI.showTutorialOverlay(
+          I18n.t('tutorialTryObjective', {
+            remaining: tutorialState.userQuestionsRemaining,
+            word: tutorialState.triggerWord,
+          }),
+          I18n.t('tutorialYourTurnTitle')
+        );
+        setTimeout(() => {
+          if (tutorialActive() && tutorialState.playerControl && state.level === 4) {
+            this.spawnPlayerQuestion();
+          }
+        }, 700);
+      }
+    }
+  },
+
+  spawnPlayerQuestion() {
+    if (!tutorialActive() || !tutorialState.playerControl || state.level !== 4) return;
+    const liveQuestions = state.objects.filter(o =>
+      !o.dead && !o.dying && !o.destroyed &&
+      !o.isFreeze && !o.isLifeUp && !o.isLightning && !o.isScoreStar &&
+      !o.isShield && !o.isMagnet && !o.isReveal && !o.isBoss
+    );
+    if (liveQuestions.length > 0) return;
+    this.clearScene();
+    this.spawnQuestion('center', { y: 110, speed: 54 });
+  },
+
+  async enterPlayerTurn() {
+    if (!tutorialActive()) return;
+    this.clearScene();
+    await this.narrate(I18n.t('tutorialNowYouTry'), { title: I18n.t('tutorialYourTurnTitle') });
+    if (!tutorialActive()) return;
+    state.correctThisLevel = 8;
+    state.attemptsThisLevel = 8;
+    UI.showTutorialOverlay(
+      I18n.t('tutorialTryObjective', { remaining: tutorialState.userQuestionsRemaining, word: tutorialState.triggerWord }),
+      I18n.t('tutorialYourTurnTitle')
+    );
+    this.resumePlayerControl();
+    this.spawnPlayerQuestion();
+  },
+
+  async onLevelChanged(level) {
+    if (!tutorialActive() || !tutorialState.playerControl) return;
+    if (level === 5 && !tutorialState.bossSpawned) {
+      tutorialState.bossSpawned = true;
+      tutorialState.inputLocked = true;
+      tutorialState.playerControl = false;
+      this.clearScene();
+      await this.narrate(I18n.t('tutorialBossIntro', { word: tutorialState.triggerWord }), { title: I18n.t('tutorialYourTurnTitle') });
+      if (!tutorialActive()) return;
+      const q1 = this.pickQuestion();
+      const q2 = this.pickQuestion([q1.answer]);
+      const boss = Objects.createBoss([q1, q2], window.innerWidth, window.innerHeight, 56);
+      this.addObject(boss, 'center', 125, 34);
+      UI.showTutorialOverlay(I18n.t('tutorialBossObjective', { word: tutorialState.triggerWord }), I18n.t('tutorialYourTurnTitle'));
+      this.resumePlayerControl();
+    }
+  },
+
+  async onBossDefeated() {
+    if (!tutorialActive() || tutorialState.completionHandled) return;
+    tutorialState.completionHandled = true;
+    tutorialState.inputLocked = true;
+    tutorialState.playerControl = false;
+    await this.wait(900);
+    if (!tutorialActive()) return;
+    await this.narrate(I18n.t('tutorialCompleteLine'), { title: I18n.t('tutorialOverlayTitle') });
+    if (!tutorialActive()) return;
+    Progress.markTutorialCompleted();
+    UI.refreshTutorialEntryPoints();
+    Audio.stopMusic();
+    Engine.stop();
+    Voice.stop();
+    state.phase = 'ONBOARDING';
+    this.stop();
+    UI.showScreen('onboarding');
+  },
+
+  async run() {
+    // Give the game screen a moment to fully render before the first narration
+    await this.wait(1000);
+    if (!tutorialActive()) return;
+
+    await this.narrate(I18n.t('tutorialIntroLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['input-wrapper', 'btn-fire', 'btn-mic'],
+    });
+    if (!tutorialActive()) return;
+
+    state.correctThisLevel = 9;
+    state.attemptsThisLevel = 9;
+    this.clearScene();
+    tutorialState.allowQuestionSpeech = true;
+    this.spawnQuestion('center', { y: 120, speed: 50 });
+    this.resumeDemo();
+    await this.wait(2200);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1800);
+
+    state.correctThisLevel = 8;
+    state.attemptsThisLevel = 8;
+    this.clearScene();
+    const voiceDemo = this.pickQuestion();
+    await this.narrate(
+      I18n.t('tutorialVoiceLine', { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
+      { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'], overlayPosition: 'bottom' }
+    );
+    if (!tutorialActive()) return;
+    tutorialState.allowQuestionSpeech = true;
+    this.addObject(Objects.create(voiceDemo, window.innerWidth, window.innerHeight, 52, []), 'center', 120, 52);
+    this.resumeDemo();
+    await this.waitForQuestionSpeechCycle();
+    await this.demoVoicePhrase(`${tutorialState.triggerWord} ${voiceDemo.answer}`, voiceDemo.answer);
+    await this.wait(1600);
+
+    await this.narrate(I18n.t('tutorialControlsLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['btn-mute', 'btn-mic', 'btn-pause'],
+    });
+    if (!tutorialActive()) return;
+    this.resumeDemo();
+    await this.demoControlButtons();
+
+    this.clearScene();
+    tutorialState.allowQuestionSpeech = false;
+    this.spawnQuestion('left', { y: 150, speed: 38 });
+    this.spawnQuestion('center', { y: 115, speed: 38 });
+    this.spawnQuestion('right', { y: 175, speed: 38 });
+    await this.narrate(I18n.t('tutorialTargetLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['game-canvas'],
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.resumeDemo();
+    await this.wait(500);
+    Targeting.moveRight(state.objects);
+    await this.wait(700);
+    Targeting.moveLeft(state.objects);
+    await this.wait(700);
+
+    await this.narrate(I18n.t('tutorialHelpLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['btn-help'],
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.resumeDemo();
+    await this.wait(450);
+    useHelp();
+    await this.wait(1300);
+
+    this.clearScene();
+    const missObj = this.spawnQuestion('center', { y: window.innerHeight - 250, speed: 120 });
+    if (missObj) Targeting.setTarget(missObj);
+    await this.narrate(I18n.t('tutorialLivesLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['hud-lives'],
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.resumeDemo();
+    await this.waitForLifeLoss();
+    await this.wait(200);
+
+    this.clearScene();
+    await this.narrate(I18n.t('tutorialLifeUpLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnItem('lifeup', 'center', { y: 125, speed: 48 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1200);
+    this.resetBonusDemoState();
+
+    await this.narrate(I18n.t('tutorialFreezeLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnQuestion('left', { y: 155, speed: 46 });
+    this.spawnQuestion('right', { y: 185, speed: 46 });
+    this.spawnItem('freeze', 'center', { y: 125, speed: 48 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1800);
+    this.resetBonusDemoState();
+
+    this.spawnQuestion('center', { y: 135, speed: 48 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1800);
+
+    this.clearScene();
+    await this.narrate(I18n.t('tutorialPowerupsLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+
+    this.spawnQuestion('left', { y: 150, speed: 34 });
+    this.spawnQuestion('right', { y: 165, speed: 34 });
+    await this.narrate(I18n.t('tutorialLightningLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnItem('lightning', 'center', { y: 120, speed: 44 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1400);
+    this.resetBonusDemoState();
+
+    await this.narrate(I18n.t('tutorialScoreStarLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['hud-score', 'score-val', 'hud-center'],
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnQuestion('left', { y: Math.round(window.innerHeight * 0.54), speed: 24 });
+    this.spawnItem('scoreStar', 'center', { y: 118, speed: 44 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(700);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1800);
+    this.resetBonusDemoState();
+
+    await this.narrate(I18n.t('tutorialShieldLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnItem('shield', 'center', { y: 120, speed: 42 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(500);
+    const shieldMiss = this.spawnQuestion('center', { y: window.innerHeight - 235, speed: 120 });
+    if (shieldMiss) Targeting.setTarget(shieldMiss);
+    await this.waitForShieldAbsorb();
+    await this.wait(500);
+    this.resetBonusDemoState();
+
+    this.spawnQuestion('left', { y: 150, speed: 28 });
+    this.spawnQuestion('center', { y: 115, speed: 28 });
+    this.spawnQuestion('right', { y: 180, speed: 28 });
+    await this.narrate(I18n.t('tutorialMagnetLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnItem('magnet', 'center', { y: 120, speed: 42 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1600);
+    this.resetBonusDemoState();
+
+    this.spawnQuestion('left', { y: 160, speed: 30 });
+    this.spawnQuestion('right', { y: 190, speed: 30 });
+    await this.narrate(I18n.t('tutorialRevealLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
+    if (!tutorialActive()) return;
+    this.spawnItem('reveal', 'center', { y: 120, speed: 42 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1800);
+    this.resetBonusDemoState();
+
+    state.correctThisLevel = 9;
+    state.attemptsThisLevel = 9;
+    this.spawnQuestion('center', { y: 135, speed: 46 });
+    this.resumeDemo();
+    await this.wait(350);
+    await this.typeAnswer(Targeting.getTarget()?.answer);
+    await this.wait(1800);
+
+    await this.enterPlayerTurn();
+  },
+};
 
 // ---- Per-table mastery announcements ----
 // Checks if any table in the current range has had all its facts mastered
@@ -382,13 +1008,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch { window._challengeConfig = null; }
 
-  UI.initOnboarding(startGame);
+  UI.initOnboarding(startGame, startTutorial);
 
   const answerInput = document.getElementById('answer-input');
   const btnFire = document.getElementById('btn-fire');
 
   document.addEventListener('keydown', e => {
     if (state.phase !== 'PLAYING') return;
+    if (tutorialLocksInput()) { e.preventDefault(); return; }
     if (e.key === 'ArrowLeft') { e.preventDefault(); hideSuggestion(); Targeting.moveLeft(state.objects); }
     if (e.key === 'ArrowRight') { e.preventDefault(); hideSuggestion(); Targeting.moveRight(state.objects); }
     if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
@@ -422,6 +1049,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   answerInput.addEventListener('input', () => {
     if (state.phase !== 'PLAYING') return;
+    if (tutorialLocksInput()) return;
     if (Voice.supported) {
       if (answerInput.value !== '') _enterTypingMode();
     }
@@ -431,8 +1059,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!isNaN(val) && val === target.answer) submitAnswer();
   });
 
-  btnFire.addEventListener('click', submitAnswer);
-  document.getElementById('btn-help').addEventListener('click', useHelp);
+  btnFire.addEventListener('click', () => { if (!tutorialLocksInput()) submitAnswer(); });
+  document.getElementById('btn-help').addEventListener('click', () => { if (!tutorialLocksInput()) useHelp(); });
 
   // ---- Swipe to change target (mobile) ----
   // Attach to the canvas so swipes on the answer bar don't interfere.
@@ -449,6 +1077,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   gameCanvas.addEventListener('touchend', e => {
     if (state.phase !== 'PLAYING') return;
+    if (tutorialLocksInput()) return;
     const dx = e.changedTouches[0].clientX - swipeStartX;
     const dy = e.changedTouches[0].clientY - swipeStartY;
     if (Math.abs(dx) < SWIPE_MIN_X) return;       // too short — ignore
@@ -479,8 +1108,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Pause / resume
   const btnPause = document.getElementById('btn-pause');
   const btnResume = document.getElementById('btn-resume');
-  btnPause.addEventListener('click', togglePause);
-  btnResume.addEventListener('click', togglePause);
+  btnPause.addEventListener('click', () => { if (!tutorialLocksInput()) togglePause(); });
+  btnResume.addEventListener('click', () => { if (!tutorialLocksInput()) togglePause(); });
   document.getElementById('btn-pause-menu').addEventListener('click', () => {
     Engine.resume();
     Engine.stop();
@@ -492,6 +1121,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+      if (tutorialLocksInput()) return;
       if (state.phase === 'PLAYING' || Engine.isPaused()) togglePause();
     }
   });
@@ -570,6 +1200,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     btnMic.addEventListener('click', () => {
+      if (tutorialLocksInput()) return;
       if (btnMic.classList.contains('denied')) return;
       if (_typingMode) {
         // User explicitly re-enables voice — exit typing mode
@@ -623,7 +1254,7 @@ function togglePause() {
   const btnMic = document.getElementById('btn-mic');
   if (Engine.isPaused()) {
     Engine.resume();
-    if (!_typingMode) Voice.start();     // mic activates immediately (skip if user chose keyboard mode)
+    if (!_typingMode && (!tutorialActive() || tutorialState.playerControl)) Voice.start();     // mic activates immediately (skip if user chose keyboard mode)
     state.unpauseFreezeTimer = 1.5;      // objects hold for 1.5s so player can orient
     btnMic.classList.remove('above-overlay');
     document.getElementById('pause-overlay').classList.remove('visible');
@@ -636,8 +1267,27 @@ function togglePause() {
   }
 }
 
+function startTutorial(settings) {
+  startGame({
+    ...settings,
+    tutorialMode: true,
+    operation: 'multiply',
+    operations: ['multiply'],
+    minTable: 2,
+    maxTable: 5,
+    difficulty: 'easy',
+    practiceMode: false,
+    runMode: false,
+    isDaily: false,
+    isChallenge: false,
+    seed: TUTORIAL_SEED,
+  });
+}
+
 function startGame(settings) {
+  TutorialRun.stop();
   Progress.setPlayer(settings.name, settings.age);
+  state.tutorialMode = !!settings.tutorialMode;
   state.name = settings.name;
   state.age = settings.age;
   state.theme = settings.theme;
@@ -696,7 +1346,9 @@ function startGame(settings) {
   state.rng  = Questions.mulberry32(state.seed);
   state.isChallenge      = settings.isChallenge      || false;
   state.challengerScore  = settings.challengerScore  || null;
-  state.seenTablesAnnounced = new Set(Progress.getTableBadges(settings.minTable, settings.maxTable, settings.operation || 'multiply'));
+  state.seenTablesAnnounced = state.tutorialMode
+    ? new Set()
+    : new Set(Progress.getTableBadges(settings.minTable, settings.maxTable, settings.operation || 'multiply'));
   state.confetti = [];
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
@@ -749,7 +1401,13 @@ function startGame(settings) {
   UI.showScreen('game');
   Engine.start();
   Voice.setTriggerMode(true, settings.triggerWord || '');
-  Voice.start();
+  if (state.tutorialMode) {
+    Voice.stop();
+    TutorialRun.start(settings);
+  } else {
+    UI.hideTutorialOverlay();
+    Voice.start();
+  }
 }
 
 
@@ -858,7 +1516,7 @@ function update(dt) {
         // Bonus item missed — just disappears, no penalty
       } else {
         // Crash counts as a wrong attempt — lowers mastery for this fact
-        if (!obj.isFreeze) {
+        if (!obj.isFreeze && !state.tutorialMode) {
           Progress.recordAttempt(obj.key, false, Date.now() - obj.spawnTime);
         }
         if (!state.practiceMode) {
@@ -877,6 +1535,7 @@ function update(dt) {
           // Shield absorbs the next miss
           if (state.shieldCharges > 0) {
             state.shieldCharges--;
+            if (state.tutorialMode) TutorialRun.onShieldAbsorbed();
             // ADJACENCY: Shield + Bomb neighbours → each absorb refunds 1 bomb charge
             if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb')) {
               state.bombCharges = (state.bombCharges || 0) + 1;
@@ -889,6 +1548,7 @@ function update(dt) {
             UI.updateHUD(state);
           } else if (state.shieldBonusActive) {
             state.shieldBonusActive = false;
+            if (state.tutorialMode) TutorialRun.onShieldAbsorbed();
             UI.showLevelUp('🛡 Shield absorbed!', null);
             Audio.play('correct');
             state.missedList.push({ question: obj.question, answer: obj.answer });
@@ -896,6 +1556,7 @@ function update(dt) {
             UI.updateHUD(state);
           } else {
             state.lives = Math.max(0, state.lives - 1);
+            if (state.tutorialMode) TutorialRun.onLifeLost();
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
             Audio.play('lifeLost');
@@ -941,7 +1602,7 @@ function update(dt) {
 
   // Boss round: spawn one giant boss on levels that are multiples of 5
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
-  const isBossLevel = state.level > 1 && state.level % 5 === 0 && state.correctThisLevel === 0 && !state._bossSpawnedThisLevel;
+  const isBossLevel = !state.tutorialMode && state.level > 1 && state.level % 5 === 0 && state.correctThisLevel === 0 && !state._bossSpawnedThisLevel;
   if (isBossLevel && !hasBoss) {
     state._bossSpawnedThisLevel = true;
     const stats = Progress.getStats();
@@ -974,119 +1635,121 @@ function update(dt) {
     return;
   }
 
-  // Spawn freeze item — at most one on screen, every ~30s
-  const hasFreeze = state.objects.some(o => o.isFreeze && !o.dead && !o.dying && !o.destroyed);
-  if (!hasFreeze && state.freezeActive <= 0) {
-    state.freezeTimer += dt;
-    if (state.freezeTimer >= 30) {
+  if (!state.tutorialMode) {
+    // Spawn freeze item — at most one on screen, every ~30s
+    const hasFreeze = state.objects.some(o => o.isFreeze && !o.dead && !o.dying && !o.destroyed);
+    if (!hasFreeze && state.freezeActive <= 0) {
+      state.freezeTimer += dt;
+      if (state.freezeTimer >= 30) {
+        state.freezeTimer = 0;
+        const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
+        const q = _pickQuestion(excludeAnswers);
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const fz = Objects.createFreeze(q, window.innerWidth, speed, liveX);
+        if (fz) state.objects.push(fz); else state.freezeTimer = 28; // retry in 2s
+      }
+    } else if (hasFreeze) {
       state.freezeTimer = 0;
+    }
+
+    // Spawn life-up item — at most one on screen, only when injured, every ~20s
+    const hasLifeUp = state.objects.some(o => o.isLifeUp && !o.dead && !o.dying && !o.destroyed);
+    if (!hasLifeUp && state.lives < state.maxLives) {
+      state.lifeUpTimer += dt;
+      if (state.lifeUpTimer >= 20) {
+        state.lifeUpTimer = 0;
+        const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
+        const q = _pickQuestion(excludeAnswers);
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const lu = Objects.createLifeUp(q, window.innerWidth, speed, liveX);
+        if (lu) state.objects.push(lu); else state.lifeUpTimer = 18; // retry in 2s
+      }
+    } else {
+      state.lifeUpTimer = 0; // reset timer when at full health or one already active
+    }
+
+    // ⚡ Lightning — level 6+, ~45s
+    const hasLightning = state.objects.some(o => o.isLightning && !o.dead && !o.dying && !o.destroyed);
+    if (!hasLightning && state.level >= 6) {
+      state.lightningTimer += dt;
+      if (state.lightningTimer >= 45) {
+        state.lightningTimer = 0;
+        const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const item = Objects.createLightning(q, window.innerWidth, speed, liveX);
+        if (item) state.objects.push(item); else state.lightningTimer = 43;
+      }
+    } else if (hasLightning) { state.lightningTimer = 0; }
+
+    // 🌟 Score Star — always, ~35s
+    const hasScoreStar = state.objects.some(o => o.isScoreStar && !o.dead && !o.dying && !o.destroyed);
+    if (!hasScoreStar && !state.scoreStarActive) {
+      state.scoreStarTimer += dt;
+      if (state.scoreStarTimer >= 35) {
+        state.scoreStarTimer = 0;
+        const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const item = Objects.createScoreStar(q, window.innerWidth, speed, liveX);
+        if (item) state.objects.push(item); else state.scoreStarTimer = 33;
+      }
+    } else { state.scoreStarTimer = 0; }
+
+    // 🛡 Shield — only when at full health, ~40s
+    const hasShield = state.objects.some(o => o.isShield && !o.dead && !o.dying && !o.destroyed);
+    if (!hasShield && !state.shieldBonusActive && state.lives >= state.maxLives) {
+      state.shieldTimer += dt;
+      if (state.shieldTimer >= 40) {
+        state.shieldTimer = 0;
+        const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const item = Objects.createShield(q, window.innerWidth, speed, liveX);
+        if (item) state.objects.push(item); else state.shieldTimer = 38;
+      }
+    } else { state.shieldTimer = 0; }
+
+    // 🧲 Magnet — 4+ live question objects, ~50s
+    const liveQuestionCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed &&
+      !o.isLifeUp && !o.isFreeze && !o.isLightning && !o.isScoreStar && !o.isShield && !o.isMagnet && !o.isReveal && !o.isBoss).length;
+    const hasMagnet = state.objects.some(o => o.isMagnet && !o.dead && !o.dying && !o.destroyed);
+    if (!hasMagnet && state.magnetActive <= 0 && liveQuestionCount >= 4) {
+      state.magnetTimer += dt;
+      if (state.magnetTimer >= 50) {
+        state.magnetTimer = 0;
+        const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const item = Objects.createMagnet(q, window.innerWidth, speed, liveX);
+        if (item) state.objects.push(item); else state.magnetTimer = 48;
+      }
+    } else if (hasMagnet) { state.magnetTimer = 0; }
+
+    // 💡 Reveal — accuracy < 60%, ~60s
+    const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 1;
+    const hasReveal = state.objects.some(o => o.isReveal && !o.dead && !o.dying && !o.destroyed);
+    if (!hasReveal && state.revealBonusActive <= 0 && state.totalAttempts >= 5 && accuracy < 0.6) {
+      state.revealTimer += dt;
+      if (state.revealTimer >= 60) {
+        state.revealTimer = 0;
+        const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+        const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+        const item = Objects.createReveal(q, window.innerWidth, speed, liveX);
+        if (item) state.objects.push(item); else state.revealTimer = 58;
+      }
+    } else if (hasReveal) { state.revealTimer = 0; }
+
+    // Spawn new question objects (skip during level transition or TTS)
+    // Stagger start: allow 1 object immediately, add a slot every 4s so the screen
+    // doesn't fill instantly at game start. Fully ramped after (maxObj-1)*4 seconds.
+    const staggerMax = Math.min(maxObj, 1 + Math.floor(state.gameTimeSecs / 4));
+    const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze &&
+      !o.isLightning && !o.isScoreStar && !o.isShield && !o.isMagnet && !o.isReveal).length;
+    if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < staggerMax) {
       const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
       const q = _pickQuestion(excludeAnswers);
       const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const fz = Objects.createFreeze(q, window.innerWidth, speed, liveX);
-      if (fz) state.objects.push(fz); else state.freezeTimer = 28; // retry in 2s
+      const obj = Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX);
+      if (obj) state.objects.push(obj);
+      // else: no room yet — retry happens automatically next frame
     }
-  } else if (hasFreeze) {
-    state.freezeTimer = 0;
-  }
-
-  // Spawn life-up item — at most one on screen, only when injured, every ~20s
-  const hasLifeUp = state.objects.some(o => o.isLifeUp && !o.dead && !o.dying && !o.destroyed);
-  if (!hasLifeUp && state.lives < state.maxLives) {
-    state.lifeUpTimer += dt;
-    if (state.lifeUpTimer >= 20) {
-      state.lifeUpTimer = 0;
-      const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-      const q = _pickQuestion(excludeAnswers);
-      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const lu = Objects.createLifeUp(q, window.innerWidth, speed, liveX);
-      if (lu) state.objects.push(lu); else state.lifeUpTimer = 18; // retry in 2s
-    }
-  } else {
-    state.lifeUpTimer = 0; // reset timer when at full health or one already active
-  }
-
-  // ⚡ Lightning — level 6+, ~45s
-  const hasLightning = state.objects.some(o => o.isLightning && !o.dead && !o.dying && !o.destroyed);
-  if (!hasLightning && state.level >= 6) {
-    state.lightningTimer += dt;
-    if (state.lightningTimer >= 45) {
-      state.lightningTimer = 0;
-      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
-      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const item = Objects.createLightning(q, window.innerWidth, speed, liveX);
-      if (item) state.objects.push(item); else state.lightningTimer = 43;
-    }
-  } else if (hasLightning) { state.lightningTimer = 0; }
-
-  // 🌟 Score Star — always, ~35s
-  const hasScoreStar = state.objects.some(o => o.isScoreStar && !o.dead && !o.dying && !o.destroyed);
-  if (!hasScoreStar && !state.scoreStarActive) {
-    state.scoreStarTimer += dt;
-    if (state.scoreStarTimer >= 35) {
-      state.scoreStarTimer = 0;
-      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
-      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const item = Objects.createScoreStar(q, window.innerWidth, speed, liveX);
-      if (item) state.objects.push(item); else state.scoreStarTimer = 33;
-    }
-  } else { state.scoreStarTimer = 0; }
-
-  // 🛡 Shield — only when at full health, ~40s
-  const hasShield = state.objects.some(o => o.isShield && !o.dead && !o.dying && !o.destroyed);
-  if (!hasShield && !state.shieldBonusActive && state.lives >= state.maxLives) {
-    state.shieldTimer += dt;
-    if (state.shieldTimer >= 40) {
-      state.shieldTimer = 0;
-      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
-      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const item = Objects.createShield(q, window.innerWidth, speed, liveX);
-      if (item) state.objects.push(item); else state.shieldTimer = 38;
-    }
-  } else { state.shieldTimer = 0; }
-
-  // 🧲 Magnet — 4+ live question objects, ~50s
-  const liveQuestionCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed &&
-    !o.isLifeUp && !o.isFreeze && !o.isLightning && !o.isScoreStar && !o.isShield && !o.isMagnet && !o.isReveal && !o.isBoss).length;
-  const hasMagnet = state.objects.some(o => o.isMagnet && !o.dead && !o.dying && !o.destroyed);
-  if (!hasMagnet && state.magnetActive <= 0 && liveQuestionCount >= 4) {
-    state.magnetTimer += dt;
-    if (state.magnetTimer >= 50) {
-      state.magnetTimer = 0;
-      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
-      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const item = Objects.createMagnet(q, window.innerWidth, speed, liveX);
-      if (item) state.objects.push(item); else state.magnetTimer = 48;
-    }
-  } else if (hasMagnet) { state.magnetTimer = 0; }
-
-  // 💡 Reveal — accuracy < 60%, ~60s
-  const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 1;
-  const hasReveal = state.objects.some(o => o.isReveal && !o.dead && !o.dying && !o.destroyed);
-  if (!hasReveal && state.revealBonusActive <= 0 && state.totalAttempts >= 5 && accuracy < 0.6) {
-    state.revealTimer += dt;
-    if (state.revealTimer >= 60) {
-      state.revealTimer = 0;
-      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
-      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-      const item = Objects.createReveal(q, window.innerWidth, speed, liveX);
-      if (item) state.objects.push(item); else state.revealTimer = 58;
-    }
-  } else if (hasReveal) { state.revealTimer = 0; }
-
-  // Spawn new question objects (skip during level transition or TTS)
-  // Stagger start: allow 1 object immediately, add a slot every 4s so the screen
-  // doesn't fill instantly at game start. Fully ramped after (maxObj-1)*4 seconds.
-  const staggerMax = Math.min(maxObj, 1 + Math.floor(state.gameTimeSecs / 4));
-  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze &&
-    !o.isLightning && !o.isScoreStar && !o.isShield && !o.isMagnet && !o.isReveal).length;
-  if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < staggerMax) {
-    const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
-    const q = _pickQuestion(excludeAnswers);
-    const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
-    const obj = Objects.create(q, window.innerWidth, window.innerHeight, speed, liveX);
-    if (obj) state.objects.push(obj);
-    // else: no room yet — retry happens automatically next frame
   }
 
   // Remove fully dead objects
@@ -1217,7 +1880,9 @@ function submitAnswer() {
     state.attemptsThisLevel++;
     if (val === target.answer) {
       const particleColor = Themes.particleColorForTheme(state.theme);
-      Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime, { hintActive: !!target.hintActive });
+      if (!state.tutorialMode) {
+        Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime, { hintActive: !!target.hintActive });
+      }
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
       state.totalCorrect++;
       state.correctThisLevel++;
@@ -1244,7 +1909,7 @@ function submitAnswer() {
             state.score += 5;
           }
         }
-        checkTableMastery();
+        if (!state.tutorialMode) checkTableMastery();
         Audio.play('levelUp');
         vibrate([60, 80, 120]);
         state.confetti = spawnConfetti(window.innerWidth);
@@ -1254,28 +1919,37 @@ function submitAnswer() {
         const bossStars = levelAcc >= 0.9 ? 3 : levelAcc >= 0.7 ? 2 : 1;
         state.levelStars.push(bossStars);
 
-        // Pause and let the player choose: keep going or finish
-        Engine.pause();
-        Voice.stop();
-        UI.showBossVictory(bossStars, state.score, state.name, state.age,
-          // Keep going
-          () => {
-            state.level++;
-            state.correctThisLevel = 0;
-            state.attemptsThisLevel = 0;
-            state.levelTransitionTimer = 1.0;
-            state.unpauseFreezeTimer = 1.5;
-            Engine.resume();
-            if (!_typingMode) Voice.start();
-            focusAnswerInput();
-          },
-          // Finish
-          () => {
-            state.phase = 'ENDING';
-            Engine.resume();
-            setTimeout(() => endGame(), 800);
-          }
-        );
+        if (state.tutorialMode) {
+          UI.updateHUD(state);
+          input.value = '';
+          input.placeholder = I18n.t('answerPlaceholder');
+          state.answerStartTime = Date.now();
+          Targeting.syncTarget(state.objects);
+          TutorialRun.onBossDefeated();
+        } else {
+          // Pause and let the player choose: keep going or finish
+          Engine.pause();
+          Voice.stop();
+          UI.showBossVictory(bossStars, state.score, state.name, state.age,
+            // Keep going
+            () => {
+              state.level++;
+              state.correctThisLevel = 0;
+              state.attemptsThisLevel = 0;
+              state.levelTransitionTimer = 1.0;
+              state.unpauseFreezeTimer = 1.5;
+              Engine.resume();
+              if (!_typingMode) Voice.start();
+              focusAnswerInput();
+            },
+            // Finish
+            () => {
+              state.phase = 'ENDING';
+              Engine.resume();
+              setTimeout(() => endGame(), 800);
+            }
+          );
+        }
       } else {
         // Advance to the next question
         const nextQ = target.questions[target.questionIndex];
@@ -1283,7 +1957,7 @@ function submitAnswer() {
         target.answer = nextQ.answer;
         target.key = nextQ.key;
         target.wrongAttempts = 0;
-        checkTableMastery();
+        if (!state.tutorialMode) checkTableMastery();
         Audio.play('levelUp');
         UI.showLevelUp(`${target.questionIndex}/${target.questionsTotal}`, null);
       }
@@ -1295,7 +1969,7 @@ function submitAnswer() {
     } else {
       target.scale = Math.min(1.5, (target.scale ?? 1.0) + 0.15); // grow on wrong answer
       target.wrongAttempts = (target.wrongAttempts || 0) + 1;
-      Progress.recordWrong(target.key);
+      if (!state.tutorialMode) Progress.recordWrong(target.key);
       Audio.play('wrong');
       UI.shakeInput();
       UI.showTryAgain(target.question, target.answer);
@@ -1434,7 +2108,7 @@ function submitAnswer() {
   if (val === target.answer) {
     // Correct!
     const wasGracing = target.gracing;
-    const prevMasteredLevel = (Progress.getStats()[target.key]?.masteredLevel ?? 0);
+    const prevMasteredLevel = state.tutorialMode ? 1 : (Progress.getStats()[target.key]?.masteredLevel ?? 0);
 
     state.totalCorrect++;
     state.streak++;
@@ -1448,15 +2122,17 @@ function submitAnswer() {
       UI.showLevelUp('💡 Help recharged!', null);
     }
 
-    Progress.recordAttempt(target.key, true, elapsed, { hintActive: !!target.hintActive });
-    checkTableMastery();
+    if (!state.tutorialMode) {
+      Progress.recordAttempt(target.key, true, elapsed, { hintActive: !!target.hintActive });
+      checkTableMastery();
 
-    // Check for newly cleared tables (all facts answered correctly ≥1 time)
-    const newBadges = Progress.getTableBadges(state.minTable, state.maxTable, state.operation);
-    for (const table of newBadges) {
-      if (!state.seenTablesAnnounced.has(table)) {
-        state.seenTablesAnnounced.add(table);
-        UI.showTableClearedBanner(table, state.operation);
+      // Check for newly cleared tables (all facts answered correctly ≥1 time)
+      const newBadges = Progress.getTableBadges(state.minTable, state.maxTable, state.operation);
+      for (const table of newBadges) {
+        if (!state.seenTablesAnnounced.has(table)) {
+          state.seenTablesAnnounced.add(table);
+          UI.showTableClearedBanner(table, state.operation);
+        }
       }
     }
 
@@ -1522,7 +2198,7 @@ function submitAnswer() {
 
     // Encouragement banners
     if (wasGracing) UI.showSaved();
-    else if (prevMasteredLevel === 0) UI.showFirstTime(target.question);
+    else if (!state.tutorialMode && prevMasteredLevel === 0) UI.showFirstTime(target.question);
 
     // Chain-answer (Gravity Well / Riptide / Lightning Strike)
     if (state.chainAnswer) {
@@ -1580,6 +2256,7 @@ function submitAnswer() {
     }
 
     UI.showCombo(state.streak);
+    if (state.tutorialMode) TutorialRun.onRegularCorrect();
 
     // Level up check
     if (state.correctThisLevel >= CORRECT_PER_LEVEL) {
@@ -1597,6 +2274,7 @@ function submitAnswer() {
       state.levelTransitionTimer = 1.0;
       state.confetti = spawnConfetti(window.innerWidth);
       UI.showLevelUp(state.level, stars);
+      if (state.tutorialMode) TutorialRun.onLevelChanged(state.level);
 
       // Run mode: every 3 levels — pause, check ante, show upgrade picker
       if (state.runMode && prevLevel % 3 === 0) {
@@ -1652,7 +2330,7 @@ function submitAnswer() {
     target.wrongAttempts = (target.wrongAttempts || 0) + 1;
     state.streak = 0;
     UI.showCombo(0);
-    Progress.recordAttempt(target.key, false, elapsed);
+    if (!state.tutorialMode) Progress.recordAttempt(target.key, false, elapsed);
     if (!state.wrongQueue.find(q => q.key === target.key)) {
       state.wrongQueue.push({ key: target.key, display: target.question, answer: target.answer });
     }
@@ -1669,6 +2347,8 @@ function submitAnswer() {
 
 // ---- GAME OVER ----
 function endGame() {
+  const wasTutorialRun = state.tutorialMode;
+  const tutorialTriggerWord = tutorialState?.triggerWord || '';
   Audio.stopMusic();
   Engine.stop();
   Voice.stop();
@@ -1677,6 +2357,7 @@ function endGame() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   _lastSpokenTarget = null;
   state.phase = 'GAME_OVER';
+  if (wasTutorialRun) TutorialRun.stop();
 
   const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 0;
   const session = {
@@ -1694,15 +2375,15 @@ function endGame() {
     isChallenge: state.isChallenge || false,
     challengerScore: state.challengerScore || null,
   };
-  const newAchievements = Progress.saveSession(session);
-  if (state.isDaily) {
+  const newAchievements = wasTutorialRun ? [] : Progress.saveSession(session);
+  if (!wasTutorialRun && state.isDaily) {
     Progress.saveDailyResult({ score: state.score, level: state.level, accuracy });
     session.dailyBadge = true;
   }
 
   // Run mode: save result and check unlocks
   let runData = null;
-  if (state.runMode) {
+  if (!wasTutorialRun && state.runMode) {
     const prevRunProgress = Progress.getRunProgress();
     const prevBest = prevRunProgress.bestAnte || 0;
     Progress.saveRunResult({
@@ -1722,22 +2403,24 @@ function endGame() {
     };
   }
 
-  const masteryData = Progress.getMastery(state.minTable, state.maxTable, state.operation);
+  const masteryData = wasTutorialRun ? null : Progress.getMastery(state.minTable, state.maxTable, state.operation);
 
   // Build challenge link for sharing
-  const challengePayload = {
-    op: state.operations.length === 1 ? state.operations[0] : 'mixed',
-    ops: state.operations,
-    min: state.minTable, max: state.maxTable,
-    diff: state.difficulty,
-    seed: state.seed,
-    score: state.score,
-    v: 1,
-  };
-  const challengeUrl = `${location.origin}${location.pathname}?c=${encodeURIComponent(btoa(JSON.stringify(challengePayload)))}`;
-  session.challengeUrl  = challengeUrl;
-  session.isChallenge   = state.isChallenge;
-  session.challengerScore = state.challengerScore;
+  if (!wasTutorialRun) {
+    const challengePayload = {
+      op: state.operations.length === 1 ? state.operations[0] : 'mixed',
+      ops: state.operations,
+      min: state.minTable, max: state.maxTable,
+      diff: state.difficulty,
+      seed: state.seed,
+      score: state.score,
+      v: 1,
+    };
+    const challengeUrl = `${location.origin}${location.pathname}?c=${encodeURIComponent(btoa(JSON.stringify(challengePayload)))}`;
+    session.challengeUrl  = challengeUrl;
+    session.isChallenge   = state.isChallenge;
+    session.challengerScore = state.challengerScore;
+  }
 
   const lastGameSettings = {
     name: state.name, age: state.age, theme: state.theme,
@@ -1746,6 +2429,7 @@ function endGame() {
     difficulty: state.difficulty, hintThreshold: state.hintThreshold,
     practiceMode: state.practiceMode, zehner: state.zehner,
     halbschriftlich: state.halbschriftlich, addSubRange: state.addSubRange,
+    tutorialMode: wasTutorialRun, seed: state.seed, triggerWord: tutorialTriggerWord,
   };
 
   UI.showGameOver(
@@ -1759,7 +2443,7 @@ function endGame() {
     runData
   );
   // Special confetti burst for the Klasse 3 Komplett milestone
-  if (newAchievements.some(a => a.id === 'klasse3_komplett')) {
+  if (!wasTutorialRun && newAchievements.some(a => a.id === 'klasse3_komplett')) {
     state.confetti = spawnConfetti(window.innerWidth);
   }
 }

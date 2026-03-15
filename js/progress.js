@@ -294,6 +294,19 @@ const Progress = (() => {
     return !!(load().lifetime?.extendedTablesUnlocked);
   }
 
+  function markTutorialCompleted() {
+    const d = load();
+    if (!d.lifetime) d.lifetime = {};
+    if (!d.lifetime.tutorialCompletedAt) {
+      d.lifetime.tutorialCompletedAt = new Date().toISOString();
+      save(d);
+    }
+  }
+
+  function isTutorialCompleted() {
+    return !!(load().lifetime?.tutorialCompletedAt);
+  }
+
   // ---- Mastery overview ----
   // Returns every fact in the game range with its masteredLevel,
   // plus aggregate counts for win-condition checking.
@@ -462,5 +475,5 @@ const Progress = (() => {
     try { localStorage.removeItem(key); return true; } catch { return false; }
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, markTutorialCompleted, isTutorialCompleted, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
 })();

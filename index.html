@@ -133,6 +133,10 @@
         <input type="hidden" id="focus-table" value="10">
       </div>
       <div id="challenge-banner" class="challenge-banner" hidden></div>
+      <div id="tutorial-home-row" class="tutorial-home-row">
+        <button id="btn-tutorial-main" class="btn-secondary tutorial-home-btn" data-i18n="tutorialStartMain">🎓 Guided Tutorial</button>
+        <span id="tutorial-home-note" class="setting-note" data-i18n="tutorialMainNote">Play the guided demo first to learn the controls, voice, and power-ups.</span>
+      </div>
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
       <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
@@ -168,6 +172,12 @@
       </div>
     </div>
     <div id="level-up-banner"></div>
+    <div id="tutorial-overlay" class="tutorial-overlay hidden" aria-live="polite">
+      <div class="tutorial-card">
+        <div id="tutorial-overlay-title" class="tutorial-overlay-title">Tutorial</div>
+        <div id="tutorial-overlay-text" class="tutorial-overlay-text"></div>
+      </div>
+    </div>
     <div id="pause-overlay">
       <div class="pause-card">
         <div class="pause-title" data-i18n="paused">Paused</div>
@@ -340,6 +350,7 @@
           <li data-i18n-html="helpVoiceNumber"><strong>Normal mode (default):</strong> say the answer — it submits automatically (e.g. "forty-eight" or "48")</li>
           <li data-i18n-html="helpVoiceTrigger"><strong>Trigger mode:</strong> say your trigger word then the answer (e.g. "fire 48") — only that combination fires; a bare number just previews it. Enable in Settings and set your preferred word.</li>
           <li data-i18n-html="helpVoiceFire"><strong>fire / shoot / go / yes</strong> — submit the answer currently shown, or use as the trigger word prefix</li>
+          <li data-i18n="helpVoicePermission">The first time you use the mic, your browser may ask for microphone permission.</li>
           <li data-i18n="helpVoiceNext"><strong>next / forward</strong> — switch to the next problem</li>
           <li data-i18n="helpVoiceBack"><strong>back / previous</strong> — switch to the previous problem</li>
           <li data-i18n="helpVoiceClear"><strong>clear / delete</strong> — clear the answer box</li>
@@ -420,6 +431,14 @@
             </div>
             <span class="setting-note" data-i18n="voiceTriggerNote">Speak this word before your answer</span>
           </div>
+        </div>
+      </div>
+
+      <div class="settings-section" id="tutorial-settings-row" style="display:none">
+        <h3 class="settings-section-title" data-i18n="tutorialSettingsTitle">Tutorial</h3>
+        <div class="form-group" style="margin-bottom:0">
+          <button type="button" id="btn-tutorial-settings" class="btn-secondary tutorial-settings-btn" data-i18n="tutorialReplay">Replay guided tutorial</button>
+          <span class="setting-note" data-i18n="tutorialReplayNote">Find the walkthrough here after you finish it once.</span>
         </div>
       </div>
 

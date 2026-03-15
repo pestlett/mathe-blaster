@@ -34,6 +34,7 @@ Complete reference for the `settings` object passed to `startGame(settings)` in 
   practiceMode:     boolean,          // unlimited lives, no time pressure
   isDaily:          boolean,          // daily challenge (uses seeded RNG)
   runMode:          boolean,          // roguelike ante/upgrade mode
+  tutorialMode:     boolean,          // guided scripted tutorial (no stat persistence)
   isChallenge:      boolean,          // social challenge (requires seed + challengerScore)
 
   // Challenge / daily
@@ -57,6 +58,7 @@ Complete reference for the `settings` object passed to `startGame(settings)` in 
 | `practiceMode` | `false` |
 | `isDaily` | `false` |
 | `runMode` | `false` |
+| `tutorialMode` | `false` |
 | `isChallenge` | `false` |
 
 ## Difficulty Parameters
@@ -107,4 +109,10 @@ where `SPEED_INCREASE_PER_LEVEL = 0.18`. Capped at `maxSpeed`.
 ```js
 { operation: 'multiply', minTable: 2, maxTable: 10,
   difficulty: 'medium', isDaily: true, seed: 20250315 }
+```
+
+### Guided Tutorial
+```js
+{ operation: 'multiply', minTable: 2, maxTable: 5,
+  difficulty: 'easy', tutorialMode: true, seed: 20260315 }
 ```

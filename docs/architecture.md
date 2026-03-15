@@ -38,6 +38,15 @@ Answer submitted
         ├── Progress.checkAchievements() ← awards badges
         └── UI.showCombo() / showLevelUp() / etc.
 
+Guided tutorial start
+        │
+        ├── UI tutorial entry points     ← onboarding button before first completion,
+        │                                  replay button in Settings afterwards
+        ├── startGame({ tutorialMode })  ← main.js switches to scripted spawns
+        ├── TutorialRun                  ← pauses for narration, injects demo objects,
+        │                                  disables input, then hands control back
+        └── Progress.markTutorialCompleted() ← stores one completion timestamp only
+
 Game ends
         │
         └── Progress.saveSession()    ← persists full session record
@@ -77,6 +86,12 @@ provided callbacks. E.g. `Voice.init({ onNumber, onFire, onNext, ... })`.
 a function; pass it as the `rng` arg to `Questions.pick()` for daily challenges
 and challenge-sharing.
 
+**Scripted tutorial mode** — `startGame({ tutorialMode: true, seed })` reuses the
+normal game loop, rendering, scoring, and answer handlers, but skips the regular
+spawn schedule. `main.js` drives a deterministic tutorial sequence that pauses
+for TTS narration, injects specific power-ups, blocks player input during the
+demo portion, then unlocks normal input for the final practice round and boss.
+
 **Object reference tracking** — `Targeting` stores a direct reference to the
 object, not an index. This survives array mutations during spawning/removal.
 
@@ -93,6 +108,9 @@ Objects spawn in `update()` when:
 
 Boss spawns every 5 levels (level % 5 === 0 and not already spawned this level).
 Freeze and Life-Up objects spawn based on RNG thresholds per frame.
+
+In `tutorialMode`, these automatic spawns are disabled and replaced with scripted
+spawns from `TutorialRun`.
 
 ## Scoring
 
