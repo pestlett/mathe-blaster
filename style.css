@@ -976,6 +976,16 @@ input[type="number"]::-webkit-outer-spin-button {
   pointer-events: none;
 }
 
+.tutorial-overlay.top {
+  top: 92px;
+  bottom: auto;
+}
+
+.tutorial-overlay.bottom {
+  top: auto;
+  bottom: 116px;
+}
+
 .tutorial-overlay.hidden {
   display: none;
 }
