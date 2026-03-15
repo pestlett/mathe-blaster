@@ -188,6 +188,9 @@ A new run-mode upgrade requires changes in:
      a real scored run
    - Block player input during fully automated demo segments, then explicitly
      hand control back
+   - If the feature is player-facing (power-up, control, HUD affordance, boss
+     behaviour, new screen callout, etc.), add or update a tutorial beat so the
+     feature is actually shown in the guided tutorial
 
 2. **`js/ui.js` + `index.html` + `style.css`**
    - Add onboarding and replay entry points
@@ -207,6 +210,8 @@ A new run-mode upgrade requires changes in:
    - Update `docs/game-settings.md` for new mode flags
    - Update `docs/storage-schema.md` for completion persistence
    - Update `docs/architecture.md` for the control flow
+   - If a new feature must appear in the tutorial, note that requirement in the
+     relevant feature doc/checklist too
 
 ---
 

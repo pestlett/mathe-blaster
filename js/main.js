@@ -371,6 +371,37 @@ function speakNarrationLine(text) {
   });
 }
 
+function speakTutorialPhrase(text) {
+  return new Promise(resolve => {
+    if (!text) { resolve(); return; }
+    if (!window.speechSynthesis) {
+      setTimeout(resolve, Math.max(900, Math.min(5000, text.length * 45)));
+      return;
+    }
+    Voice.muteResults(true);
+    state.ttsFreezeActive = true;
+    window.speechSynthesis.cancel();
+    const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'en';
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = { en: 'en-US', de: 'de-DE', es: 'es-ES' }[lang] || 'en-US';
+    utt.rate = 0.94;
+    utt.pitch = 1.03;
+    utt.volume = 0.88;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      state.ttsFreezeActive = false;
+      Voice.muteResults(false);
+      resolve();
+    };
+    utt.onend = finish;
+    utt.onerror = finish;
+    setTimeout(finish, Math.max(2500, text.length * 90));
+    window.speechSynthesis.speak(utt);
+  });
+}
+
 const TutorialRun = {
   start(settings) {
     this.stop();
@@ -515,6 +546,20 @@ const TutorialRun = {
     submitAnswer();
   },
 
+  async demoVoicePhrase(phrase, answer) {
+    if (!tutorialActive()) return;
+    this.resumeDemo();
+    await this.wait(300);
+    UI.showTutorialOverlay(
+      I18n.t('tutorialVoiceDemoLine', { phrase }),
+      I18n.t('tutorialOverlayTitle')
+    );
+    await speakTutorialPhrase(phrase);
+    if (!tutorialActive()) return;
+    await this.wait(250);
+    await this.voiceAnswer(answer);
+  },
+
   waitForLifeLoss() {
     return new Promise(resolve => {
       if (!tutorialActive()) { resolve(); return; }
@@ -640,9 +685,7 @@ const TutorialRun = {
     if (!tutorialActive()) return;
     tutorialState.allowQuestionSpeech = true;
     this.addObject(Objects.create(voiceDemo, window.innerWidth, window.innerHeight, 52, []), 'center', 120, 52);
-    this.resumeDemo();
-    await this.wait(2200);
-    await this.voiceAnswer(voiceDemo.answer);
+    await this.demoVoicePhrase(`${tutorialState.triggerWord} ${voiceDemo.answer}`, voiceDemo.answer);
     await this.wait(1600);
 
     this.clearScene();

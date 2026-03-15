@@ -45,6 +45,16 @@ relevant doc file in the same commit.
 
 Use `/sync-docs` to audit docs against the codebase at any time.
 
+## Guided Tutorial Coverage
+**Any new player-facing feature must be considered for the guided tutorial.**
+If you add or change a power-up, control scheme, HUD affordance, boss behaviour,
+settings flow, help interaction, or other gameplay-facing mechanic:
+
+1. Decide whether it should be shown in the guided tutorial
+2. Update the tutorial sequence/copy when it should be taught to players
+3. Update `docs/adding-features.md` (and any feature-specific doc) if the
+   tutorial checklist needs to mention it
+
 ## Slash Commands
 Project-specific commands are in `.claude/commands/`. Use them by name:
 
