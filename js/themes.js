@@ -2630,6 +2630,16 @@ const Themes = (() => {
     return '#ffd93d';
   }
 
+  // High-contrast accent colour for each theme — used for tutorial highlights,
+  // selection rings, or anything that must stand out against the theme background.
+  function contrastColorForTheme(theme) {
+    if (theme === 'space') return '#00e5ff';   // electric cyan on dark space
+    if (theme === 'ocean') return '#ff7030';   // coral-orange on deep blue
+    if (theme === 'sky')   return '#9933ff';   // deep violet on light sky
+    if (theme === 'cats')  return '#ff3399';   // hot pink on warm cats palette
+    return '#00e5ff';
+  }
+
   function lighten(hex, amt) {
     const num = parseInt(hex.slice(1), 16);
     const r = Math.min(255, (num >> 16) + amt);
@@ -2646,5 +2656,5 @@ const Themes = (() => {
     return `rgb(${r},${g},${b})`;
   }
 
-  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, drawBonusActivation, particleColorForTheme };
+  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, drawBonusActivation, particleColorForTheme, contrastColorForTheme };
 })();

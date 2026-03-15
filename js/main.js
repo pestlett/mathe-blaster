@@ -439,16 +439,10 @@ const TutorialRun = {
 
   setHighlights(ids = []) {
     this.clearHighlights();
-    // Per-theme glow colours that contrast against each theme's background
-    const glowMap = {
-      space: ['rgba(0,229,255,0.85)',   'rgba(0,229,255,0.38)'],
-      ocean: ['rgba(255,112,48,0.88)',  'rgba(255,112,48,0.38)'],
-      sky:   ['rgba(153,51,255,0.88)',  'rgba(153,51,255,0.38)'],
-      cats:  ['rgba(255,51,153,0.88)',  'rgba(255,51,153,0.38)'],
-    };
-    const [solid, dim] = glowMap[state.theme] || glowMap.space;
-    document.documentElement.style.setProperty('--tutorial-glow', solid);
-    document.documentElement.style.setProperty('--tutorial-glow-dim', dim);
+    const hex = Themes.contrastColorForTheme(state.theme);
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    document.documentElement.style.setProperty('--tutorial-glow',     `rgba(${r},${g},${b},0.85)`);
+    document.documentElement.style.setProperty('--tutorial-glow-dim', `rgba(${r},${g},${b},0.38)`);
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.add('tutorial-highlight');
@@ -1966,6 +1960,7 @@ function submitAnswer() {
         target.answer = nextQ.answer;
         target.key = nextQ.key;
         target.wrongAttempts = 0;
+        _lastSpokenTarget = null; // same object ref, so force TTS to re-speak
         if (!state.tutorialMode) checkTableMastery();
         Audio.play('levelUp');
         UI.showLevelUp(`${target.questionIndex}/${target.questionsTotal}`, null);
