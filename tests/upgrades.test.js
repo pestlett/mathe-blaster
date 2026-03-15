@@ -3,9 +3,10 @@
 
 const {
   UPGRADES, SYNERGIES, ADJACENCY,
-  STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS,
+  STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS, SHOP_UPGRADE_IDS,
   upgradeNameForTheme, upgradeDescForTheme,
-  drawUpgrades, getSynergyHintsForUpgrade, getActiveSynergySets,
+  drawUpgrades, drawShopOptions, getUpgradeById, unapplyUpgrade,
+  getSynergyHintsForUpgrade, getActiveSynergySets,
   getAdjacencyBonuses, getAdjacencyForPair,
 } = require('../js/upgrades.js');
 
@@ -26,6 +27,18 @@ function makeState() {
     streakSlow: false,
     revealOnHotZone: false,
     lastChanceAvailable: false,
+    // Shop upgrade flags
+    scoreMultiplier: 1,
+    perfectMultEnabled: false,
+    echoLucky: false,
+    echoChain: false,
+    echoStreak: false,
+    bonusCoinPerAnte: 0,
+    replayCount: 0,
+    replayLuckyCount: 0,
+    replayChain: false,
+    replayHotZone: false,
+    replayStreak: false,
   };
 }
 
@@ -34,8 +47,8 @@ function findUpgrade(id) {
 }
 
 describe('UPGRADES definitions', () => {
-  test('all 12 upgrades are defined', () => {
-    expect(UPGRADES).toHaveLength(12);
+  test('all 24 upgrades are defined (12 original + 12 shop)', () => {
+    expect(UPGRADES).toHaveLength(24);
   });
 
   test('every upgrade has required fields', () => {
@@ -45,8 +58,18 @@ describe('UPGRADES definitions', () => {
       expect(u.names.ocean).toBeTruthy();
       expect(u.names.sky).toBeTruthy();
       expect(u.desc.space).toBeTruthy();
-      expect(u.tier).toMatch(/^(start|unlock)$/);
+      expect(u.tier).toMatch(/^(start|unlock|shop)$/);
       expect(typeof u.apply).toBe('function');
+    }
+  });
+
+  test('every upgrade has a price and sellValue', () => {
+    for (const u of UPGRADES) {
+      expect(typeof u.price).toBe('number');
+      expect(u.price).toBeGreaterThan(0);
+      expect(typeof u.sellValue).toBe('number');
+      expect(u.sellValue).toBeGreaterThan(0);
+      expect(u.sellValue).toBeLessThan(u.price);
     }
   });
 
@@ -56,6 +79,10 @@ describe('UPGRADES definitions', () => {
 
   test('unlock pool has 4 upgrades', () => {
     expect(UNLOCK_UPGRADE_IDS).toHaveLength(4);
+  });
+
+  test('shop pool has 12 upgrades', () => {
+    expect(SHOP_UPGRADE_IDS).toHaveLength(12);
   });
 });
 
@@ -300,8 +327,8 @@ describe('commutative pair mechanic', () => {
 
 // ---- SYNERGIES definitions ----
 describe('SYNERGIES definitions', () => {
-  test('5 synergies defined', () => {
-    expect(SYNERGIES).toHaveLength(5);
+  test('13 synergies defined (5 original + 8 new)', () => {
+    expect(SYNERGIES).toHaveLength(13);
   });
 
   test('each synergy has ids (2), type, and effect', () => {
@@ -312,11 +339,12 @@ describe('SYNERGIES definitions', () => {
     }
   });
 
-  test('3 positive and 2 negative synergies', () => {
-    const pos = SYNERGIES.filter(s => s.type === 'positive').length;
-    const neg = SYNERGIES.filter(s => s.type === 'negative').length;
-    expect(pos).toBe(3);
-    expect(neg).toBe(2);
+  test('includes new shop upgrade synergies', () => {
+    const ids = SYNERGIES.map(s => s.ids.join('+'));
+    expect(SYNERGIES.some(s => s.ids.includes('echoLucky') && s.ids.includes('luckyBonus'))).toBe(true);
+    expect(SYNERGIES.some(s => s.ids.includes('echoChain') && s.ids.includes('chain'))).toBe(true);
+    expect(SYNERGIES.some(s => s.ids.includes('scoreMultPerfect') && s.ids.includes('hotZoneBoost'))).toBe(true);
+    void ids;
   });
 });
 
@@ -455,8 +483,8 @@ describe('synergy mechanics', () => {
 
 // ---- ADJACENCY definitions ----
 describe('ADJACENCY definitions', () => {
-  test('5 adjacency bonuses defined', () => {
-    expect(ADJACENCY).toHaveLength(5);
+  test('9 adjacency bonuses defined (5 original + 4 new)', () => {
+    expect(ADJACENCY).toHaveLength(9);
   });
 
   test('each entry has ids (2), flag, and effect', () => {
@@ -652,5 +680,227 @@ describe('adjacency bonus mechanics (scoring simulation)', () => {
     const adjacencyBonuses = new Set();
     const ticks = adjacencyBonuses.has('adj_chainLucky') ? 2 : 1;
     expect(ticks).toBe(1);
+  });
+});
+
+// ---- Shop upgrade apply() tests ----
+describe('shop upgrade apply() — flag setting', () => {
+  test('scoreMultSmall multiplies scoreMultiplier by 1.5', () => {
+    const state = makeState();
+    findUpgrade('scoreMultSmall').apply(state);
+    expect(state.scoreMultiplier).toBeCloseTo(1.5);
+  });
+
+  test('scoreMultSmall stacks multiplicatively', () => {
+    const state = makeState();
+    findUpgrade('scoreMultSmall').apply(state);
+    findUpgrade('scoreMultSmall').apply(state);
+    expect(state.scoreMultiplier).toBeCloseTo(2.25);
+  });
+
+  test('scoreMultLarge doubles scoreMultiplier', () => {
+    const state = makeState();
+    findUpgrade('scoreMultLarge').apply(state);
+    expect(state.scoreMultiplier).toBe(2);
+    findUpgrade('scoreMultLarge').apply(state);
+    expect(state.scoreMultiplier).toBe(4);
+  });
+
+  test('scoreMultSmall + scoreMultLarge combined', () => {
+    const state = makeState();
+    findUpgrade('scoreMultSmall').apply(state);
+    findUpgrade('scoreMultLarge').apply(state);
+    expect(state.scoreMultiplier).toBeCloseTo(3);
+  });
+
+  test('scoreMultPerfect sets perfectMultEnabled=true', () => {
+    const state = makeState();
+    findUpgrade('scoreMultPerfect').apply(state);
+    expect(state.perfectMultEnabled).toBe(true);
+  });
+
+  test('echoLucky sets echoLucky=true', () => {
+    const state = makeState();
+    findUpgrade('echoLucky').apply(state);
+    expect(state.echoLucky).toBe(true);
+  });
+
+  test('echoChain sets echoChain=true', () => {
+    const state = makeState();
+    findUpgrade('echoChain').apply(state);
+    expect(state.echoChain).toBe(true);
+  });
+
+  test('echoStreak sets echoStreak=true', () => {
+    const state = makeState();
+    findUpgrade('echoStreak').apply(state);
+    expect(state.echoStreak).toBe(true);
+  });
+
+  test('starterBoost increments bonusCoinPerAnte by 3 (stackable)', () => {
+    const state = makeState();
+    findUpgrade('starterBoost').apply(state);
+    expect(state.bonusCoinPerAnte).toBe(3);
+    findUpgrade('starterBoost').apply(state);
+    expect(state.bonusCoinPerAnte).toBe(6);
+  });
+
+  test('replayScore increments replayCount (stackable)', () => {
+    const state = makeState();
+    findUpgrade('replayScore').apply(state);
+    expect(state.replayCount).toBe(1);
+    findUpgrade('replayScore').apply(state);
+    expect(state.replayCount).toBe(2);
+  });
+
+  test('replayLucky increments replayLuckyCount (stackable)', () => {
+    const state = makeState();
+    findUpgrade('replayLucky').apply(state);
+    expect(state.replayLuckyCount).toBe(1);
+    findUpgrade('replayLucky').apply(state);
+    expect(state.replayLuckyCount).toBe(2);
+  });
+
+  test('replayChain sets replayChain=true', () => {
+    const state = makeState();
+    findUpgrade('replayChain').apply(state);
+    expect(state.replayChain).toBe(true);
+  });
+
+  test('replayHotZone sets replayHotZone=true', () => {
+    const state = makeState();
+    findUpgrade('replayHotZone').apply(state);
+    expect(state.replayHotZone).toBe(true);
+  });
+
+  test('replayStreak sets replayStreak=true', () => {
+    const state = makeState();
+    findUpgrade('replayStreak').apply(state);
+    expect(state.replayStreak).toBe(true);
+  });
+});
+
+// ---- unapplyUpgrade tests ----
+describe('unapplyUpgrade — reverses apply()', () => {
+  test('unapply chain restores chainAnswer=false', () => {
+    const state = makeState();
+    findUpgrade('chain').apply(state);
+    unapplyUpgrade(findUpgrade('chain'), state);
+    expect(state.chainAnswer).toBe(false);
+  });
+
+  test('unapply shield decrements shieldCharges', () => {
+    const state = makeState();
+    findUpgrade('shield').apply(state);
+    findUpgrade('shield').apply(state);
+    expect(state.shieldCharges).toBe(2);
+    unapplyUpgrade(findUpgrade('shield'), state);
+    expect(state.shieldCharges).toBe(1);
+  });
+
+  test('unapply slowAll reverses speed reduction', () => {
+    const state = makeState();
+    findUpgrade('slowAll').apply(state);
+    expect(state.speedMult).toBeCloseTo(0.75);
+    unapplyUpgrade(findUpgrade('slowAll'), state);
+    expect(state.speedMult).toBeCloseTo(1);
+  });
+
+  test('unapply scoreMultSmall divides by 1.5', () => {
+    const state = makeState();
+    findUpgrade('scoreMultSmall').apply(state);
+    findUpgrade('scoreMultSmall').apply(state);
+    expect(state.scoreMultiplier).toBeCloseTo(2.25);
+    unapplyUpgrade(findUpgrade('scoreMultSmall'), state);
+    expect(state.scoreMultiplier).toBeCloseTo(1.5);
+  });
+
+  test('unapply scoreMultLarge halves multiplier', () => {
+    const state = makeState();
+    findUpgrade('scoreMultLarge').apply(state);
+    unapplyUpgrade(findUpgrade('scoreMultLarge'), state);
+    expect(state.scoreMultiplier).toBeCloseTo(1);
+  });
+
+  test('unapply replayScore decrements replayCount', () => {
+    const state = makeState();
+    findUpgrade('replayScore').apply(state);
+    findUpgrade('replayScore').apply(state);
+    unapplyUpgrade(findUpgrade('replayScore'), state);
+    expect(state.replayCount).toBe(1);
+  });
+
+  test('unapply starterBoost decrements bonusCoinPerAnte by 3', () => {
+    const state = makeState();
+    findUpgrade('starterBoost').apply(state);
+    findUpgrade('starterBoost').apply(state);
+    unapplyUpgrade(findUpgrade('starterBoost'), state);
+    expect(state.bonusCoinPerAnte).toBe(3);
+  });
+
+  test('unapply clamps multiplier floor at 1', () => {
+    const state = makeState();
+    // If scoreMultiplier is already 1, selling shouldn't go below 1
+    unapplyUpgrade(findUpgrade('scoreMultSmall'), state);
+    expect(state.scoreMultiplier).toBeCloseTo(1);
+  });
+});
+
+// ---- drawShopOptions tests ----
+describe('drawShopOptions', () => {
+  test('includes shop-tier upgrades even with no unlockedIds', () => {
+    const drawn = drawShopOptions(12, [], []);
+    const ids = drawn.map(u => u.id);
+    // Should include some shop upgrades
+    const shopIds = SHOP_UPGRADE_IDS;
+    expect(ids.some(id => shopIds.includes(id))).toBe(true);
+  });
+
+  test('excludes non-stackable already-owned upgrades', () => {
+    const drawn = drawShopOptions(20, [], ['chain', 'echoLucky', 'replayChain']);
+    const ids = drawn.map(u => u.id);
+    expect(ids).not.toContain('chain');
+    expect(ids).not.toContain('echoLucky');
+    expect(ids).not.toContain('replayChain');
+  });
+
+  test('includes stackable shop upgrades even when owned', () => {
+    const drawn = drawShopOptions(20, [], ['scoreMultSmall', 'replayScore']);
+    const ids = drawn.map(u => u.id);
+    expect(ids).toContain('scoreMultSmall');
+    expect(ids).toContain('replayScore');
+  });
+
+  test('returns no duplicate IDs', () => {
+    const drawn = drawShopOptions(5, [], []);
+    const ids = drawn.map(u => u.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test('drawUpgrades does NOT include shop upgrades', () => {
+    const drawn = drawUpgrades(20, [], []);
+    const ids = drawn.map(u => u.id);
+    for (const shopId of SHOP_UPGRADE_IDS) {
+      expect(ids).not.toContain(shopId);
+    }
+  });
+});
+
+// ---- getUpgradeById tests ----
+describe('getUpgradeById', () => {
+  test('returns upgrade for valid id', () => {
+    const upg = getUpgradeById('chain');
+    expect(upg).not.toBeNull();
+    expect(upg.id).toBe('chain');
+  });
+
+  test('returns null for unknown id', () => {
+    expect(getUpgradeById('doesNotExist')).toBeNull();
+  });
+
+  test('works for shop-tier upgrades', () => {
+    const upg = getUpgradeById('replayScore');
+    expect(upg).not.toBeNull();
+    expect(upg.tier).toBe('shop');
   });
 });

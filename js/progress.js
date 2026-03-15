@@ -79,6 +79,9 @@ const Progress = (() => {
     { id: 'add_first_correct', label: 'First Sum',        desc: 'Answer your first addition question correctly',    check: (_, s) => Object.keys(s).some(k => /^\d+a\d+$/.test(k) && (s[k].correct || 0) >= 1) },
     // Subtraction achievements
     { id: 'sub_first_correct', label: 'First Difference', desc: 'Answer your first subtraction question correctly', check: (_, s) => Object.keys(s).some(k => /^\d+s\d+$/.test(k) && (s[k].correct || 0) >= 1) },
+    // Run mode shop achievement
+    { id: 'shop_spree', label: 'Big Spender', desc: 'Buy 3 upgrades from the shop in a single run',
+      check: (d) => (d.shopBuysRecord || 0) >= 3 },
     // Klasse 3 Komplett milestone
     { id: 'klasse3_komplett', label: 'Klasse 3 Komplett! 🎓', milestone: true,
       desc: 'Master all ×-tables (2–10), all ÷-tables (2–10), and try addition & subtraction',
@@ -404,15 +407,19 @@ const Progress = (() => {
       runsCompleted: 0,
       unlockedUpgrades: [],
       milestones: { bossesDefeated: 0, runsCompleted: 0, maxStreak: 0 },
+      bestCoins: 0,
+      shopBuysRecord: 0,
     };
   }
 
-  function saveRunResult({ ante, upgrades, bossesDefeated, maxStreak }) {
+  function saveRunResult({ ante, upgrades, bossesDefeated, maxStreak, coinsEarned, shopBuysThisRun }) {
     const d = load();
-    if (!d.run) d.run = { bestAnte: 0, runsCompleted: 0, unlockedUpgrades: [], milestones: { bossesDefeated: 0, runsCompleted: 0, maxStreak: 0 } };
+    if (!d.run) d.run = { bestAnte: 0, runsCompleted: 0, unlockedUpgrades: [], milestones: { bossesDefeated: 0, runsCompleted: 0, maxStreak: 0 }, bestCoins: 0, shopBuysRecord: 0 };
     const run = d.run;
     run.bestAnte = Math.max(run.bestAnte || 0, ante);
     run.runsCompleted = (run.runsCompleted || 0) + 1;
+    run.bestCoins = Math.max(run.bestCoins || 0, coinsEarned || 0);
+    run.shopBuysRecord = Math.max(run.shopBuysRecord || 0, shopBuysThisRun || 0);
     const m = run.milestones;
     m.bossesDefeated = (m.bossesDefeated || 0) + (bossesDefeated || 0);
     m.runsCompleted  = run.runsCompleted;

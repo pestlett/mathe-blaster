@@ -76,6 +76,8 @@ to the player-specific key automatically.
     bestAnte:        number,
     runsCompleted:   number,
     unlockedUpgrades: string[],     // upgrade IDs unlocked via milestones
+    bestCoins:       number,        // highest coin balance reached in a single run
+    shopBuysRecord:  number,        // most shop purchases in a single run (for shop_spree achievement)
     milestones: {
       bossesDefeated: number,
       runsCompleted:  number,
@@ -156,6 +158,11 @@ requires all 10 facts in a table to have `cleanCorrect >= 1`.
 | ID | Condition |
 |----|-----------|
 | `klasseKomplett` | All multiply tables 2–10 + all divide tables 2–10 + addFirst + subFirst |
+
+### Run Mode Achievements
+| ID | Condition |
+|----|-----------|
+| `shop_spree` | Buy 3 upgrades from the shop in a single run (`run.shopBuysRecord >= 3`) |
 
 ## Run Mode Unlock Milestones
 

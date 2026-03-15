@@ -920,7 +920,7 @@ const UI = (() => {
       const badges = [];
       if (state.shieldCharges > 0) badges.push(`🛡×${state.shieldCharges}`);
       if (state.bombCharges > 0)   badges.push(`💣×${state.bombCharges}`);
-      hudTables += ` | Ante ${state.currentAnte}` + (badges.length ? ' ' + badges.join(' ') : '');
+      hudTables += ` | Ante ${state.currentAnte} | 🪙${state.runCoins || 0}` + (badges.length ? ' ' + badges.join(' ') : '');
     }
     document.getElementById('hud-tables').textContent = hudTables;
     renderLives(state.lives, state.maxLives, state.theme);
@@ -1838,6 +1838,175 @@ const UI = (() => {
     acquired.addEventListener('click', skip);
   }
 
+  // ---- Shop (run mode) ----
+  // onDone({ bought, sold: [], newCoins, newOrder })
+  function showShop(options, coins, theme, activeUpgrades, isFreeStarter, onDone) {
+    const el = document.getElementById('upgrade-picker');
+    const card = el.querySelector('.upgrade-picker-card');
+    card.innerHTML = ''; // clear existing content
+
+    let currentCoins = coins;
+    let soldList = [];
+    let boughtUpgrade = null;
+    let freeUsed = !isFreeStarter;
+    let orderArr = [...activeUpgrades];
+
+    function refreshCoinDisplay() {
+      const coinEl = card.querySelector('.shop-coin-display');
+      if (coinEl) coinEl.textContent = `🪙 ${currentCoins}`;
+    }
+
+    function renderShop() {
+      card.innerHTML = '';
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'upgrade-picker-title';
+      header.innerHTML = `Power Shop <span class="shop-coin-display">🪙 ${currentCoins}</span>`;
+      card.appendChild(header);
+
+      // Shop cards row
+      const cardsRow = document.createElement('div');
+      cardsRow.className = 'shop-cards';
+      options.forEach(upg => {
+        const name = upgradeNameForTheme(upg, theme);
+        const desc = upgradeDescForTheme(upg, theme);
+        const hints = getSynergyHintsForUpgrade(upg.id, orderArr.map(u => u.id), theme);
+        const canAfford = currentCoins >= (upg.price || 0);
+        const alreadyBought = boughtUpgrade !== null;
+        const isFreeCard = isFreeStarter && !freeUsed;
+
+        const card2 = document.createElement('div');
+        card2.className = 'shop-card' +
+          (hints.some(h => h.type === 'positive') ? ' upgrade-option-synergy' : '') +
+          (hints.some(h => h.type === 'negative') ? ' upgrade-option-conflict' : '') +
+          (!canAfford && !isFreeCard ? ' shop-card-unaffordable' : '');
+
+        let hintHtml = '';
+        for (const h of hints) {
+          hintHtml += `<div class="${h.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative'}">
+            ${h.type === 'positive' ? '⚡' : '⚠'} with ${h.partnerName}: ${h.effect}
+          </div>`;
+        }
+
+        const btnLabel = isFreeCard ? 'Free!' : `Buy 🪙${upg.price || 0}`;
+        const btnDisabled = alreadyBought || (!isFreeCard && !canAfford) ? 'disabled' : '';
+
+        card2.innerHTML = `
+          <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '✨'}</span> ${name}</div>
+          <div class="upgrade-desc">${desc}</div>
+          ${hintHtml}
+          <button class="shop-buy-btn" ${btnDisabled}>${btnLabel}</button>
+        `;
+
+        card2.querySelector('.shop-buy-btn').addEventListener('click', () => {
+          if (alreadyBought) return;
+          if (!isFreeCard && !canAfford) return;
+          boughtUpgrade = upg;
+          if (!isFreeCard) {
+            currentCoins -= upg.price || 0;
+            freeUsed = true;
+          } else {
+            freeUsed = true;
+          }
+          el.classList.add('hidden');
+          _showUpgradeAcquired(upg, theme, () => {
+            onDone({ bought: boughtUpgrade, sold: soldList, newCoins: currentCoins, newOrder: orderArr });
+          });
+        });
+
+        cardsRow.appendChild(card2);
+      });
+      card.appendChild(cardsRow);
+
+      // Reroll button
+      const rerollCost = 4;
+      const rerollBtn = document.createElement('button');
+      rerollBtn.className = 'shop-reroll-btn';
+      rerollBtn.textContent = `🔄 Reroll (🪙${rerollCost})`;
+      rerollBtn.disabled = currentCoins < rerollCost;
+      rerollBtn.addEventListener('click', () => {
+        if (currentCoins < rerollCost) return;
+        currentCoins -= rerollCost;
+        // Redraw 3 new options (excluding already-owned non-stackable)
+        const rp = typeof Progress !== 'undefined' ? Progress.getRunProgress() : { unlockedUpgrades: [] };
+        const activeIds = orderArr.map(u => u.id);
+        const newOpts = drawShopOptions(3, rp.unlockedUpgrades || [], activeIds);
+        // Replace options array in-place
+        options.length = 0;
+        newOpts.forEach(o => options.push(o));
+        renderShop();
+      });
+      card.appendChild(rerollBtn);
+
+      // Owned upgrades section
+      if (orderArr.length > 0) {
+        const sub = document.createElement('div');
+        sub.className = 'upgrade-picker-subtitle';
+        sub.textContent = 'Your Upgrades';
+        card.appendChild(sub);
+
+        const { positive, negative } = getActiveSynergySets(orderArr.map(u => u.id));
+        const ownedRow = document.createElement('div');
+        ownedRow.className = 'shop-owned-row';
+
+        orderArr.forEach((upg, idx) => {
+          const pill = document.createElement('div');
+          const isPos = positive.has(upg.id);
+          const isNeg = negative.has(upg.id);
+          pill.className = 'reorder-pill' +
+            (isPos ? ' shop-pill-synergy' : '') +
+            (isNeg ? ' shop-pill-conflict' : '');
+
+          const adjBefore = idx > 0 ? getAdjacencyForPair(orderArr[idx - 1].id, upg.id) : null;
+          if (adjBefore) {
+            const connector = document.createElement('span');
+            connector.className = 'reorder-connector reorder-connector-bonus';
+            connector.textContent = '✦';
+            connector.title = adjBefore.effect;
+            ownedRow.appendChild(connector);
+          } else if (idx > 0) {
+            const connector = document.createElement('span');
+            connector.className = 'reorder-connector';
+            connector.textContent = '·';
+            ownedRow.appendChild(connector);
+          }
+
+          pill.innerHTML = `<span class="reorder-icon">${upg.icon || '?'}</span>`;
+          const sellVal = upg.sellValue || Math.floor((upg.price || 0) * 0.55);
+          const sellBtn = document.createElement('button');
+          sellBtn.className = 'shop-sell-btn';
+          sellBtn.textContent = `Sell 🪙${sellVal}`;
+          sellBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentCoins += sellVal;
+            soldList.push(upg);
+            orderArr = orderArr.filter(u => u !== upg);
+            renderShop();
+          });
+          pill.appendChild(sellBtn);
+          ownedRow.appendChild(pill);
+        });
+
+        card.appendChild(ownedRow);
+      }
+
+      // Done button
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'btn-skip-upgrade';
+      doneBtn.style.marginTop = '14px';
+      doneBtn.textContent = 'Done →';
+      doneBtn.addEventListener('click', () => {
+        el.classList.add('hidden');
+        onDone({ bought: boughtUpgrade, sold: soldList, newCoins: currentCoins, newOrder: orderArr });
+      });
+      card.appendChild(doneBtn);
+    }
+
+    renderShop();
+    el.classList.remove('hidden');
+  }
+
   // ---- Achievements ----
   function showAchievements(onBack) {
     const all = Progress.getAchievements();
@@ -1924,5 +2093,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, refreshTutorialEntryPoints, showTutorialOverlay, hideTutorialOverlay, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory };
 })();

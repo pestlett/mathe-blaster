@@ -1425,6 +1425,23 @@ function startGame(settings) {
   state.lastChanceUsed    = false;
   state.missCount         = 0;
   state.adjacencyBonuses  = new Set();
+  // Shop economy state
+  state.runCoins          = 0;
+  state.bonusCoinPerAnte  = 0;
+  state.shopBuysThisRun   = 0;
+  // Score multiplier state
+  state.scoreMultiplier   = 1;
+  state.perfectMultEnabled = false;
+  // Echo flags
+  state.echoLucky         = false;
+  state.echoChain         = false;
+  state.echoStreak        = false;
+  // Replay counters
+  state.replayCount       = 0;
+  state.replayLuckyCount  = 0;
+  state.replayChain       = false;
+  state.replayHotZone     = false;
+  state.replayStreak      = false;
 
   // Help / SOS system
   state.helpCooldown    = 0;   // seconds remaining on cooldown (0 = ready)
@@ -2224,6 +2241,7 @@ function submitAnswer() {
     const hzTop    = state.hotZoneBoost ? HOT_ZONE_TOP_WIDE    : HOT_ZONE_TOP;
     const hzBottom = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
     const inHotZone = target.y >= canvasH * hzTop && target.y <= canvasH * hzBottom;
+    const preHotZonePts = pts; // used by echoStreak
     if (inHotZone) {
       // SYNERGY: Hot Zone Boost + Reveal → ×2 (or ×2.5 when adjacent) when answer was revealed
       const adjHotReveal = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_hotReveal');
@@ -2231,14 +2249,68 @@ function submitAnswer() {
         ? (adjHotReveal ? 2.5 : 2) : 1.5;
       pts = Math.round(pts * hotMult);
       UI.showLevelUp(hotMult >= 2.5 ? '👁✦ Precision Lock+!' : hotMult >= 2 ? '👁 Precision Lock!' : '🔥 Hot zone!', null);
+      // Streak Echo: hot-zone streak bonus echoes — streak mult applied a second time
+      if (state.echoStreak) {
+        const echoStreakMult = state.streakBoost
+          ? (state.streak >= 8 ? 4 : state.streak >= 5 ? 3 : state.streak >= 3 ? 2 : 1)
+          : (state.streak >= 5 ? 2 : state.streak >= 3 ? 1.5 : 1);
+        const echoStreakBonus = Math.round(preHotZonePts * (echoStreakMult - 1));
+        if (echoStreakBonus > 0) {
+          pts += echoStreakBonus;
+          UI.showLevelUp('💠 Streak Echo!', null);
+        }
+      }
+      // Replay Hot Zone: apply the hot-zone multiplier a second time as a flat bonus
+      if (state.replayHotZone) {
+        pts += Math.round(preHotZonePts * (hotMult - 1));
+        UI.showLevelUp('⭕ Zone Repeat!', null);
+      }
+      // Score Mult Perfect: each hot-zone answer ramps the score multiplier
+      if (state.perfectMultEnabled) {
+        const perfCap = (state.hotZoneBoost &&
+          state.activeUpgradeIds && state.activeUpgradeIds.includes('hotZoneBoost')) ? 12 : 8;
+        state.scoreMultiplier = Math.min(state.scoreMultiplier * 1.2, perfCap);
+      }
+    }
+    // Adjacency: Echo Streak + Quick Bonus neighbours → echo fires on quick answers too
+    if (!inHotZone && state.echoStreak && state.quickBonus &&
+        state.adjacencyBonuses && state.adjacencyBonuses.has('adj_echoQuick') &&
+        elapsed < (hasSynSlowQuick ? 750 : 1500)) {
+      const echoStreakMult = state.streakBoost
+        ? (state.streak >= 8 ? 4 : state.streak >= 5 ? 3 : state.streak >= 3 ? 2 : 1)
+        : (state.streak >= 5 ? 2 : state.streak >= 3 ? 1.5 : 1);
+      const echoQuickBonus = Math.round(preHotZonePts * (echoStreakMult - 1) * 0.5);
+      if (echoQuickBonus > 0) pts += echoQuickBonus;
     }
     // Lucky bonus (Nebula Luck / Treasure Drift / Lucky Wind)
+    let _luckyFiredFromChain = false; // used by echoLucky negative synergy
     if (state.luckyBonus) {
       state.luckyBonusCounter = (state.luckyBonusCounter || 0) + 1;
       if (state.luckyBonusCounter % 5 === 0) {
         const luckyMult = 2 + Math.floor(Math.random() * 4); // ×2–×5
         pts = Math.round(pts * luckyMult);
-        UI.showLevelUp(`Lucky ×${luckyMult}!`, null);
+        UI.showLevelUp(`🍀 Lucky ×${luckyMult}!`, null);
+        // Echo Lucky: fires a second time (synergy with luckyBonus uncaps range)
+        if (state.echoLucky) {
+          const hasEchoFull = state.activeUpgradeIds && state.activeUpgradeIds.includes('luckyBonus');
+          const adjEcho = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_echoLucky');
+          const echoMax = (hasEchoFull || adjEcho) ? 4 : 2; // full range or capped ×3
+          const echoMult = 2 + Math.floor(Math.random() * echoMax);
+          pts = Math.round(pts * echoMult);
+          UI.showLevelUp(`🔮 Echo Lucky ×${echoMult}!`, null);
+        }
+        // Replay Lucky: each stack fires one more lucky roll
+        for (let r = 0; r < (state.replayLuckyCount || 0); r++) {
+          const replayMult = 2 + Math.floor(Math.random() * 4);
+          pts = Math.round(pts * replayMult);
+          UI.showLevelUp(`🎲 Lucky Replay ×${replayMult}!`, null);
+          // Echo fires on replay rolls too (synergy: replayLucky + echoLucky)
+          if (state.echoLucky &&
+              state.activeUpgradeIds && state.activeUpgradeIds.includes('replayLucky')) {
+            const rEchoMult = 2 + Math.floor(Math.random() * 4);
+            pts = Math.round(pts * rEchoMult);
+          }
+        }
       }
     }
     if (state.scoreStarActive) {
@@ -2246,7 +2318,31 @@ function submitAnswer() {
       state.scoreStarActive = false;
       UI.showLevelUp('🌟 ×3!', null);
     }
-    state.score += pts;
+    // Apply global score multiplier, then add to score
+    const finalPts = Math.round(pts * (state.scoreMultiplier || 1));
+    state.score += finalPts;
+    // Synergy: Score Mult Large + Score Mult Small → +10 flat pts per answer
+    if (state.activeUpgradeIds &&
+        state.activeUpgradeIds.includes('scoreMultLarge') &&
+        state.activeUpgradeIds.includes('scoreMultSmall')) {
+      state.score += 10;
+    }
+    // Replay Score: replay the full pts calculation N more times
+    for (let r = 0; r < (state.replayCount || 0); r++) {
+      state.score += finalPts;
+      // Replay earns +1 coin per replay (synergy: replayScore + scoreMultSmall)
+      if (state.runMode && state.activeUpgradeIds &&
+          state.activeUpgradeIds.includes('scoreMultSmall')) {
+        state.runCoins = (state.runCoins || 0) + 1;
+      }
+    }
+    // Coin earning for correct answers (run mode only)
+    if (state.runMode) {
+      let coinsEarned = 1; // base per correct
+      if (inHotZone) coinsEarned += 1;
+      if (state.streak > 0 && state.streak % 5 === 0) coinsEarned += 3;
+      state.runCoins = (state.runCoins || 0) + coinsEarned;
+    }
 
     // Destroy object
     const particleColor = Themes.particleColorForTheme(state.theme);
@@ -2284,6 +2380,7 @@ function submitAnswer() {
     // Chain-answer (Gravity Well / Riptide / Lightning Strike)
     if (state.chainAnswer) {
       let chainCount = 0;
+      const chainKilledObjects = [];
       for (const obj of state.objects) {
         if (obj !== target && !obj.dying && !obj.dead && !obj.destroyed &&
             !obj.isFreeze && !obj.isLifeUp && !obj.isBoss &&
@@ -2291,11 +2388,45 @@ function submitAnswer() {
             obj.answer === target.answer) {
           Objects.triggerDestruction(obj, particleColor);
           state.score += Math.round(pts * 0.5);
+          chainKilledObjects.push(obj);
           chainCount++;
+        }
+      }
+      // Replay Chain: chain scoring fires a second time
+      if (state.replayChain && chainCount > 0) {
+        state.score += Math.round(pts * 0.5 * chainCount);
+        UI.showLevelUp(`💥 Chain ×2!`, null);
+      }
+      // Echo Chain: each chain kill also destroys its commutative mirror
+      if (state.echoChain && chainKilledObjects.length > 0) {
+        const adjEchoChain = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_echoChain');
+        for (const killed of chainKilledObjects) {
+          const mirror = state.objects.find(o =>
+            !o.dying && !o.dead && !o.destroyed && !o.isFreeze && !o.isLifeUp && !o.isBoss &&
+            o !== target && o.a === killed.b && o.b === killed.a
+          );
+          if (mirror) {
+            Objects.triggerDestruction(mirror, particleColor);
+            // SYNERGY: echoChain + chain → echo kills also score 50%
+            const echoChainPts = state.activeUpgradeIds && state.activeUpgradeIds.includes('chain')
+              ? Math.round(pts * 0.5)
+              : Math.round(pts * 0.25);
+            state.score += echoChainPts;
+            // ADJACENCY: adj_echoChain → echo chain kill counts as a lucky tick
+            if (adjEchoChain && state.luckyBonus) {
+              state.luckyBonusCounter = (state.luckyBonusCounter || 0) + 1;
+              if (state.luckyBonusCounter % 5 === 0) {
+                const luckyMult = 2 + Math.floor(Math.random() * 4);
+                state.score += Math.round(pts * luckyMult * 0.5);
+                UI.showLevelUp(`⛓🍀 Echo Lucky ×${luckyMult}!`, null);
+              }
+            }
+          }
         }
       }
       // SYNERGY: Chain + Lucky — each chain kill counts toward the lucky counter
       // ADJACENCY: Chain + Lucky neighbours → each kill counts as 2 ticks
+      // NEGATIVE SYNERGY: echoLucky + chain → echoLucky does not fire on chain-triggered lucky
       if (state.luckyBonus && chainCount > 0) {
         const chainLuckyTicks = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_chainLucky')) ? 2 : 1;
         for (let i = 0; i < chainCount; i++) {
@@ -2303,9 +2434,18 @@ function submitAnswer() {
           if (state.luckyBonusCounter % 5 === 0) {
             const luckyMult = 2 + Math.floor(Math.random() * 4);
             state.score += Math.round(pts * luckyMult * 0.5);
-            UI.showLevelUp(`Chain Lucky ×${luckyMult}!`, null);
+            UI.showLevelUp(`⛓ Chain Lucky ×${luckyMult}!`, null);
+            // SYNERGY: replayChain + chain → replay lucky counter advance
+            if (state.replayChain) {
+              const replayLuckyMult = 2 + Math.floor(Math.random() * 4);
+              state.score += Math.round(pts * replayLuckyMult * 0.5);
+            }
           }
         }
+      }
+      // Coins per chain kill (run mode)
+      if (state.runMode && chainCount > 0) {
+        state.runCoins = (state.runCoins || 0) + chainCount;
       }
     }
     // Commutative pair (Twin Stars / Echo Wave / Harmonic)
@@ -2328,6 +2468,19 @@ function submitAnswer() {
       if (dur === 2 && state.adjacencyBonuses && state.adjacencyBonuses.has('adj_slowSlow')) dur = 3;
       state.streakSlowTimer   = dur;
       state.streakSlowDuration = dur;
+    }
+
+    // Replay Streak: when a streak threshold is newly crossed, award the answer score again
+    if (state.replayStreak) {
+      const prevStreak = state.streak - 1;
+      const thresholdCrossed =
+        (state.streak >= 3 && prevStreak < 3) ||
+        (state.streak >= 5 && prevStreak < 5) ||
+        (state.streak >= 8 && prevStreak < 8);
+      if (thresholdCrossed) {
+        state.score += finalPts;
+        UI.showLevelUp('🚀 Streak Surge!', null);
+      }
     }
 
     // Streak flash at ×1.5 (streak 3+) and ×2 (streak 5+)
@@ -2357,47 +2510,64 @@ function submitAnswer() {
       UI.showLevelUp(state.level, stars);
       if (state.tutorialMode) TutorialRun.onLevelChanged(state.level);
 
-      // Run mode: every 3 levels — pause, check ante, show upgrade picker
+      // Coin award for level stars (run mode)
+      if (state.runMode) {
+        const starCoins = [0, 0, 1, 2][stars] || 0;
+        if (starCoins > 0) state.runCoins = (state.runCoins || 0) + starCoins;
+      }
+
+      // Run mode: every 3 levels — pause, check ante, open shop
       if (state.runMode && prevLevel % 3 === 0) {
         // Ante check: did player meet the score target?
-        const target = anteTarget(state.currentAnte);
+        const anteTargetScore = anteTarget(state.currentAnte);
         const scoreGained = state.score - state.anteStartScore;
-        if (scoreGained < target) {
+        if (scoreGained < anteTargetScore) {
           // Missed ante — run ends
           state.phase = 'ENDING';
           setTimeout(() => endGame(), 1400);
         } else {
-          // Advance ante
+          // Advance ante — award coins, open shop
           state.currentAnte++;
           state.anteStartScore = state.score;
-          // Show upgrade picker
+          const anteCoins = 5 + (state.bonusCoinPerAnte || 0);
+          state.runCoins = (state.runCoins || 0) + anteCoins;
+          // Adjacency: adj_multStack → +1 coin when both multipliers adjacent
+          if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_multStack')) {
+            state.runCoins += 1;
+          }
           Engine.pause();
           const rp = Progress.getRunProgress();
           const unlockedIds = rp.unlockedUpgrades || [];
-          const options = drawUpgrades(3, unlockedIds, state.activeUpgradeIds);
-          if (options.length > 0 || state.activeUpgrades.length > 0) {
-            UI.showUpgradePicker(options, state.theme, state.activeUpgrades, (chosen, newOrder) => {
-              // Apply reordered bar first
-              if (newOrder) {
-                state.activeUpgrades   = newOrder;
-                state.activeUpgradeIds = newOrder.map(u => u.id);
+          const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds);
+          const isFreeStarter = (state.currentAnte === 2); // free pick on first ante
+          UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, (result) => {
+            // Apply reordered bar
+            if (result.newOrder) {
+              state.activeUpgrades   = result.newOrder;
+              state.activeUpgradeIds = result.newOrder.map(u => u.id);
+            }
+            // Process sells
+            if (result.sold && result.sold.length > 0) {
+              for (const sold of result.sold) {
+                unapplyUpgrade(sold, state);
+                state.activeUpgrades   = state.activeUpgrades.filter(u => u !== sold);
+                state.activeUpgradeIds = state.activeUpgradeIds.filter(id => id !== sold.id);
               }
-              // Apply new upgrade (null if player clicked "Done" without picking)
-              if (chosen) {
-                chosen.apply(state);
-                state.activeUpgrades.push(chosen);
-                state.activeUpgradeIds.push(chosen.id);
-                // Clamp speed floor after stacking Slow All
-                if (state.speedMult !== undefined) state.speedMult = Math.max(0.4, state.speedMult);
-              }
-              // Recompute adjacency bonuses with updated order
-              state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
-              Engine.resume();
-              state.unpauseFreezeTimer = 1.0;
-            });
-          } else {
+            }
+            // Apply purchased upgrade
+            if (result.bought) {
+              result.bought.apply(state);
+              state.activeUpgrades.push(result.bought);
+              state.activeUpgradeIds.push(result.bought.id);
+              if (state.speedMult !== undefined) state.speedMult = Math.max(0.4, state.speedMult);
+              state.shopBuysThisRun = (state.shopBuysThisRun || 0) + 1;
+            }
+            state.runCoins = result.newCoins;
+            // Recompute adjacency bonuses with updated order
+            state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
             Engine.resume();
-          }
+            state.unpauseFreezeTimer = 1.0;
+          });
         }
       }
     }
@@ -2472,6 +2642,8 @@ function endGame() {
       upgrades: state.activeUpgradeIds,
       bossesDefeated: state.bossesDefeated,
       maxStreak: state.maxStreak,
+      coinsEarned: state.runCoins || 0,
+      shopBuysThisRun: state.shopBuysThisRun || 0,
     });
     const newUnlocks = Progress.checkRunUnlocks();
     runData = {

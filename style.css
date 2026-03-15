@@ -2420,6 +2420,102 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   line-height: 1.3;
 }
 
+/* ---- Shop UI ---- */
+.shop-coin-display {
+  color: #f7c948;
+  font-weight: 700;
+  margin-left: 10px;
+  font-size: 1rem;
+}
+.shop-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.shop-card {
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  position: relative;
+}
+.shop-card-unaffordable {
+  opacity: 0.42;
+}
+.shop-buy-btn {
+  margin-top: 8px;
+  background: rgba(162,155,254,0.18);
+  border: 1px solid rgba(162,155,254,0.5);
+  border-radius: 8px;
+  color: #f0f0f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.shop-buy-btn:hover:not(:disabled) {
+  background: rgba(162,155,254,0.32);
+  border-color: #a29bfe;
+}
+.shop-buy-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.shop-reroll-btn {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(247,201,72,0.4);
+  border-radius: 8px;
+  color: #f7c948;
+  font-size: 0.82rem;
+  padding: 6px 0;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.15s;
+}
+.shop-reroll-btn:hover:not(:disabled) {
+  background: rgba(247,201,72,0.1);
+}
+.shop-reroll-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.shop-owned-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 8px;
+}
+.shop-sell-btn {
+  display: block;
+  margin-top: 4px;
+  background: transparent;
+  border: 1px solid rgba(253,121,168,0.45);
+  border-radius: 6px;
+  color: #fd79a8;
+  font-size: 0.7rem;
+  padding: 3px 7px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.shop-sell-btn:hover {
+  background: rgba(253,121,168,0.12);
+}
+.shop-pill-synergy {
+  border-color: rgba(247,201,72,0.55) !important;
+  background: rgba(247,201,72,0.08) !important;
+}
+.shop-pill-conflict {
+  border-color: rgba(253,121,168,0.55) !important;
+  background: rgba(253,121,168,0.07) !important;
+}
+
 /* Run mode game-over section */
 .run-summary {
   background: rgba(162,155,254,0.1);
