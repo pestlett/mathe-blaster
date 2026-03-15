@@ -1464,6 +1464,17 @@ function startGame(settings) {
   state.replayChain       = false;
   state.replayHotZone     = false;
   state.replayStreak      = false;
+  // Slot system
+  state.maxUpgradeSlots   = 4;
+  // Operation boosters
+  state.multiBooster      = false;
+  state.divideBooster     = false;
+  state.addBooster        = false;
+  state.subtractBooster   = false;
+  // Exponential mechanics
+  state.cascadeMultCount  = 0;
+  state.compoundGrowth    = false;
+  state.luckyFrequency    = false;
 
   // Help / SOS system
   state.helpCooldown    = 0;   // seconds remaining on cooldown (0 = ready)
@@ -2300,12 +2311,14 @@ function submitAnswer() {
         if (echoStreakBonus > 0) {
           pts += echoStreakBonus;
           UI.showLevelUp('💠 Streak Echo!', null);
+          UI.flashUpgrade && UI.flashUpgrade('echoStreak');
         }
       }
       // Replay Hot Zone: apply the hot-zone multiplier a second time as a flat bonus
       if (state.replayHotZone) {
         pts += Math.round(preHotZonePts * (hotMult - 1));
         UI.showLevelUp('⭕ Zone Repeat!', null);
+        UI.flashUpgrade && UI.flashUpgrade('replayHotZone');
       }
       // Score Mult Perfect: each hot-zone answer ramps the score multiplier
       if (state.perfectMultEnabled) {
@@ -2328,10 +2341,26 @@ function submitAnswer() {
     let _luckyFiredFromChain = false; // used by echoLucky negative synergy
     if (state.luckyBonus) {
       state.luckyBonusCounter = (state.luckyBonusCounter || 0) + 1;
-      if (state.luckyBonusCounter % 5 === 0) {
+      const luckyThreshold = state.luckyFrequency ? 3 : 5;
+      if (state.luckyBonusCounter % luckyThreshold === 0) {
         const luckyMult = 2 + Math.floor(Math.random() * 4); // ×2–×5
         pts = Math.round(pts * luckyMult);
         UI.showLevelUp(`🍀 Lucky ×${luckyMult}!`, null);
+        // Cascade Mult: each lucky permanently boosts score multiplier
+        if (state.cascadeMultCount > 0) {
+          const cascadeBonus = 0.3 * state.cascadeMultCount;
+          // SYNERGY: cascadeMult + luckyBonus → double rate
+          const hasSynCascade = state.activeUpgradeIds &&
+            state.activeUpgradeIds.includes('cascadeMult') &&
+            state.activeUpgradeIds.includes('luckyBonus');
+          const finalCascade = hasSynCascade ? cascadeBonus * 2 : cascadeBonus;
+          state.scoreMultiplier = (state.scoreMultiplier || 1) + finalCascade;
+          // ADJACENCY: adj_cascadeLucky → +1 coin per 3rd lucky
+          if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_cascadeLucky')) {
+            state.runCoins = (state.runCoins || 0) + 1;
+          }
+          UI.flashUpgrade && UI.flashUpgrade('cascadeMult');
+        }
         // Echo Lucky: fires a second time (synergy with luckyBonus uncaps range)
         if (state.echoLucky) {
           const hasEchoFull = state.activeUpgradeIds && state.activeUpgradeIds.includes('luckyBonus');
@@ -2340,12 +2369,14 @@ function submitAnswer() {
           const echoMult = 2 + Math.floor(Math.random() * echoMax);
           pts = Math.round(pts * echoMult);
           UI.showLevelUp(`🔮 Echo Lucky ×${echoMult}!`, null);
+          UI.flashUpgrade && UI.flashUpgrade('echoLucky');
         }
         // Replay Lucky: each stack fires one more lucky roll
         for (let r = 0; r < (state.replayLuckyCount || 0); r++) {
           const replayMult = 2 + Math.floor(Math.random() * 4);
           pts = Math.round(pts * replayMult);
           UI.showLevelUp(`🎲 Lucky Replay ×${replayMult}!`, null);
+          UI.flashUpgrade && UI.flashUpgrade('replayLucky');
           // Echo fires on replay rolls too (synergy: replayLucky + echoLucky)
           if (state.echoLucky &&
               state.activeUpgradeIds && state.activeUpgradeIds.includes('replayLucky')) {
@@ -2369,6 +2400,45 @@ function submitAnswer() {
         state.activeUpgradeIds.includes('scoreMultSmall')) {
       state.score += 10;
     }
+    // Operation-specific boosters
+    if (state.runMode) {
+      const op = state.operation || 'multiply';
+      if (state.multiBooster && op === 'multiply') {
+        state.score += finalPts; // +×2 effective (double scoring)
+        UI.flashUpgrade && UI.flashUpgrade('multiBooster');
+      }
+      if (state.divideBooster && op === 'divide') {
+        state.score += finalPts;
+        UI.flashUpgrade && UI.flashUpgrade('divideBooster');
+      }
+      if (state.addBooster && op === 'add') {
+        state.score += finalPts;
+        UI.flashUpgrade && UI.flashUpgrade('addBooster');
+      }
+      if (state.subtractBooster && op === 'subtract') {
+        state.score += finalPts;
+        UI.flashUpgrade && UI.flashUpgrade('subtractBooster');
+      }
+      // SYNERGY: addBooster + subtractBooster → +10 flat pts
+      if (state.addBooster && state.subtractBooster &&
+          (op === 'add' || op === 'subtract')) {
+        state.score += 10;
+      }
+    }
+
+    // Compound Growth: score multiplier ramps ×1.02 each answer
+    if (state.compoundGrowth) {
+      const growthRate = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_compoundReplay'))
+        ? 1.03 : 1.02;
+      // SYNERGY: compoundGrowth + scoreMultPerfect → ×1.04
+      const hasSynCompound = state.activeUpgradeIds &&
+        state.activeUpgradeIds.includes('compoundGrowth') &&
+        state.activeUpgradeIds.includes('scoreMultPerfect');
+      const finalGrowthRate = hasSynCompound ? 1.04 : growthRate;
+      state.scoreMultiplier = (state.scoreMultiplier || 1) * finalGrowthRate;
+      UI.flashUpgrade && UI.flashUpgrade('compoundGrowth');
+    }
+
     // Replay Score: replay the full pts calculation N more times
     for (let r = 0; r < (state.replayCount || 0); r++) {
       state.score += finalPts;
@@ -2379,11 +2449,12 @@ function submitAnswer() {
       }
     }
     // Coin earning for correct answers (run mode only)
+    // Earn coins for skilled play only — not every answer
     if (state.runMode) {
-      let coinsEarned = 1; // base per correct
-      if (inHotZone) coinsEarned += 1;
-      if (state.streak > 0 && state.streak % 5 === 0) coinsEarned += 3;
-      state.runCoins = (state.runCoins || 0) + coinsEarned;
+      let coinsEarned = 0;
+      if (inHotZone) coinsEarned += 1;  // hot zone precision
+      if (state.streak > 0 && state.streak % 5 === 0) coinsEarned += 2;  // streak milestones
+      if (coinsEarned > 0) state.runCoins = (state.runCoins || 0) + coinsEarned;
     }
 
     // Destroy object
@@ -2438,6 +2509,7 @@ function submitAnswer() {
       if (state.replayChain && chainCount > 0) {
         state.score += Math.round(pts * 0.5 * chainCount);
         UI.showLevelUp(`💥 Chain ×2!`, null);
+        UI.flashUpgrade && UI.flashUpgrade('replayChain');
       }
       // Echo Chain: each chain kill also destroys its commutative mirror
       if (state.echoChain && chainKilledObjects.length > 0) {
@@ -2485,10 +2557,6 @@ function submitAnswer() {
           }
         }
       }
-      // Coins per chain kill (run mode)
-      if (state.runMode && chainCount > 0) {
-        state.runCoins = (state.runCoins || 0) + chainCount;
-      }
     }
     // Commutative pair (Twin Stars / Echo Wave / Harmonic)
     if (state.commutativePair) {
@@ -2522,6 +2590,7 @@ function submitAnswer() {
       if (thresholdCrossed) {
         state.score += finalPts;
         UI.showLevelUp('🚀 Streak Surge!', null);
+        UI.flashUpgrade && UI.flashUpgrade('replayStreak');
       }
     }
 
@@ -2583,27 +2652,24 @@ function submitAnswer() {
           const unlockedIds = rp.unlockedUpgrades || [];
           const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds);
           const isFreeStarter = (state.currentAnte === 2); // free pick on first ante
-          UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, (result) => {
-            // Apply reordered bar
-            if (result.newOrder) {
-              state.activeUpgrades   = result.newOrder;
-              state.activeUpgradeIds = result.newOrder.map(u => u.id);
+          UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, (result) => {
+            // Apply reordered bar (newOrder already includes bought items from shop UI)
+            state.activeUpgrades   = result.newOrder;
+            state.activeUpgradeIds = state.activeUpgrades.map(u => u.id);
+            // Reverse effects of sold upgrades
+            for (const sold of (result.sold || [])) {
+              unapplyUpgrade(sold, state);
             }
-            // Process sells
-            if (result.sold && result.sold.length > 0) {
-              for (const sold of result.sold) {
-                unapplyUpgrade(sold, state);
-                state.activeUpgrades   = state.activeUpgrades.filter(u => u !== sold);
-                state.activeUpgradeIds = state.activeUpgradeIds.filter(id => id !== sold.id);
-              }
-            }
-            // Apply purchased upgrade
-            if (result.bought) {
-              result.bought.apply(state);
-              state.activeUpgrades.push(result.bought);
-              state.activeUpgradeIds.push(result.bought.id);
+            // Apply effects of newly bought upgrades
+            const boughtItems = result.boughtList || (result.bought ? [result.bought] : []);
+            for (const bought of boughtItems) {
+              bought.apply(state);
               if (state.speedMult !== undefined) state.speedMult = Math.max(0.4, state.speedMult);
-              state.shopBuysThisRun = (state.shopBuysThisRun || 0) + 1;
+            }
+            state.shopBuysThisRun = (state.shopBuysThisRun || 0) + boughtItems.length;
+            if (boughtItems.length > 0) {
+              state.activeUpgradeIds = state.activeUpgrades.map(u => u.id);
+              Progress.unlockNextUpgrade(state.activeUpgradeIds);
             }
             state.runCoins = result.newCoins;
             // Recompute adjacency bonuses with updated order

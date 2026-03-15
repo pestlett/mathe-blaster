@@ -6,7 +6,8 @@ const UPGRADES = [
     id: 'chain',
     icon: '⛓',
     tier: 'start',
-    price: 6, sellValue: 3,
+    operations: ['all'],
+    price: 10, sellValue: 5,
     names: { space: 'Gravity Well', ocean: 'Riptide', sky: 'Lightning Strike' },
     desc: {
       space: 'Pull all objects with the same answer into the void.',
@@ -19,7 +20,8 @@ const UPGRADES = [
     id: 'streakBoost',
     icon: '✴',
     tier: 'start',
-    price: 6, sellValue: 3,
+    operations: ['all'],
+    price: 10, sellValue: 5,
     names: { space: 'Solar Flare', ocean: 'Tidal Surge', sky: 'Jet Stream' },
     desc: {
       space: 'Streak multiplier blazes: 3+: ×2, 5+: ×3, 8+: ×4.',
@@ -33,7 +35,8 @@ const UPGRADES = [
     icon: '🛡',
     tier: 'start',
     stackable: true,
-    price: 4, sellValue: 2,
+    operations: ['all'],
+    price: 7, sellValue: 3,
     names: { space: 'Shield Array', ocean: 'Coral Armor', sky: 'Gust Guard' },
     desc: {
       space: 'An energy shield absorbs the next miss without losing a life.',
@@ -47,7 +50,8 @@ const UPGRADES = [
     icon: '🌀',
     tier: 'start',
     stackable: true,
-    price: 5, sellValue: 3,
+    operations: ['all'],
+    price: 9, sellValue: 4,
     names: { space: 'Warp Drag', ocean: 'Undertow', sky: 'Headwind' },
     desc: {
       space: 'Warp drag slows all objects to 75% speed for the run.',
@@ -61,7 +65,8 @@ const UPGRADES = [
     icon: '💣',
     tier: 'start',
     stackable: true,
-    price: 4, sellValue: 2,
+    operations: ['all'],
+    price: 7, sellValue: 3,
     names: { space: 'Nova Burst', ocean: 'Depth Charge', sky: 'Thunderbolt' },
     desc: {
       space: 'Charge a nova burst — press Space to destroy the lowest object.',
@@ -74,7 +79,8 @@ const UPGRADES = [
     id: 'hotZoneBoost',
     icon: '🔥',
     tier: 'start',
-    price: 6, sellValue: 3,
+    operations: ['all'],
+    price: 10, sellValue: 5,
     names: { space: 'Event Horizon', ocean: 'Whirlpool', sky: 'Thermal Lift' },
     desc: {
       space: 'The event horizon swells — hot zone widens from 24% to 45%.',
@@ -87,7 +93,8 @@ const UPGRADES = [
     id: 'luckyBonus',
     icon: '🍀',
     tier: 'start',
-    price: 7, sellValue: 4,
+    operations: ['all'],
+    price: 12, sellValue: 6,
     names: { space: 'Nebula Luck', ocean: 'Treasure Drift', sky: 'Lucky Wind' },
     desc: {
       space: 'Every 5th correct answer triggers a random ×2–×5 nebula bonus.',
@@ -100,7 +107,8 @@ const UPGRADES = [
     id: 'quickBonus',
     icon: '⚡',
     tier: 'start',
-    price: 5, sellValue: 3,
+    operations: ['all'],
+    price: 9, sellValue: 4,
     names: { space: 'Warp Strike', ocean: 'Flash Current', sky: 'Tailwind' },
     desc: {
       space: 'Answers within 1.5s earn +20 pts on top of the time bonus.',
@@ -114,7 +122,8 @@ const UPGRADES = [
     id: 'commutative',
     icon: '🔁',
     tier: 'unlock',
-    price: 8, sellValue: 4,
+    operations: ['multiply', 'divide'],
+    price: 14, sellValue: 7,
     names: { space: 'Twin Stars', ocean: 'Echo Wave', sky: 'Harmonic' },
     desc: {
       space: 'Twin stars: answer 3×7 and 7×3 on screen is also destroyed.',
@@ -127,7 +136,8 @@ const UPGRADES = [
     id: 'streakSlow',
     icon: '❄',
     tier: 'unlock',
-    price: 7, sellValue: 4,
+    operations: ['all'],
+    price: 12, sellValue: 6,
     names: { space: 'Dark Matter', ocean: 'Abyss Pull', sky: 'Storm Front' },
     desc: {
       space: 'Dark matter: objects slow to 60% for 5s on every streak of 5.',
@@ -140,7 +150,8 @@ const UPGRADES = [
     id: 'reveal',
     icon: '👁',
     tier: 'unlock',
-    price: 7, sellValue: 4,
+    operations: ['all'],
+    price: 12, sellValue: 6,
     names: { space: 'Pulsar', ocean: 'Sonar Ping', sky: 'Radar Sweep' },
     desc: {
       space: 'Pulsar reveals the answer on the lowest object for 1s when it enters the hot zone.',
@@ -153,7 +164,8 @@ const UPGRADES = [
     id: 'lastChance',
     icon: '💫',
     tier: 'unlock',
-    price: 9, sellValue: 5,
+    operations: ['all'],
+    price: 16, sellValue: 8,
     names: { space: 'Supernova', ocean: 'Tsunami', sky: 'Cyclone' },
     desc: {
       space: 'Once per run: supernova destroys all objects on your 4th miss.',
@@ -171,7 +183,8 @@ const UPGRADES = [
     icon: '✨',
     tier: 'shop',
     stackable: true,
-    price: 10, sellValue: 5,
+    operations: ['all'],
+    price: 22, sellValue: 11,
     names: { space: 'Nebula Lens', ocean: 'Depth Amplifier', sky: 'Sky Lens' },
     desc: {
       space: 'All score ×1.5 for this run. Stacks multiplicatively.',
@@ -185,7 +198,8 @@ const UPGRADES = [
     icon: '🌟',
     tier: 'shop',
     stackable: true,
-    price: 16, sellValue: 9,
+    operations: ['all'],
+    price: 38, sellValue: 19,
     names: { space: 'Supernova Core', ocean: 'Maelstrom', sky: 'Cyclone Heart' },
     desc: {
       space: 'Double all score for this run. Stack for exponential growth.',
@@ -198,7 +212,8 @@ const UPGRADES = [
     id: 'scoreMultPerfect',
     icon: '🎯',
     tier: 'shop',
-    price: 12, sellValue: 6,
+    operations: ['all'],
+    price: 28, sellValue: 14,
     names: { space: 'Precision Core', ocean: "Bull's Eye", sky: 'Pinpoint' },
     desc: {
       space: 'Each hot-zone answer ramps all future score ×1.2 (cap ×8).',
@@ -213,7 +228,8 @@ const UPGRADES = [
     id: 'echoLucky',
     icon: '🔮',
     tier: 'shop',
-    price: 11, sellValue: 6,
+    operations: ['all'],
+    price: 25, sellValue: 12,
     names: { space: 'Nebula Echo', ocean: 'Double Drift', sky: 'Twin Gust' },
     desc: {
       space: 'Lucky Bonus fires twice — the echo rolls ×2–×3.',
@@ -226,7 +242,8 @@ const UPGRADES = [
     id: 'echoChain',
     icon: '🔗',
     tier: 'shop',
-    price: 10, sellValue: 5,
+    operations: ['multiply', 'divide'],
+    price: 22, sellValue: 11,
     names: { space: 'Chain Echo', ocean: 'Wave Echo', sky: 'Lightning Echo' },
     desc: {
       space: "Each chain kill also destroys the mirror fact if it's on screen.",
@@ -239,7 +256,8 @@ const UPGRADES = [
     id: 'echoStreak',
     icon: '💠',
     tier: 'shop',
-    price: 9, sellValue: 5,
+    operations: ['all'],
+    price: 20, sellValue: 10,
     names: { space: 'Streak Echo', ocean: 'Surge Echo', sky: 'Jet Echo' },
     desc: {
       space: 'Hot-zone streak bonus echoes — streak multiplier applied a second time.',
@@ -255,7 +273,8 @@ const UPGRADES = [
     icon: '💰',
     tier: 'shop',
     stackable: true,
-    price: 7, sellValue: 4,
+    operations: ['all'],
+    price: 15, sellValue: 7,
     names: { space: 'Star Mine', ocean: 'Treasure Reef', sky: 'Wind Farm' },
     desc: {
       space: 'Gain +3 bonus coins at the start of each shop. Stack to compound.',
@@ -271,7 +290,8 @@ const UPGRADES = [
     icon: '🔄',
     tier: 'shop',
     stackable: true,
-    price: 14, sellValue: 7,
+    operations: ['all'],
+    price: 32, sellValue: 16,
     names: { space: 'Answer Echo', ocean: 'Tidal Repeat', sky: 'Gust Replay' },
     desc: {
       space: 'After scoring, replay the full answer score once more. Stacks.',
@@ -285,7 +305,8 @@ const UPGRADES = [
     icon: '🎲',
     tier: 'shop',
     stackable: true,
-    price: 11, sellValue: 6,
+    operations: ['all'],
+    price: 25, sellValue: 12,
     names: { space: 'Fortune Cycle', ocean: 'Lucky Current', sky: 'Windfall Loop' },
     desc: {
       space: 'Lucky Bonus fires one extra time when triggered. Stacks.',
@@ -298,7 +319,8 @@ const UPGRADES = [
     id: 'replayChain',
     icon: '💥',
     tier: 'shop',
-    price: 9, sellValue: 5,
+    operations: ['multiply', 'divide'],
+    price: 20, sellValue: 10,
     names: { space: 'Chain Resonance', ocean: 'Splash Repeat', sky: 'Thunder Repeat' },
     desc: {
       space: 'After chain kills, the chain scoring fires a second time.',
@@ -311,7 +333,8 @@ const UPGRADES = [
     id: 'replayHotZone',
     icon: '⭕',
     tier: 'shop',
-    price: 10, sellValue: 5,
+    operations: ['all'],
+    price: 22, sellValue: 11,
     names: { space: 'Zone Loop', ocean: 'Depth Repeat', sky: 'Thermal Repeat' },
     desc: {
       space: 'Hot-zone answers apply the hot-zone multiplier a second time.',
@@ -324,7 +347,8 @@ const UPGRADES = [
     id: 'replayStreak',
     icon: '🚀',
     tier: 'shop',
-    price: 8, sellValue: 4,
+    operations: ['all'],
+    price: 18, sellValue: 9,
     names: { space: 'Streak Surge', ocean: 'Wave Surge', sky: 'Sky Surge' },
     desc: {
       space: 'When you cross a streak threshold (3/5/8), the answer scores again.',
@@ -332,6 +356,126 @@ const UPGRADES = [
       sky:   'Sky surge: streak thresholds launch a repeat of your last answer.',
     },
     apply(state) { state.replayStreak = true; },
+  },
+
+  // ---- New shop upgrades ----
+
+  // Slot Expander
+  {
+    id: 'slotExpander',
+    icon: '🗂',
+    tier: 'shop',
+    stackable: true,
+    operations: ['all'],
+    price: 25, sellValue: 12,
+    names: { space: 'Expansion Bay', ocean: 'Reef Chamber', sky: 'Hangar Bay' },
+    desc: {
+      space: 'Add 1 extra upgrade slot — hold up to 5, 6, 7... upgrades.',
+      ocean: 'Reef chamber grows — carry one more upgrade into battle.',
+      sky:   'Hangar bay expands — fit one more power into your loadout.',
+    },
+    apply(state) { state.maxUpgradeSlots = (state.maxUpgradeSlots || 4) + 1; },
+  },
+  // Operation-specific boosters
+  {
+    id: 'multiBooster',
+    icon: '✖',
+    tier: 'shop',
+    operations: ['multiply'],
+    price: 18, sellValue: 9,
+    names: { space: 'Factor Amplifier', ocean: 'Multiplier Coral', sky: 'Times Thermal' },
+    desc: {
+      space: '× questions score ×2. Only fires on multiplication answers.',
+      ocean: 'Multiplier coral doubles every times-table score.',
+      sky:   'Times thermal: multiplication answers worth double.',
+    },
+    apply(state) { state.multiBooster = true; },
+  },
+  {
+    id: 'divideBooster',
+    icon: '➗',
+    tier: 'shop',
+    operations: ['divide'],
+    price: 18, sellValue: 9,
+    names: { space: 'Division Drive', ocean: 'Split Current', sky: 'Division Downdraft' },
+    desc: {
+      space: '÷ questions score ×2. Only fires on division answers.',
+      ocean: 'Split current: division answers flow in twice as strong.',
+      sky:   'Division downdraft doubles every division score.',
+    },
+    apply(state) { state.divideBooster = true; },
+  },
+  {
+    id: 'addBooster',
+    icon: '➕',
+    tier: 'shop',
+    operations: ['add'],
+    price: 14, sellValue: 7,
+    names: { space: 'Summation Core', ocean: 'Positive Current', sky: 'Updraft Adder' },
+    desc: {
+      space: '+ questions score ×2. Only fires on addition answers.',
+      ocean: 'Positive current doubles every addition score.',
+      sky:   'Updraft adder: addition answers soar twice as high.',
+    },
+    apply(state) { state.addBooster = true; },
+  },
+  {
+    id: 'subtractBooster',
+    icon: '➖',
+    tier: 'shop',
+    operations: ['subtract'],
+    price: 14, sellValue: 7,
+    names: { space: 'Negation Field', ocean: 'Counter-current', sky: 'Downdraft Deduct' },
+    desc: {
+      space: '− questions score ×2. Only fires on subtraction answers.',
+      ocean: 'Counter-current doubles every subtraction score.',
+      sky:   'Downdraft deduct: subtraction answers hit twice as hard.',
+    },
+    apply(state) { state.subtractBooster = true; },
+  },
+  // Exponential mechanics
+  {
+    id: 'cascadeMult',
+    icon: '📈',
+    tier: 'shop',
+    stackable: true,
+    operations: ['all'],
+    price: 30, sellValue: 15,
+    names: { space: 'Cascade Lens', ocean: 'Cascade Reef', sky: 'Cascade Spiral' },
+    desc: {
+      space: 'Each Lucky Bonus permanently raises your score multiplier ×0.3. Stacks.',
+      ocean: 'Cascade reef: every lucky win ripples into a permanent ×0.3 score boost.',
+      sky:   'Cascade spiral: lucky bonuses compound — +×0.3 to score mult each time.',
+    },
+    apply(state) { state.cascadeMultCount = (state.cascadeMultCount || 0) + 1; },
+  },
+  {
+    id: 'compoundGrowth',
+    icon: '🌱',
+    tier: 'shop',
+    operations: ['all'],
+    price: 35, sellValue: 17,
+    names: { space: 'Compound Engine', ocean: 'Growth Reef', sky: 'Compound Thermals' },
+    desc: {
+      space: 'Score multiplier grows ×1.02 after each correct answer — compounds to millions.',
+      ocean: 'Growth reef: every correct answer nudges your multiplier up ×1.02.',
+      sky:   'Compound thermals: each answer adds ×1.02 to your score multiplier.',
+    },
+    apply(state) { state.compoundGrowth = true; },
+  },
+  {
+    id: 'luckyFrequency',
+    icon: '🎰',
+    tier: 'shop',
+    operations: ['all'],
+    price: 26, sellValue: 13,
+    names: { space: 'Lucky Pulsar', ocean: 'Fortune Tide', sky: 'Lucky Draft' },
+    desc: {
+      space: 'Lucky Bonus fires every 3 answers instead of every 5.',
+      ocean: 'Fortune tide surges — lucky hits every 3rd correct answer.',
+      sky:   'Lucky draft whirls faster — trigger every 3 instead of 5.',
+    },
+    apply(state) { state.luckyFrequency = true; },
   },
 ];
 
@@ -344,6 +488,8 @@ const SHOP_UPGRADE_IDS = [
   'scoreMultSmall','scoreMultLarge','scoreMultPerfect',
   'echoLucky','echoChain','echoStreak','starterBoost',
   'replayScore','replayLucky','replayChain','replayHotZone','replayStreak',
+  'slotExpander','multiBooster','divideBooster','addBooster','subtractBooster',
+  'cascadeMult','compoundGrowth','luckyFrequency',
 ];
 
 // ---- Synergies & conflicts ----
@@ -416,6 +562,32 @@ const SYNERGIES = [
     type:   'positive',
     effect: 'Replay chain kills also advance the lucky counter.',
   },
+  // New synergies for new upgrades
+  {
+    ids: ['multiBooster', 'scoreMultSmall'],
+    type: 'positive',
+    effect: 'Multiplication questions get ×1.5 extra on top of the ×2 booster.',
+  },
+  {
+    ids: ['cascadeMult', 'luckyBonus'],
+    type: 'positive',
+    effect: 'Lucky cascade stacks twice as fast — each lucky adds ×0.6 instead of ×0.3.',
+  },
+  {
+    ids: ['compoundGrowth', 'scoreMultPerfect'],
+    type: 'positive',
+    effect: 'Compound growth rate doubles — ×1.04 per answer instead of ×1.02.',
+  },
+  {
+    ids: ['luckyFrequency', 'replayLucky'],
+    type: 'positive',
+    effect: 'Frequent lucky rolls cascade into replays — more replay opportunities.',
+  },
+  {
+    ids: ['addBooster', 'subtractBooster'],
+    type: 'positive',
+    effect: 'Arithmetic mastery: +10 flat pts on every add/subtract answer.',
+  },
 ];
 
 // ---- Adjacency bonuses ----
@@ -467,6 +639,22 @@ const ADJACENCY = [
     ids:    ['echoStreak', 'quickBonus'],
     flag:   'adj_echoQuick',
     effect: 'Echo streak fires on any quick-bonus answer too, not only hot-zone.',
+  },
+  // New adjacency bonuses for new upgrades
+  {
+    ids: ['cascadeMult', 'luckyBonus'],
+    flag: 'adj_cascadeLucky',
+    effect: 'Adjacent cascade+lucky: every 3rd lucky also grants +1 bonus coin.',
+  },
+  {
+    ids: ['compoundGrowth', 'replayScore'],
+    flag: 'adj_compoundReplay',
+    effect: 'Each replay also adds ×1.01 to the compound growth rate.',
+  },
+  {
+    ids: ['multiBooster', 'divideBooster'],
+    flag: 'adj_opMasters',
+    effect: 'Operation Masters: × and ÷ answers also fire a lucky tick.',
   },
 ];
 
@@ -599,6 +787,14 @@ function unapplyUpgrade(upgrade, state) {
     case 'replayChain':      state.replayChain = false; break;
     case 'replayHotZone':    state.replayHotZone = false; break;
     case 'replayStreak':     state.replayStreak = false; break;
+    case 'slotExpander':     state.maxUpgradeSlots = Math.max(4, (state.maxUpgradeSlots || 4) - 1); break;
+    case 'multiBooster':     state.multiBooster = false; break;
+    case 'divideBooster':    state.divideBooster = false; break;
+    case 'addBooster':       state.addBooster = false; break;
+    case 'subtractBooster':  state.subtractBooster = false; break;
+    case 'cascadeMult':      state.cascadeMultCount = Math.max(0, (state.cascadeMultCount || 0) - 1); break;
+    case 'compoundGrowth':   state.compoundGrowth = false; break;
+    case 'luckyFrequency':   state.luckyFrequency = false; break;
   }
 }
 

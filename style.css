@@ -2516,6 +2516,62 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   background: rgba(253,121,168,0.07) !important;
 }
 
+/* Shop slot display */
+.shop-slot-display {
+  font-size: 0.75em;
+  opacity: 0.8;
+  margin-left: 8px;
+  color: var(--theme-contrast, #adf);
+}
+
+/* Shop operation badge */
+.shop-op-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.7em;
+  font-weight: bold;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+/* HUD upgrade strip */
+.hud-upgrades {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.hud-upgrades.hidden { display: none; }
+
+.hud-upgrade-pip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  font-size: 14px;
+  cursor: default;
+  transition: transform 0.1s;
+}
+
+@keyframes upgradePipFlash {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,230,80,0); }
+  20%  { transform: scale(1.6); box-shadow: 0 0 10px 4px rgba(255,230,80,0.8); }
+  60%  { transform: scale(1.2); box-shadow: 0 0 6px 2px rgba(255,230,80,0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,230,80,0); }
+}
+
+.hud-upgrade-pip.hud-upgrade-flash {
+  animation: upgradePipFlash 0.5s ease-out forwards;
+}
+
 /* Run mode game-over section */
 .run-summary {
   background: rgba(162,155,254,0.1);

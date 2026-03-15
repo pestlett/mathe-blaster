@@ -936,6 +936,18 @@ const UI = (() => {
       hudTables += ` | Ante ${state.currentAnte} | 🪙${state.runCoins || 0}` + (badges.length ? ' ' + badges.join(' ') : '');
     }
     document.getElementById('hud-tables').textContent = hudTables;
+    // Run mode upgrade strip
+    const hudUpgradesEl = document.getElementById('hud-upgrades');
+    if (hudUpgradesEl) {
+      if (state.runMode && state.activeUpgrades && state.activeUpgrades.length > 0) {
+        hudUpgradesEl.innerHTML = state.activeUpgrades.map(u =>
+          `<span class="hud-upgrade-pip" data-id="${u.id}" title="${upgradeNameForTheme(u, state.theme)}">${u.icon || '?'}</span>`
+        ).join('');
+        hudUpgradesEl.classList.remove('hidden');
+      } else {
+        hudUpgradesEl.classList.add('hidden');
+      }
+    }
     renderLives(state.lives, state.maxLives, state.theme);
 
     // Active bonus indicators below score
@@ -1852,15 +1864,15 @@ const UI = (() => {
   }
 
   // ---- Shop (run mode) ----
-  // onDone({ bought, sold: [], newCoins, newOrder })
-  function showShop(options, coins, theme, activeUpgrades, isFreeStarter, onDone) {
+  // onDone({ bought, boughtList, sold: [], newCoins, newOrder })
+  function showShop(options, coins, theme, activeUpgrades, isFreeStarter, maxSlots, onDone) {
     const el = document.getElementById('upgrade-picker');
     const card = el.querySelector('.upgrade-picker-card');
     card.innerHTML = ''; // clear existing content
 
     let currentCoins = coins;
     let soldList = [];
-    let boughtUpgrade = null;
+    let boughtList = [];
     let freeUsed = !isFreeStarter;
     let orderArr = [...activeUpgrades];
 
@@ -1875,7 +1887,9 @@ const UI = (() => {
       // Header
       const header = document.createElement('div');
       header.className = 'upgrade-picker-title';
-      header.innerHTML = `Power Shop <span class="shop-coin-display">🪙 ${currentCoins}</span>`;
+      const slotsUsed = orderArr.length;
+      const slotsTotal = maxSlots;
+      header.innerHTML = `Power Shop <span class="shop-coin-display">🪙 ${currentCoins}</span> <span class="shop-slot-display">${slotsUsed}/${slotsTotal} slots</span>`;
       card.appendChild(header);
 
       // Shop cards row
@@ -1886,8 +1900,13 @@ const UI = (() => {
         const desc = upgradeDescForTheme(upg, theme);
         const hints = getSynergyHintsForUpgrade(upg.id, orderArr.map(u => u.id), theme);
         const canAfford = currentCoins >= (upg.price || 0);
-        const alreadyBought = boughtUpgrade !== null;
         const isFreeCard = isFreeStarter && !freeUsed;
+        const slotsLeft = maxSlots - orderArr.length;
+        const slotsFull = slotsLeft <= 0 && !upg.stackable;
+
+        const opBadge = upg.operations && !upg.operations.includes('all')
+          ? `<span class="shop-op-badge">${upg.operations.map(o => ({multiply:'×',divide:'÷',add:'+',subtract:'−'})[o] || o).join('/')}</span>`
+          : '';
 
         const card2 = document.createElement('div');
         card2.className = 'shop-card' +
@@ -1903,28 +1922,32 @@ const UI = (() => {
         }
 
         const btnLabel = isFreeCard ? 'Free!' : `Buy 🪙${upg.price || 0}`;
-        const btnDisabled = alreadyBought || (!isFreeCard && !canAfford) ? 'disabled' : '';
+        const btnDisabled = (!isFreeCard && !canAfford) || slotsFull ? 'disabled' : '';
 
         card2.innerHTML = `
           <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '✨'}</span> ${name}</div>
+          ${opBadge}
           <div class="upgrade-desc">${desc}</div>
           ${hintHtml}
           <button class="shop-buy-btn" ${btnDisabled}>${btnLabel}</button>
         `;
 
         card2.querySelector('.shop-buy-btn').addEventListener('click', () => {
-          if (alreadyBought) return;
           if (!isFreeCard && !canAfford) return;
-          boughtUpgrade = upg;
+          if (slotsFull) return;
           if (!isFreeCard) {
             currentCoins -= upg.price || 0;
-            freeUsed = true;
-          } else {
-            freeUsed = true;
           }
-          el.classList.add('hidden');
+          freeUsed = true;
+          boughtList.push(upg);
+          orderArr.push(upg);
+          // Remove bought non-stackable from shop options
+          if (!upg.stackable) {
+            const idx = options.indexOf(upg);
+            if (idx >= 0) options.splice(idx, 1);
+          }
           _showUpgradeAcquired(upg, theme, () => {
-            onDone({ bought: boughtUpgrade, sold: soldList, newCoins: currentCoins, newOrder: orderArr });
+            renderShop(); // re-render after animation so player can buy more
           });
         });
 
@@ -2011,7 +2034,7 @@ const UI = (() => {
       doneBtn.textContent = 'Done →';
       doneBtn.addEventListener('click', () => {
         el.classList.add('hidden');
-        onDone({ bought: boughtUpgrade, sold: soldList, newCoins: currentCoins, newOrder: orderArr });
+        onDone({ bought: boughtList[boughtList.length - 1] || null, boughtList, sold: soldList, newCoins: currentCoins, newOrder: orderArr });
       });
       card.appendChild(doneBtn);
     }
@@ -2092,6 +2115,16 @@ const UI = (() => {
     }
   }
 
+  // ---- Upgrade Flash ----
+  function flashUpgrade(id) {
+    const pip = document.querySelector(`.hud-upgrade-pip[data-id="${id}"]`);
+    if (!pip) return;
+    pip.classList.remove('hud-upgrade-flash');
+    // Force reflow to restart animation
+    void pip.offsetWidth;
+    pip.classList.add('hud-upgrade-flash');
+  }
+
   // ---- Boss Victory ----
   function showBossVictory(stars, score, name, age, onContinue, onFinish) {
     const overlay = document.getElementById('boss-victory-overlay');
@@ -2106,5 +2139,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, refreshTutorialEntryPoints, showTutorialOverlay, hideTutorialOverlay, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade };
 })();

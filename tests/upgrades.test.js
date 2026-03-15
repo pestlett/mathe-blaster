@@ -39,6 +39,15 @@ function makeState() {
     replayChain: false,
     replayHotZone: false,
     replayStreak: false,
+    // New upgrade flags
+    maxUpgradeSlots: 4,
+    multiBooster: false,
+    divideBooster: false,
+    addBooster: false,
+    subtractBooster: false,
+    cascadeMultCount: 0,
+    compoundGrowth: false,
+    luckyFrequency: false,
   };
 }
 
@@ -47,8 +56,8 @@ function findUpgrade(id) {
 }
 
 describe('UPGRADES definitions', () => {
-  test('all 24 upgrades are defined (12 original + 12 shop)', () => {
-    expect(UPGRADES).toHaveLength(24);
+  test('all 32 upgrades are defined (12 original + 12 shop + 8 new shop)', () => {
+    expect(UPGRADES).toHaveLength(32);
   });
 
   test('every upgrade has required fields', () => {
@@ -60,6 +69,14 @@ describe('UPGRADES definitions', () => {
       expect(u.desc.space).toBeTruthy();
       expect(u.tier).toMatch(/^(start|unlock|shop)$/);
       expect(typeof u.apply).toBe('function');
+    }
+  });
+
+  test('every upgrade has an operations field', () => {
+    for (const u of UPGRADES) {
+      expect(u.operations).toBeDefined();
+      expect(Array.isArray(u.operations)).toBe(true);
+      expect(u.operations.length).toBeGreaterThan(0);
     }
   });
 
@@ -81,8 +98,8 @@ describe('UPGRADES definitions', () => {
     expect(UNLOCK_UPGRADE_IDS).toHaveLength(4);
   });
 
-  test('shop pool has 12 upgrades', () => {
-    expect(SHOP_UPGRADE_IDS).toHaveLength(12);
+  test('shop pool has 20 upgrades', () => {
+    expect(SHOP_UPGRADE_IDS).toHaveLength(20);
   });
 });
 
@@ -327,8 +344,8 @@ describe('commutative pair mechanic', () => {
 
 // ---- SYNERGIES definitions ----
 describe('SYNERGIES definitions', () => {
-  test('13 synergies defined (5 original + 8 new)', () => {
-    expect(SYNERGIES).toHaveLength(13);
+  test('18 synergies defined (5 original + 8 existing + 5 new)', () => {
+    expect(SYNERGIES).toHaveLength(18);
   });
 
   test('each synergy has ids (2), type, and effect', () => {
@@ -345,6 +362,14 @@ describe('SYNERGIES definitions', () => {
     expect(SYNERGIES.some(s => s.ids.includes('echoChain') && s.ids.includes('chain'))).toBe(true);
     expect(SYNERGIES.some(s => s.ids.includes('scoreMultPerfect') && s.ids.includes('hotZoneBoost'))).toBe(true);
     void ids;
+  });
+
+  test('includes new upgrade synergies', () => {
+    expect(SYNERGIES.some(s => s.ids.includes('multiBooster') && s.ids.includes('scoreMultSmall'))).toBe(true);
+    expect(SYNERGIES.some(s => s.ids.includes('cascadeMult') && s.ids.includes('luckyBonus'))).toBe(true);
+    expect(SYNERGIES.some(s => s.ids.includes('compoundGrowth') && s.ids.includes('scoreMultPerfect'))).toBe(true);
+    expect(SYNERGIES.some(s => s.ids.includes('luckyFrequency') && s.ids.includes('replayLucky'))).toBe(true);
+    expect(SYNERGIES.some(s => s.ids.includes('addBooster') && s.ids.includes('subtractBooster'))).toBe(true);
   });
 });
 
@@ -483,8 +508,8 @@ describe('synergy mechanics', () => {
 
 // ---- ADJACENCY definitions ----
 describe('ADJACENCY definitions', () => {
-  test('9 adjacency bonuses defined (5 original + 4 new)', () => {
-    expect(ADJACENCY).toHaveLength(9);
+  test('12 adjacency bonuses defined (5 original + 4 existing + 3 new)', () => {
+    expect(ADJACENCY).toHaveLength(12);
   });
 
   test('each entry has ids (2), flag, and effect', () => {
@@ -778,6 +803,58 @@ describe('shop upgrade apply() — flag setting', () => {
     findUpgrade('replayStreak').apply(state);
     expect(state.replayStreak).toBe(true);
   });
+
+  test('slotExpander increments maxUpgradeSlots (stackable)', () => {
+    const state = makeState();
+    findUpgrade('slotExpander').apply(state);
+    expect(state.maxUpgradeSlots).toBe(5);
+    findUpgrade('slotExpander').apply(state);
+    expect(state.maxUpgradeSlots).toBe(6);
+  });
+
+  test('multiBooster sets multiBooster=true', () => {
+    const state = makeState();
+    findUpgrade('multiBooster').apply(state);
+    expect(state.multiBooster).toBe(true);
+  });
+
+  test('divideBooster sets divideBooster=true', () => {
+    const state = makeState();
+    findUpgrade('divideBooster').apply(state);
+    expect(state.divideBooster).toBe(true);
+  });
+
+  test('addBooster sets addBooster=true', () => {
+    const state = makeState();
+    findUpgrade('addBooster').apply(state);
+    expect(state.addBooster).toBe(true);
+  });
+
+  test('subtractBooster sets subtractBooster=true', () => {
+    const state = makeState();
+    findUpgrade('subtractBooster').apply(state);
+    expect(state.subtractBooster).toBe(true);
+  });
+
+  test('cascadeMult increments cascadeMultCount (stackable)', () => {
+    const state = makeState();
+    findUpgrade('cascadeMult').apply(state);
+    expect(state.cascadeMultCount).toBe(1);
+    findUpgrade('cascadeMult').apply(state);
+    expect(state.cascadeMultCount).toBe(2);
+  });
+
+  test('compoundGrowth sets compoundGrowth=true', () => {
+    const state = makeState();
+    findUpgrade('compoundGrowth').apply(state);
+    expect(state.compoundGrowth).toBe(true);
+  });
+
+  test('luckyFrequency sets luckyFrequency=true', () => {
+    const state = makeState();
+    findUpgrade('luckyFrequency').apply(state);
+    expect(state.luckyFrequency).toBe(true);
+  });
 });
 
 // ---- unapplyUpgrade tests ----
@@ -844,6 +921,76 @@ describe('unapplyUpgrade — reverses apply()', () => {
     unapplyUpgrade(findUpgrade('scoreMultSmall'), state);
     expect(state.scoreMultiplier).toBeCloseTo(1);
   });
+
+  test('unapply slotExpander decrements maxUpgradeSlots (min 4)', () => {
+    const state = makeState();
+    findUpgrade('slotExpander').apply(state);
+    findUpgrade('slotExpander').apply(state);
+    expect(state.maxUpgradeSlots).toBe(6);
+    unapplyUpgrade(findUpgrade('slotExpander'), state);
+    expect(state.maxUpgradeSlots).toBe(5);
+    unapplyUpgrade(findUpgrade('slotExpander'), state);
+    expect(state.maxUpgradeSlots).toBe(4);
+    // Clamps at 4
+    unapplyUpgrade(findUpgrade('slotExpander'), state);
+    expect(state.maxUpgradeSlots).toBe(4);
+  });
+
+  test('unapply multiBooster sets multiBooster=false', () => {
+    const state = makeState();
+    findUpgrade('multiBooster').apply(state);
+    unapplyUpgrade(findUpgrade('multiBooster'), state);
+    expect(state.multiBooster).toBe(false);
+  });
+
+  test('unapply divideBooster sets divideBooster=false', () => {
+    const state = makeState();
+    findUpgrade('divideBooster').apply(state);
+    unapplyUpgrade(findUpgrade('divideBooster'), state);
+    expect(state.divideBooster).toBe(false);
+  });
+
+  test('unapply addBooster sets addBooster=false', () => {
+    const state = makeState();
+    findUpgrade('addBooster').apply(state);
+    unapplyUpgrade(findUpgrade('addBooster'), state);
+    expect(state.addBooster).toBe(false);
+  });
+
+  test('unapply subtractBooster sets subtractBooster=false', () => {
+    const state = makeState();
+    findUpgrade('subtractBooster').apply(state);
+    unapplyUpgrade(findUpgrade('subtractBooster'), state);
+    expect(state.subtractBooster).toBe(false);
+  });
+
+  test('unapply cascadeMult decrements cascadeMultCount (min 0)', () => {
+    const state = makeState();
+    findUpgrade('cascadeMult').apply(state);
+    findUpgrade('cascadeMult').apply(state);
+    expect(state.cascadeMultCount).toBe(2);
+    unapplyUpgrade(findUpgrade('cascadeMult'), state);
+    expect(state.cascadeMultCount).toBe(1);
+    unapplyUpgrade(findUpgrade('cascadeMult'), state);
+    expect(state.cascadeMultCount).toBe(0);
+    // Clamps at 0
+    unapplyUpgrade(findUpgrade('cascadeMult'), state);
+    expect(state.cascadeMultCount).toBe(0);
+  });
+
+  test('unapply compoundGrowth sets compoundGrowth=false', () => {
+    const state = makeState();
+    findUpgrade('compoundGrowth').apply(state);
+    unapplyUpgrade(findUpgrade('compoundGrowth'), state);
+    expect(state.compoundGrowth).toBe(false);
+  });
+
+  test('unapply luckyFrequency sets luckyFrequency=false', () => {
+    const state = makeState();
+    findUpgrade('luckyFrequency').apply(state);
+    unapplyUpgrade(findUpgrade('luckyFrequency'), state);
+    expect(state.luckyFrequency).toBe(false);
+  });
 });
 
 // ---- drawShopOptions tests ----
@@ -865,7 +1012,8 @@ describe('drawShopOptions', () => {
   });
 
   test('includes stackable shop upgrades even when owned', () => {
-    const drawn = drawShopOptions(20, [], ['scoreMultSmall', 'replayScore']);
+    // Draw the full pool (n > total upgrades) to guarantee stackable owned items appear
+    const drawn = drawShopOptions(40, [], ['scoreMultSmall', 'replayScore']);
     const ids = drawn.map(u => u.id);
     expect(ids).toContain('scoreMultSmall');
     expect(ids).toContain('replayScore');

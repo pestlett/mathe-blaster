@@ -26,25 +26,29 @@ The shop replaces the old free upgrade picker. Upgrades now cost **coins**.
 
 ### Coin Earn Rates
 
+Coins are earned for **skilled play** — not every answer. This keeps the economy tighter and purchases meaningful.
+
 | Source | Coins |
 |--------|-------|
-| Correct answer | +1 |
-| Hot-zone correct | +1 extra |
-| 5-streak milestone | +3 |
-| Chain kill (per extra object) | +1 |
+| Hot-zone correct answer | +1 |
+| 5-streak milestone | +2 |
 | Ante cleared | +5 |
 | Level 2★ | +1 |
 | Level 3★ | +2 |
 | `starterBoost` upgrade (per stack) | +3 extra per ante |
 | `adj_multStack` adjacency bonus | +1 extra per ante |
+| `adj_cascadeLucky` adjacency bonus | +1 per 3rd lucky trigger |
+
+Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zone hits, 1–2 streak milestones).
 
 ### Shop Mechanics
 
 - **3 upgrade cards** drawn from the full pool (start + unlock + shop tiers)
-- **Buy**: costs coins shown on the card; 1 purchase allowed per shop visit
+- **Buy**: costs coins shown on the card; **unlimited purchases** per visit (limited by slot count and coins)
+- **Slot limit**: active upgrades capped at `state.maxUpgradeSlots` (default 4); buy `slotExpander` to increase
 - **Free pick**: the very first ante (ante 1→2) grants one free pick
 - **Sell**: any owned upgrade can be sold for its `sellValue` (coins returned immediately)
-- **Reroll**: costs 4 coins, draws 3 fresh cards; flat cost (doesn't increase)
+- **Reroll**: costs 8 coins, draws 3 fresh cards; flat cost (doesn't increase)
 - **Done**: close shop without buying (sells still apply)
 
 ## Ante Score Targets
@@ -61,7 +65,7 @@ Score is measured from the start of each ante (delta score, not total).
 
 ## Upgrades
 
-12 upgrades total: 8 available from the start, 4 unlocked via milestones.
+32 upgrades total: 8 available from the start, 4 unlocked via milestones, 20 shop-tier.
 
 ### Starting Upgrades (tier: 'start')
 
@@ -89,23 +93,51 @@ Upgrade unlock status is persisted in `progress.run.unlockedUpgrades`.
 
 ### Shop Upgrade Pricing
 
-All upgrades now have `price` and `sellValue` fields. Shop-tier upgrades are
+All upgrades have `price`, `sellValue`, and `operations` fields. Shop-tier upgrades are
 only available through the shop (never in `drawUpgrades` for legacy free picks).
+Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen upgrades.
 
-| ID | Price | Sell | Stackable |
-|----|-------|------|-----------|
-| `scoreMultSmall` | 10 | 5 | ✓ |
-| `scoreMultLarge` | 16 | 9 | ✓ |
-| `scoreMultPerfect` | 12 | 6 | — |
-| `echoLucky` | 11 | 6 | — |
-| `echoChain` | 10 | 5 | — |
-| `echoStreak` | 9 | 5 | — |
-| `starterBoost` | 7 | 4 | ✓ |
-| `replayScore` | 14 | 7 | ✓ |
-| `replayLucky` | 11 | 6 | ✓ |
-| `replayChain` | 9 | 5 | — |
-| `replayHotZone` | 10 | 5 | — |
-| `replayStreak` | 8 | 4 | — |
+**Starting/unlock tier:**
+
+| ID | Price | Sell | Operations |
+|----|-------|------|------------|
+| `chain` | 10 | 5 | all |
+| `streakBoost` | 10 | 5 | all |
+| `shield` | 7 | 3 | all (stackable) |
+| `slowAll` | 9 | 4 | all (stackable) |
+| `bomb` | 7 | 3 | all (stackable) |
+| `hotZoneBoost` | 10 | 5 | all |
+| `luckyBonus` | 12 | 6 | all |
+| `quickBonus` | 9 | 4 | all |
+| `commutative` | 14 | 7 | ×, ÷ |
+| `streakSlow` | 12 | 6 | all |
+| `reveal` | 12 | 6 | all |
+| `lastChance` | 16 | 8 | all |
+
+**Shop tier (all available in shop regardless of milestones):**
+
+| ID | Price | Sell | Stackable | Operations |
+|----|-------|------|-----------|------------|
+| `scoreMultSmall` | 22 | 11 | ✓ | all |
+| `scoreMultLarge` | 38 | 19 | ✓ | all |
+| `scoreMultPerfect` | 28 | 14 | — | all |
+| `echoLucky` | 25 | 12 | — | all |
+| `echoChain` | 22 | 11 | — | ×, ÷ |
+| `echoStreak` | 20 | 10 | — | all |
+| `starterBoost` | 15 | 7 | ✓ | all |
+| `replayScore` | 32 | 16 | ✓ | all |
+| `replayLucky` | 25 | 12 | ✓ | all |
+| `replayChain` | 20 | 10 | — | ×, ÷ |
+| `replayHotZone` | 22 | 11 | — | all |
+| `replayStreak` | 18 | 9 | — | all |
+| `slotExpander` | 25 | 12 | ✓ | all |
+| `multiBooster` | 18 | 9 | — | × only |
+| `divideBooster` | 18 | 9 | — | ÷ only |
+| `addBooster` | 14 | 7 | — | + only |
+| `subtractBooster` | 14 | 7 | — | − only |
+| `cascadeMult` | 30 | 15 | ✓ | all |
+| `compoundGrowth` | 35 | 17 | — | all |
+| `luckyFrequency` | 26 | 13 | — | all |
 
 ### Shop Upgrade Effects
 
@@ -116,6 +148,29 @@ only available through the shop (never in `drawUpgrades` for legacy free picks).
 | `scoreMultSmall` | ×1.5 all score. Each stack multiplies again (×2.25, ×3.375…) |
 | `scoreMultLarge` | ×2 all score. Stacks multiplicatively |
 | `scoreMultPerfect` | Each hot-zone answer ramps `scoreMultiplier` ×1.2 (cap ×8; raised to ×12 with `hotZoneBoost`) |
+
+**Operation Boosters** — double score for a specific operation:
+
+| ID | Effect |
+|----|--------|
+| `multiBooster` | × answers score ×2 (awards `finalPts` a second time). No effect on other ops |
+| `divideBooster` | ÷ answers score ×2. No effect on other ops |
+| `addBooster` | + answers score ×2. No effect on other ops |
+| `subtractBooster` | − answers score ×2. No effect on other ops |
+
+**Exponential Mechanics** — compound score into the millions and billions:
+
+| ID | Effect |
+|----|--------|
+| `cascadeMult` | Each Lucky Bonus permanently raises `scoreMultiplier` by +0.3 per stack. With synergy (adj): +0.6 |
+| `compoundGrowth` | `scoreMultiplier` grows ×1.02 after every correct answer. With synergy: ×1.04 |
+| `luckyFrequency` | Lucky Bonus threshold reduced from every 5 answers to every 3 |
+
+**Slot Expander:**
+
+| ID | Effect |
+|----|--------|
+| `slotExpander` | `state.maxUpgradeSlots` +1 (default 4; max limited by `stackable` application) |
 
 **Echoes** — cause a specific effect to fire again:
 
@@ -155,6 +210,11 @@ When both upgrades in a pair are active, additional effects apply:
 | `echoLucky` + `chain` | negative | Echo lucky cannot fire on chain-triggered lucky events |
 | `replayLucky` + `echoLucky` | positive | Echo fires on each replay lucky roll too |
 | `replayChain` + `chain` | positive | Replay chain kills also advance the lucky counter |
+| `multiBooster` + `scoreMultSmall` | positive | × questions get ×1.5 extra on top of the ×2 booster |
+| `cascadeMult` + `luckyBonus` | positive | Lucky cascade adds ×0.6 instead of ×0.3 per stack |
+| `compoundGrowth` + `scoreMultPerfect` | positive | Compound growth rate doubles (×1.04 per answer) |
+| `luckyFrequency` + `replayLucky` | positive | More frequent lucky rolls create more replay opportunities |
+| `addBooster` + `subtractBooster` | positive | Arithmetic mastery: +10 flat pts on every +/− answer |
 
 ## Adjacency Bonuses
 
@@ -172,6 +232,9 @@ can reorder upgrades between rounds to activate/deactivate these.
 | `scoreMultSmall` + `scoreMultLarge` | `adj_multStack` | +1 bonus coin per ante when both adjacent |
 | `echoChain` + `chain` | `adj_echoChain` | Echo chain mirror kill counts as a full lucky tick |
 | `echoStreak` + `quickBonus` | `adj_echoQuick` | Echo streak fires on any quick-bonus answer too |
+| `cascadeMult` + `luckyBonus` | `adj_cascadeLucky` | Every 3rd lucky trigger awards +1 coin |
+| `compoundGrowth` + `replayScore` | `adj_compoundReplay` | Each replay also adds ×1.01 compound growth |
+| `multiBooster` + `divideBooster` | `adj_opMasters` | × and ÷ answers also fire a lucky tick |
 
 Adjacency is computed by `getAdjacencyBonuses(upgrades)` in `upgrades.js` and
 stored in `state.adjacencyBonuses` (a `Set` of flag strings).
@@ -214,7 +277,24 @@ state.replayLuckyCount   // number — extra lucky rolls (replayLucky stacks)
 state.replayChain        // boolean
 state.replayHotZone      // boolean
 state.replayStreak       // boolean
+// Slot system
+state.maxUpgradeSlots    // number (default 4, +1 per slotExpander)
+// Operation boosters
+state.multiBooster       // boolean
+state.divideBooster      // boolean
+state.addBooster         // boolean
+state.subtractBooster    // boolean
+// Exponential mechanics
+state.cascadeMultCount   // number (stacks of cascadeMult owned)
+state.compoundGrowth     // boolean (grows scoreMultiplier ×1.02 each correct answer)
+state.luckyFrequency     // boolean (lucky threshold 5 → 3)
 ```
+
+## HUD Upgrade Strip
+
+When in run mode, active upgrades are displayed as emoji pips in `#hud-upgrades`
+below the level/tables row. When an upgrade effect fires, `UI.flashUpgrade(id)`
+triggers a CSS pulse animation (`upgradePipFlash`) on the corresponding pip.
 
 ## Adding a New Upgrade
 
