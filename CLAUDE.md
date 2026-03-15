@@ -1,5 +1,13 @@
 # Mathe Blaster! — Development Guide
 
+## Pedagogical Source of Truth — PIKAS
+**All game design decisions follow the PIKAS framework** (German federal primary
+school maths curriculum, Klassen 1–4). Before adding or changing any game
+mechanic, content, or difficulty setting, read `docs/pikas.md`.
+
+Key rule: *if a German Klasse 3 teacher wouldn't recognise it as appropriate
+content, don't add it.*
+
 ## Working in a git worktree
 **Always work in a git worktree** — never modify the main checkout directly.
 
@@ -21,6 +29,36 @@
 4. Commit with a concise message (what changed and why)
 5. Push directly to `main` — this triggers CI tests and deploys to GitHub Pages
 
+## Documentation
+**Keep `docs/` in sync with the code.** When a change affects game mechanics,
+settings, storage schema, operations, upgrades, or achievements, update the
+relevant doc file in the same commit.
+
+| Change type | Doc(s) to update |
+|-------------|-----------------|
+| New operation or question type | `docs/operations.md` |
+| New setting in startGame() | `docs/game-settings.md` |
+| New localStorage field or achievement | `docs/storage-schema.md` |
+| New upgrade, synergy, or ante target | `docs/run-mode.md` |
+| New module, screen, or architectural pattern | `docs/architecture.md` |
+| Any of the above | `docs/adding-features.md` (update the checklist) |
+
+Use `/sync-docs` to audit docs against the codebase at any time.
+
+## Slash Commands
+Project-specific commands are in `.claude/commands/`. Use them by name:
+
+| Command | Purpose |
+|---------|---------|
+| `/new-operation` | Guided walkthrough for adding a math operation |
+| `/new-theme` | Guided walkthrough for adding a visual theme |
+| `/new-upgrade` | Guided walkthrough for adding a run-mode upgrade |
+| `/new-achievement` | Guided walkthrough for adding an achievement |
+| `/check-i18n` | Audit translations for missing keys across EN/DE/ES |
+| `/sync-docs` | Check docs/ for staleness against current code |
+| `/review-change` | Pre-implementation review of a proposed mechanic change |
+| `/debug-voice` | Diagnose voice input problems |
+
 ## Versioning
 The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
 
@@ -41,25 +79,52 @@ The only exception is a deliberate MINOR or MAJOR bump (new feature set or redes
 
 `js/version.js` and `sw.js` are **always** overwritten by CI — any manual changes to them will be lost on the next deploy.
 
-## File structure
+## File Structure
+
+### Source
 | File | Purpose |
 |------|---------|
-| `index.html` | Single HTML shell |
+| `index.html` | Single HTML shell — all screens live here as `<div class="screen">` |
 | `style.css` | All styling |
-| `js/version.js` | App version (injected by CI from `package.json`; update `package.json` instead) |
-| `js/main.js` | State machine, entry point |
-| `js/engine.js` | requestAnimationFrame game loop |
-| `js/questions.js` | Weighted question pool |
-| `js/objects.js` | Falling object logic + particles |
-| `js/targeting.js` | Arrow-key snap targeting |
-| `js/themes.js` | Space / Ocean / Sky canvas renderers |
-| `js/audio.js` | Web Audio API synth music + SFX |
-| `js/progress.js` | localStorage: stats, sessions, settings |
-| `js/ui.js` | Screen management, HUD, overlays |
+| `js/version.js` | App version (injected by CI; edit `package.json` instead) |
+| `js/main.js` | State machine, game loop callbacks, answer handling, scoring |
+| `js/engine.js` | requestAnimationFrame loop, canvas sizing, delta time |
+| `js/questions.js` | Weighted question pool builder, seeded RNG |
+| `js/objects.js` | Falling object factory, boss/freeze/life-up, particles |
+| `js/targeting.js` | Arrow-key snap targeting (reference-based, not index-based) |
+| `js/themes.js` | Space / Ocean / Sky / Cats canvas background renderers |
+| `js/audio.js` | Web Audio API synth music + SFX, one set per theme |
+| `js/progress.js` | localStorage: stats, sessions, mastery, achievements, profiles |
+| `js/upgrades.js` | Run-mode upgrade definitions, synergies, adjacency bonuses |
+| `js/ui.js` | Screen management, HUD, overlays, onboarding form |
 | `js/i18n.js` | EN / DE / ES translations |
-| `js/voice.js` | Web Speech API voice input |
+| `js/voice.js` | Web Speech API: recognition, echo suppression, word parsing |
 | `manifest.json` + `sw.js` | PWA / offline support |
-| `tests/` | Jest unit tests |
+
+### Tests
+| File | Tests |
+|------|-------|
+| `tests/questions.test.js` | Pool building, weighting, carry/borrow logic |
+| `tests/progress.test.js` | Storage schema, mastery, achievements, profiles |
+| `tests/targeting.test.js` | Arrow-key targeting, reference tracking |
+| `tests/voice.test.js` | Word mapping, number parsing |
+| `tests/voice-processing.test.js` | Voice result processing pipeline |
+| `tests/voicemode.test.js` | Voice interaction integration |
+| `tests/objects.test.js` | Object creation, physics, particles |
+| `tests/upgrades.test.js` | Upgrade apply(), synergies, adjacency |
+| `tests/i18n.test.js` | Translation key consistency across languages |
+| `tests/helpers/context.js` | DOM mocks / test setup |
+
+### Docs
+| File | Covers |
+|------|--------|
+| `docs/pikas.md` | **Pedagogical source of truth** — PIKAS curriculum, design rules, scope |
+| `docs/architecture.md` | Module map, data flow, key patterns, scoring formula |
+| `docs/operations.md` | All operations, question key formats, Pikas curriculum |
+| `docs/game-settings.md` | Complete `startGame()` settings reference |
+| `docs/storage-schema.md` | localStorage schema, mastery system, achievement IDs |
+| `docs/run-mode.md` | Ante system, all upgrades, synergies, adjacency bonuses |
+| `docs/adding-features.md` | Per-feature checklists (operation / theme / upgrade / achievement / i18n / screen) |
 
 ## Tests
 `npm test` — must pass before every commit. CI blocks deployment if they fail.
