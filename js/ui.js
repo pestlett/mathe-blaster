@@ -10,6 +10,8 @@ const UI = (() => {
     dashboard: document.getElementById('screen-dashboard')
   };
 
+  let _refreshTutorialEntryPoints = () => {};
+
   function showScreen(name) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[name].classList.add('active');
@@ -19,7 +21,7 @@ const UI = (() => {
   }
 
   // ---- Onboarding ----
-  function initOnboarding(onStart) {
+  function initOnboarding(onStart, onStartTutorial) {
     const nameInput = document.getElementById('input-name');
     const ageInput = document.getElementById('input-age');
     const rangeMin = document.getElementById('range-min');
@@ -30,6 +32,10 @@ const UI = (() => {
     const hintLabel = document.getElementById('hint-label');
     const modeNote = document.getElementById('mode-note');
     const btnStart = document.getElementById('btn-start');
+    const tutorialHomeRow = document.getElementById('tutorial-home-row');
+    const btnTutorialMain = document.getElementById('btn-tutorial-main');
+    const tutorialSettingsRow = document.getElementById('tutorial-settings-row');
+    const btnTutorialSettings = document.getElementById('btn-tutorial-settings');
 
     let selectedTheme = 'space';
     let selectedDiff = 'medium';
@@ -189,6 +195,8 @@ const UI = (() => {
       }
       if (typeof ps.triggerMode !== 'undefined') _setTriggerMode(ps.triggerMode);
       if (ps.triggerWord && triggerWdInput) triggerWdInput.value = ps.triggerWord;
+      Progress.setPlayer(nameInput.value.trim(), ageInput.value);
+      _refreshTutorialEntryPoints();
     }
 
     profileSelect?.addEventListener('change', () => {
@@ -516,19 +524,82 @@ const UI = (() => {
     triggerRecordBtn?.addEventListener('pointerup',    () => _stopTriggerRecording());
     triggerRecordBtn?.addEventListener('pointerleave', () => _stopTriggerRecording());
 
-    btnStart.addEventListener('click', () => {
+    function _requireIdentity() {
       const name = nameInput.value.trim();
       const age = parseInt(ageInput.value);
       if (!name) {
         openSettings();
         setTimeout(() => { nameInput.focus(); nameInput.classList.add('field-error'); }, 50);
-        return;
+        return null;
       }
       if (!age || age < 1 || age > 132) {
         openSettings();
         setTimeout(() => { ageInput.focus(); ageInput.classList.add('field-error'); }, 50);
-        return;
+        return null;
       }
+      return { name, age };
+    }
+
+    function _buildTutorialSettings(identity) {
+      return {
+        ...identity,
+        theme: selectedTheme,
+        minTable: 2,
+        maxTable: 5,
+        operation: 'multiply',
+        operations: ['multiply'],
+        addSubRange: 100,
+        difficulty: 'easy',
+        hintThreshold: parseInt(hintThreshInput.value),
+        practiceMode: false,
+        triggerMode: true,
+        triggerWord: triggerWdInput?.value?.trim() || '',
+        tutorialMode: true,
+      };
+    }
+
+    function _startTutorialFlow() {
+      if (typeof onStartTutorial !== 'function') return;
+      const identity = _requireIdentity();
+      if (!identity) return;
+      Progress.setPlayer(identity.name, identity.age);
+      Progress.saveName(identity.name);
+      Progress.saveSettings({
+        ...Progress.loadSettings(),
+        theme: selectedTheme,
+        diff: selectedDiff,
+        mode: selectedMode,
+        operation: selectedOp,
+        tablesMode,
+        rangeMin: rangeMin.value,
+        rangeMax: rangeMax.value,
+        singleTable: focusSingleTable,
+        hintThreshold: parseInt(hintThreshInput.value),
+        lastPlayer: identity.name,
+        lastAge: identity.age,
+        triggerMode: _triggerModeOn,
+        triggerWord: triggerWdInput?.value?.trim() || '',
+        numRange: selectedNumRange,
+        zehner: selectedZehner,
+        halbschriftlich: selectedHalbschriftlich,
+        mixedPreset: selectedOperations ? selectedOperations.join(',') : null,
+      });
+      onStartTutorial(_buildTutorialSettings(identity));
+    }
+
+    _refreshTutorialEntryPoints = () => {
+      const completed = Progress.isTutorialCompleted();
+      if (tutorialHomeRow) tutorialHomeRow.hidden = completed;
+      if (tutorialSettingsRow) tutorialSettingsRow.style.display = completed ? '' : 'none';
+    };
+
+    btnTutorialMain?.addEventListener('click', _startTutorialFlow);
+    btnTutorialSettings?.addEventListener('click', _startTutorialFlow);
+
+    btnStart.addEventListener('click', () => {
+      const identity = _requireIdentity();
+      if (!identity) return;
+      const { name, age } = identity;
 
       let min, max;
       if (selectedOp === 'add' || selectedOp === 'subtract') {
@@ -690,6 +761,7 @@ const UI = (() => {
     function _onIdentityChange() {
       Progress.setPlayer(nameInput.value.trim(), ageInput.value);
       _updateTablesRange();
+      _refreshTutorialEntryPoints();
     }
     nameInput.addEventListener('change', _onIdentityChange);
     ageInput.addEventListener('change', _onIdentityChange);
@@ -753,6 +825,7 @@ const UI = (() => {
     // Apply all dynamic strings in the current language (must run after settings restore)
     _refreshDynamicOnboarding(selectedMode);
     _refreshDailyBtn();
+    _refreshTutorialEntryPoints();
     if (!nameInput.value.trim()) openSettings();
 
     // Apply challenge config from URL param (must run last so all listeners are ready)
@@ -777,6 +850,26 @@ const UI = (() => {
         banner.textContent = I18n.t('challengeBanner', { score: cfg.score ?? '?' });
       }
     }
+  }
+
+  function showTutorialOverlay(text, title = null) {
+    const overlay = document.getElementById('tutorial-overlay');
+    const titleEl = document.getElementById('tutorial-overlay-title');
+    const textEl = document.getElementById('tutorial-overlay-text');
+    if (!overlay || !titleEl || !textEl) return;
+    titleEl.textContent = title || I18n.t('tutorialOverlayTitle');
+    textEl.textContent = text || '';
+    overlay.classList.remove('hidden');
+  }
+
+  function hideTutorialOverlay() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+  }
+
+  function refreshTutorialEntryPoints() {
+    _refreshTutorialEntryPoints();
   }
 
   // ---- HUD ----
@@ -1605,6 +1698,6 @@ const UI = (() => {
     overlay.classList.add('visible');
   }
 
-  return { showScreen, initOnboarding, updateHUD, showCombo, showTryAgain,
+  return { showScreen, initOnboarding, refreshTutorialEntryPoints, showTutorialOverlay, hideTutorialOverlay, updateHUD, showCombo, showTryAgain,
     shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory };
 })();

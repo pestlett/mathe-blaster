@@ -27,6 +27,12 @@ const Voice = (() => {
   let _pendingFire    = null;
   let _pendingCommand = null;
 
+  function later(fn, ms) {
+    const timer = setTimeout(fn, ms);
+    if (typeof timer?.unref === 'function') timer.unref();
+    return timer;
+  }
+
   let _triggerMode = true;   // always on — only the trigger word is configurable
   let _triggerWord = '';     // empty = use full cmds.fire list as triggers
 
@@ -393,7 +399,7 @@ const Voice = (() => {
           callbacks.onFire?.();
           callbacks.onResultDone?.();
         } else {
-          _pendingCommand = { timer: setTimeout(() => {
+          _pendingCommand = { timer: later(() => {
             _pendingCommand = null;
             console.log('[Voice] cmd: fire (delayed)');
             callbacks.onFire?.();
@@ -515,7 +521,7 @@ const Voice = (() => {
       // conf=0 streaming partial — hold briefly so the engine can extend it.
       // If a better result arrives within PARTIAL_DELAY_MS it cancels this one.
       const snap = { winner, votes, alternatives };
-      _pendingFire = { winner, timer: setTimeout(() => {
+      _pendingFire = { winner, timer: later(() => {
         _pendingFire = null;
         _doFire(snap.winner, snap.votes, snap.alternatives);
       }, PARTIAL_DELAY_MS) };
@@ -563,7 +569,7 @@ const Voice = (() => {
   function resetWatchdog() {
     clearTimeout(watchdogTimer);
     if (shouldRestart && listening) {
-      watchdogTimer = setTimeout(() => {
+      watchdogTimer = later(() => {
         if (shouldRestart && listening) {
           console.log('[Voice] watchdog abort+restart');
           try { recognition.abort(); } catch (_) {}
@@ -574,14 +580,14 @@ const Voice = (() => {
 
   function scheduleRestart() {
     clearTimeout(restartTimer);
-    restartTimer = setTimeout(() => {
+    restartTimer = later(() => {
       if (!shouldRestart || !listening) return;
       recognition.lang = recognitionLang();
       try {
         recognition.start();
         resetWatchdog();
       } catch (e) {
-        if (e.name !== 'InvalidStateError') setTimeout(scheduleRestart, 200);
+        if (e.name !== 'InvalidStateError') later(scheduleRestart, 200);
       }
     }, 80);
   }

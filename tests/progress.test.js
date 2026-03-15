@@ -241,6 +241,28 @@ describe('Progress extended tables unlock', () => {
   });
 });
 
+describe('Tutorial completion persistence', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeProgressCtx(); ctx.Progress.setPlayer('Emma', 7); });
+
+  test('tutorial is incomplete by default', () => {
+    expect(ctx.Progress.isTutorialCompleted()).toBe(false);
+  });
+
+  test('markTutorialCompleted persists the completion flag', () => {
+    ctx.Progress.markTutorialCompleted();
+    expect(ctx.Progress.isTutorialCompleted()).toBe(true);
+    const stored = JSON.parse(ctx.localStorage.getItem('multiblaster_v1_emma_7'));
+    expect(typeof stored.lifetime.tutorialCompletedAt).toBe('string');
+  });
+
+  test('tutorial completion is per-player', () => {
+    ctx.Progress.markTutorialCompleted();
+    ctx.Progress.setPlayer('Dad', 40);
+    expect(ctx.Progress.isTutorialCompleted()).toBe(false);
+  });
+});
+
 describe('Klasse 3 Komplett achievement', () => {
   function makeFullStats() {
     const s = {};
