@@ -1746,10 +1746,107 @@ const Themes = (() => {
     ctx.globalAlpha = alpha;
     ctx.fillStyle = '#00aaff';
     ctx.fillRect(0, 0, w, h);
-    ctx.globalAlpha = Math.min(0.6, secondsLeft * 0.12);
-    ctx.strokeStyle = '#00d4ff';
-    ctx.lineWidth = 6;
+    // Border flashes rapidly when about to expire
+    const expiring = secondsLeft < 1.5;
+    const borderAlpha = expiring
+      ? Math.abs(Math.sin(Date.now() * 0.008)) * 0.85
+      : Math.min(0.6, secondsLeft * 0.12);
+    ctx.globalAlpha = borderAlpha;
+    ctx.strokeStyle = expiring ? '#ffffff' : '#00d4ff';
+    ctx.lineWidth = expiring ? 4 : 6;
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = expiring ? 18 : 0;
     ctx.strokeRect(3, 3, w - 6, h - 6);
+    ctx.restore();
+  }
+
+  // Glowing forcefield bar across the bottom while shield is active
+  function drawShieldForceField(ctx, w, h, theme) {
+    const t = Date.now() * 0.001;
+    const color = { space: '#00ccff', ocean: '#55cc88', sky: '#aabbee', cats: '#ff66aa' }[theme] || '#00ccff';
+    const barY = h - 14;
+    const pulse = 0.65 + 0.35 * Math.sin(t * 2.8);
+
+    ctx.save();
+
+    // Glow beneath the bar
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 22 * pulse;
+
+    // Main gradient bar (bright line fading downward)
+    const grad = ctx.createLinearGradient(0, barY - 8, 0, h);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.35, color + 'aa');
+    grad.addColorStop(0.65, color + 'dd');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = pulse * 0.9;
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, barY - 8, w, 22);
+
+    // Bright top edge line
+    ctx.globalAlpha = pulse * 0.95;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(0, barY - 2);
+    ctx.lineTo(w, barY - 2);
+    ctx.stroke();
+
+    // Slow-travelling energy nodes along the bar
+    const nodeCount = Math.ceil(w / 110);
+    for (let i = 0; i < nodeCount; i++) {
+      const baseX = (i / nodeCount) * w;
+      const nx = (baseX + t * 38) % w;
+      const nodeAlpha = 0.45 + 0.55 * Math.abs(Math.sin(t * 2.2 + i * 1.7));
+      ctx.globalAlpha = nodeAlpha * pulse;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(nx, barY - 2, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // Golden shimmer/aura around the weapon while score-star is ready
+  function drawScoreStarAura(ctx, w, h, tx, ty, theme) {
+    const t = Date.now() * 0.001;
+    const color = { space: '#ffd700', ocean: '#ffcc44', sky: '#ffd700', cats: '#f0c030' }[theme] || '#ffd700';
+    const pulse = 0.6 + 0.4 * Math.sin(t * 3.2);
+
+    ctx.save();
+
+    // Rotating dashed orbit ring
+    ctx.globalAlpha = 0.6 * pulse;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 5]);
+    ctx.lineDashOffset = -(t * 55) % 24;
+    ctx.beginPath();
+    ctx.arc(tx, ty, 38, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Orbiting sparkle dots
+    const dots = 5;
+    ctx.setLineDash([]);
+    for (let i = 0; i < dots; i++) {
+      const angle = (i / dots) * Math.PI * 2 + t * 2.6;
+      const r = 32 + Math.sin(t * 3 + i * 1.4) * 6;
+      const sx = tx + Math.cos(angle) * r;
+      const sy = ty + Math.sin(angle) * r;
+      const dotAlpha = (0.45 + 0.55 * Math.abs(Math.sin(t * 4 + i * 1.2))) * 0.9;
+      ctx.globalAlpha = dotAlpha;
+      ctx.shadowBlur = 9;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 
@@ -1764,11 +1861,12 @@ const Themes = (() => {
     const age = 1 - pct;                       // 0=just activated → 1=expired
     ctx.save();
     switch (flash.type) {
-      case 'lightning': _flashLightning(ctx, w, h, age, pct, theme, flash); break;
-      case 'lifeup':    _flashLifeUp(ctx, w, h, age, pct, theme); break;
-      case 'scoreStar': _flashScoreStar(ctx, w, h, age, pct, theme); break;
-      case 'shield':    _flashShield(ctx, w, h, age, pct, theme); break;
-      case 'magnet':    _flashMagnet(ctx, w, h, age, pct, theme); break;
+      case 'lightning':      _flashLightning(ctx, w, h, age, pct, theme, flash); break;
+      case 'lifeup':         _flashLifeUp(ctx, w, h, age, pct, theme); break;
+      case 'scoreStar':      _flashScoreStar(ctx, w, h, age, pct, theme); break;
+      case 'shield':         _flashShield(ctx, w, h, age, pct, theme); break;
+      case 'shieldAbsorbed': _flashShieldAbsorbed(ctx, w, h, age, pct, theme); break;
+      case 'magnet':         _flashMagnet(ctx, w, h, age, pct, theme); break;
     }
     ctx.restore();
   }
@@ -1905,6 +2003,39 @@ const Themes = (() => {
     ctx.globalAlpha = pct * 0.3;
     ctx.shadowBlur = 15;
     ctx.strokeRect(thick * 1.5, thick * 1.5, w - thick * 3, h - thick * 3);
+  }
+
+  // Shield absorbed: expanding arcs from the bottom + bright base flash
+  function _flashShieldAbsorbed(ctx, w, h, age, pct, theme) {
+    const color = { space: '#00ccff', ocean: '#55cc88', sky: '#aabbee', cats: '#ff66aa' }[theme] || '#00ccff';
+
+    // Brief bright gradient flash from bottom
+    if (age < 0.22) {
+      const flashA = (1 - age / 0.22) * 0.75;
+      const g = ctx.createLinearGradient(0, h, 0, h - 130);
+      g.addColorStop(0, color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = flashA;
+      ctx.fillStyle = g;
+      ctx.fillRect(0, h - 130, w, 130);
+    }
+
+    // Three staggered semi-circular shockwaves expanding upward from bottom-centre
+    ctx.shadowColor = color;
+    for (let i = 0; i < 3; i++) {
+      const delay = i * 0.09;
+      const wt = Math.max(0, age - delay);
+      if (wt <= 0) continue;
+      const r = wt * h * 1.55;
+      const alpha = Math.max(0, (1 - wt) * pct * 0.9);
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3.5 - i * 0.8;
+      ctx.shadowBlur = 20 - i * 4;
+      ctx.beginPath();
+      ctx.arc(w / 2, h + 10, r, Math.PI, 0);
+      ctx.stroke();
+    }
   }
 
   function _flashMagnet(ctx, w, h, age, pct, theme) {
@@ -2656,5 +2787,5 @@ const Themes = (() => {
     return `rgb(${r},${g},${b})`;
   }
 
-  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, drawBonusActivation, particleColorForTheme, contrastColorForTheme };
+  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, drawBonusActivation, drawShieldForceField, drawScoreStarAura, particleColorForTheme, contrastColorForTheme };
 })();

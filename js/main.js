@@ -1572,6 +1572,7 @@ function update(dt) {
             if (state.tutorialMode) TutorialRun.onShieldAbsorbed();
             UI.showLevelUp('🛡 Shield absorbed!', null);
             Audio.play('correct');
+            state.bonusFlash = { type: 'shieldAbsorbed', timer: 0.85, maxTimer: 0.85 };
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
             UI.updateHUD(state);
@@ -1863,6 +1864,14 @@ function render(ctx, w, h, t) {
   }
   if (state.magnetActive > 0) Themes.drawMagnetOverlay(ctx, w, h, state.magnetActive, state.theme);
   if (state.revealBonusActive > 0) Themes.drawRevealOverlay(ctx, w, h, state.revealBonusActive);
+  if (state.shieldBonusActive || state.shieldCharges > 0) {
+    Themes.drawShieldForceField(ctx, w, h, state.theme);
+  }
+  if (state.scoreStarActive) {
+    const _tx = target ? target.x + (target.wobbleX || 0) : w / 2;
+    const _ty = target ? target.y : h / 2;
+    Themes.drawScoreStarAura(ctx, w, h, _tx, _ty, state.theme);
+  }
 
   // Streak vignette (drawn inside the shake transform so it shakes too)
   if (state.streakFlashTimer > 0) {
