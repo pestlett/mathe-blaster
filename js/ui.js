@@ -891,7 +891,7 @@ const UI = (() => {
   }
 
   function _renderMasteryGrid(masteryData) {
-    const { facts, mastered, seen, total, operation = 'multiply', isLargeRange = false, maxTable = 12 } = masteryData;
+    const { facts, mastered, seen, total, operation = 'multiply', isLargeRange = false, maxTable = 10 } = masteryData;
     if (total === 0) return '';
 
     // Band view for large add/subtract ranges

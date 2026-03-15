@@ -119,11 +119,11 @@ const Questions = (() => {
     const wrongKeys = new Set(wrongQueue.map(q => q.key));
     const pool = [];
 
-    // When a single table is selected, pair it against all multipliers 1–12
+    // When a single table is selected, pair it against all multipliers 1–10
     // so the player practises the full table, not just e.g. 6×6.
     const aRange = { lo: minTable, hi: maxTable };
     const bRange = minTable === maxTable
-      ? { lo: 1, hi: 12 }
+      ? { lo: 1, hi: 10 }
       : { lo: minTable, hi: maxTable };
 
     if (operation === 'divide') {
@@ -350,7 +350,7 @@ const Questions = (() => {
       return { a: dividend, b: a, answer: quotient, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
     }
     if (operation === 'divide') {
-      const b = Math.floor(rand() * 12) + 1;
+      const b = Math.floor(rand() * 10) + 1;
       const dividend = a * b;
       return { a: dividend, b: a, answer: b, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
     }

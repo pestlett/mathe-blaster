@@ -63,13 +63,15 @@ describe('Questions — single table mode', () => {
   let ctx;
   beforeEach(() => { ctx = makeQCtxWithBuildPool(); });
 
-  test('single table 6×: pairs against 1–12, not just 6×6', () => {
+  test('single table 6×: pairs against 1–10, not just 6×6', () => {
     const pool = ctx.Questions._buildPool(6, 6, {}, [], []);
     const keys = new Set(pool.map(q => q.key));
-    // Should include 6x1, 6x2, ..., 6x12
+    // Should include 6x1, 6x2, ..., 6x10
     expect(keys.has('6x1')).toBe(true);
     expect(keys.has('6x7')).toBe(true);
-    expect(keys.has('6x12')).toBe(true);
+    expect(keys.has('6x10')).toBe(true);
+    expect(keys.has('6x11')).toBe(false);
+    expect(keys.has('6x12')).toBe(false);
   });
 
   test('single table 6×: does NOT include 7×anything', () => {

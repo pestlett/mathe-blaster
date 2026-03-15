@@ -64,8 +64,6 @@ const Progress = (() => {
     { id: 'table_8',  label: 'Eight Is Great',  desc: 'Answer every ×8 fact correctly at least once',  check: (_, s) => tableComplete(s, 8)  },
     { id: 'table_9',  label: 'Cloud Nine',      desc: 'Answer every ×9 fact correctly at least once',  check: (_, s) => tableComplete(s, 9)  },
     { id: 'table_10', label: 'Perfect Ten',     desc: 'Answer every ×10 fact correctly at least once', check: (_, s) => tableComplete(s, 10) },
-    { id: 'table_11', label: 'Going to Eleven', desc: 'Answer every ×11 fact correctly at least once', check: (_, s) => tableComplete(s, 11) },
-    { id: 'table_12', label: 'Dozen Done',      desc: 'Answer every ×12 fact correctly at least once', check: (_, s) => tableComplete(s, 12) },
     // Division achievements
     { id: 'div_first_correct', label: 'First Division', desc: 'Answer your first division question correctly',    check: (_, s) => Object.keys(s).some(k => /^\d+d\d+$/.test(k) && (s[k].correct || 0) >= 1) },
     { id: 'div_table_2',  label: 'Half It Down',    desc: 'Answer every ÷2 fact correctly at least once',  check: (_, s) => tableDivideComplete(s, 2)  },
@@ -97,7 +95,7 @@ const Progress = (() => {
   // A multiplication fact is "cleanly known" if answered correctly at least once
   // with no hint AND no wrong attempt in the last 10 s.
   function tableComplete(stats, n) {
-    for (let b = 1; b <= 12; b++) {
+    for (let b = 1; b <= 10; b++) {
       const s = stats[`${n}x${b}`];
       if (!s || (s.cleanCorrect || 0) < 1) return false;
     }
@@ -106,7 +104,7 @@ const Progress = (() => {
 
   // Same check for division: all ÷n facts (n÷n through 12n÷n) cleanly answered
   function tableDivideComplete(stats, divisor) {
-    for (let quotient = 1; quotient <= 12; quotient++) {
+    for (let quotient = 1; quotient <= 10; quotient++) {
       const s = stats[`${divisor * quotient}d${divisor}`];
       if (!s || (s.cleanCorrect || 0) < 1) return false;
     }
@@ -262,7 +260,7 @@ const Progress = (() => {
     const key = getDailyKey();
     let hash = 0;
     for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-    const tables = [2,3,4,5,6,7,8,9,10,11,12];
+    const tables = [2,3,4,5,6,7,8,9,10];
     const diffs = ['easy','medium','hard'];
     const table = tables[hash % tables.length];
     const diff = diffs[(hash >> 4) % diffs.length];
@@ -322,7 +320,7 @@ const Progress = (() => {
       }
     } else {
       const bLo = minTable === maxTable ? 1  : minTable;
-      const bHi = minTable === maxTable ? 12 : maxTable;
+      const bHi = minTable === maxTable ? 10 : maxTable;
 
       for (let a = minTable; a <= maxTable; a++) {
         for (let b = bLo; b <= bHi; b++) {
