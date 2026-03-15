@@ -168,6 +168,7 @@ const I18n = (() => {
       tutorialBossIntro:    'Great! One more step. Beat the boss to finish the tutorial.',
       tutorialBossObjective:'Beat the boss. Type the answers, or say {word} and the answer.',
       tutorialCompleteLine: 'Tutorial complete! You can replay it later from Settings.',
+      tutorialSkip:         'Skip tutorial',
 
       // Game over
       gameOver:          'Game Over!',
@@ -466,6 +467,7 @@ const I18n = (() => {
       tutorialBossIntro:    'Super! Nur noch ein Schritt. Besiege den Boss, um das Tutorial zu beenden.',
       tutorialBossObjective:'Besiege den Boss. Tippe die Antworten ein oder sag {word} und die Antwort.',
       tutorialCompleteLine: 'Tutorial geschafft! Du kannst es später in den Einstellungen noch einmal spielen.',
+      tutorialSkip:         'Tutorial überspringen',
 
       gameOver:          'Spiel vorbei!',
       goExcellent:       'Tolle Arbeit, {name}! 🌟',
@@ -758,6 +760,7 @@ const I18n = (() => {
       tutorialBossIntro:    '¡Muy bien! Falta un paso más. Vence al jefe para terminar el tutorial.',
       tutorialBossObjective:'Vence al jefe. Escribe las respuestas o di {word} y la respuesta.',
       tutorialCompleteLine: '¡Tutorial completo! Puedes volver a jugarlo después desde Configuración.',
+      tutorialSkip:         'Saltar tutorial',
 
       gameOver:          '¡Fin del juego!',
       goExcellent:       '¡Trabajo increíble, {name}! 🌟',

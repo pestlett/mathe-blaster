@@ -429,6 +429,18 @@ const TutorialRun = {
     tutorialState = null;
   },
 
+  skip() {
+    if (!tutorialActive()) return;
+    Progress.markTutorialCompleted();
+    UI.refreshTutorialEntryPoints();
+    Audio.stopMusic();
+    Engine.stop();
+    Voice.stop();
+    state.phase = 'ONBOARDING';
+    this.stop();
+    UI.showScreen('onboarding');
+  },
+
   async wait(ms) {
     await new Promise(resolve => setTimeout(resolve, ms));
   },
@@ -1016,6 +1028,8 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch { window._challengeConfig = null; }
 
   UI.initOnboarding(startGame, startTutorial);
+
+  document.getElementById('btn-tutorial-skip')?.addEventListener('click', () => TutorialRun.skip());
 
   const answerInput = document.getElementById('answer-input');
   const btnFire = document.getElementById('btn-fire');
