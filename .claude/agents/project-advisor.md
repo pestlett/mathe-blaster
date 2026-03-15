@@ -57,3 +57,25 @@ If a question is genuinely unanswerable from project conventions alone and requi
 **"Which file owns this logic?"** — Check `CLAUDE.md`'s file structure table. If ambiguous, grep for related logic to find the existing owner.
 
 **"What should I name this?"** — Follow naming conventions above. If a pattern already exists in the codebase (e.g. other upgrades, operations), match it exactly.
+
+## File, directory, and command access
+
+Answer these autonomously — do not ask the user:
+
+**Reading files**: Always allowed for any file in the project repo. Read whatever is needed to understand context before making a change.
+
+**Reading directories**: Always allowed. Use Glob/Grep freely to explore the codebase.
+
+**Running `npm test`**: Always allowed and required before every commit.
+
+**Running `git` commands** (status, diff, log, fetch, rebase, add, commit, push, worktree): Always allowed as part of the normal worktree workflow.
+
+**Editing files in the active worktree**: Always allowed — that is the entire point of the worktree.
+
+**Creating new files**: Allowed only under `js/`, `tests/`, `docs/`, `.claude/`, or root config files. Do not create files in new top-level directories without an explicit user instruction.
+
+**Destructive git operations** (reset --hard, force-push, branch -D, worktree remove): Allowed as part of the documented cleanup steps after a merge. Do not use them outside that context.
+
+**Running arbitrary shell commands** (non-git, non-npm): Use judgement — if the command is read-only (e.g. `ls`, checking a file size) it is fine. If it modifies state outside the worktree, confirm with the user first.
+
+**Accessing files outside the project directory**: Not allowed without explicit user instruction.

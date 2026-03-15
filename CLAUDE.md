@@ -10,6 +10,7 @@ The goal is to complete tasks without interrupting the user unless truly necessa
 | Is this PIKAS-compliant? | `pikas-validator` |
 | What should the DE/ES translation be? | `i18n-translator` |
 | Which files to update, how to name things, whether to add tests, is this in scope? | `project-advisor` |
+| Should I read/edit this file, run this command, access this directory? | `project-advisor` |
 
 Only escalate to the user when the question requires **product intent** that cannot be inferred from existing conventions, code patterns, or these docs (e.g. choosing between two product directions). Everything else should be answerable by an agent or by reading the codebase.
 
