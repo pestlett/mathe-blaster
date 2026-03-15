@@ -403,7 +403,14 @@ const Progress = (() => {
   }
 
   // ---- Profile management ----
-  // Returns all saved player profiles as [{ key, name, age }]
+  // Saves per-player settings (age, mode, diff, hint, voice) into the player data blob.
+  function savePlayerSettings(s) {
+    const d = load();
+    d.playerSettings = { ...(d.playerSettings || {}), ...s };
+    save(d);
+  }
+
+  // Returns all saved player profiles as [{ key, name, age, settings }]
   function listProfiles() {
     const profiles = [];
     try {
@@ -413,8 +420,10 @@ const Progress = (() => {
         try {
           const data = JSON.parse(localStorage.getItem(key));
           const name = data?.player?.name || '';
-          const age  = data?.player?.age  || null;
-          if (name) profiles.push({ key, name, age });
+          if (!name) continue;
+          const ps  = data?.playerSettings || {};
+          const age = ps.age || null;
+          profiles.push({ key, name, age, settings: ps });
         } catch {}
       }
     } catch {}
@@ -427,5 +436,5 @@ const Progress = (() => {
     try { localStorage.removeItem(key); return true; } catch { return false; }
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile };
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile, savePlayerSettings };
 })();

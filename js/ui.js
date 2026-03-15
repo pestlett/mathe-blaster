@@ -177,12 +177,25 @@ const UI = (() => {
       }).join('');
     }
 
+    function _applyProfileToForm(profile) {
+      nameInput.value = profile.name;
+      ageInput.value  = profile.age || '';
+      const ps = profile.settings || {};
+      if (ps.diff) document.querySelector(`.diff-btn[data-diff="${ps.diff}"]`)?.click();
+      if (ps.mode) document.querySelector(`.mode-btn[data-mode="${ps.mode}"]`)?.click();
+      if (ps.hintThreshold) {
+        hintThreshInput.value = ps.hintThreshold;
+        hintLabel.textContent = I18n.t('hintAfter', { n: ps.hintThreshold });
+      }
+      if (typeof ps.triggerMode !== 'undefined') _setTriggerMode(ps.triggerMode);
+      if (ps.triggerWord && triggerWdInput) triggerWdInput.value = ps.triggerWord;
+    }
+
     profileSelect?.addEventListener('change', () => {
       const profiles = Progress.listProfiles();
       const selected = profiles.find(p => p.key === profileSelect.value);
       if (!selected) return;
-      nameInput.value = selected.name;
-      ageInput.value  = selected.age || '';
+      _applyProfileToForm(selected);
     });
 
     btnProfileDelete?.addEventListener('click', () => {
@@ -195,20 +208,15 @@ const UI = (() => {
       const msg   = I18n.t('confirmDeleteProfile').replace('{name}', label);
       if (!confirm(msg)) return;
       Progress.deleteProfile(key);
-      // If we just deleted the profile shown in the name/age fields, pick another
+      // If we just deleted the profile shown in the name/age fields, switch to another
       const currentName = nameInput.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
       const currentAge  = parseInt(ageInput.value) || 0;
       const currentSlug = (currentName || 'guest') + (currentAge > 0 ? `_${currentAge}` : '');
       const deletedSlug = key.replace('multiblaster_v1_', '');
       if (deletedSlug === currentSlug) {
         const remaining = Progress.listProfiles();
-        if (remaining.length > 0) {
-          nameInput.value = remaining[0].name;
-          ageInput.value  = remaining[0].age || '';
-        } else {
-          nameInput.value = '';
-          ageInput.value  = '';
-        }
+        if (remaining.length > 0) _applyProfileToForm(remaining[0]);
+        else { nameInput.value = ''; ageInput.value = ''; }
       }
       _refreshProfileSwitcher();
     });
@@ -233,18 +241,23 @@ const UI = (() => {
       if (!name) { nameInput.focus(); nameInput.classList.add('field-error'); return; }
       nameInput.classList.remove('field-error');
       ageInput.classList.remove('field-error');
-      const existing = Progress.loadSettings() || {};
-      Progress.setPlayer(name, age);
-      Progress.saveName(name);
-      Progress.saveSettings({
-        ...existing,
+      const playerSettings = {
+        age,
         mode: selectedMode,
         diff: selectedDiff,
         hintThreshold: parseInt(hintThreshInput.value),
-        lastPlayer: name,
-        lastAge: age,
         triggerMode: _triggerModeOn,
         triggerWord: triggerWdInput?.value?.trim(),
+      };
+      const existing = Progress.loadSettings() || {};
+      Progress.setPlayer(name, age);
+      Progress.saveName(name);
+      Progress.savePlayerSettings(playerSettings);
+      Progress.saveSettings({
+        ...existing,
+        ...playerSettings,
+        lastPlayer: name,
+        lastAge: age,
       });
       const btn = document.getElementById('btn-settings-save');
       const orig = btn.textContent;
