@@ -439,6 +439,16 @@ const TutorialRun = {
 
   setHighlights(ids = []) {
     this.clearHighlights();
+    // Per-theme glow colours that contrast against each theme's background
+    const glowMap = {
+      space: ['rgba(0,229,255,0.85)',   'rgba(0,229,255,0.38)'],
+      ocean: ['rgba(255,112,48,0.88)',  'rgba(255,112,48,0.38)'],
+      sky:   ['rgba(153,51,255,0.88)',  'rgba(153,51,255,0.38)'],
+      cats:  ['rgba(255,51,153,0.88)',  'rgba(255,51,153,0.38)'],
+    };
+    const [solid, dim] = glowMap[state.theme] || glowMap.space;
+    document.documentElement.style.setProperty('--tutorial-glow', solid);
+    document.documentElement.style.setProperty('--tutorial-glow-dim', dim);
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.add('tutorial-highlight');
