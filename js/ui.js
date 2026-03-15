@@ -793,7 +793,7 @@ const UI = (() => {
     const b = _hudBonusIcons[type];
     const icon = b[theme] || b.space;
     const bar = pct !== null
-      ? `<span class="hud-bonus-bar-wrap"><span class="hud-bonus-bar-fill" style="width:${Math.round(pct * 100)}%;background:${b.color}"></span></span>`
+      ? `<span class="hud-bonus-bar-wrap"><span class="hud-bonus-bar-fill" style="height:${Math.round(pct * 100)}%;background:${b.color}"></span></span>`
       : '';
     return `<div class="hud-bonus-pill" style="border-color:${b.color}88"><span class="bp-icon">${icon}</span>${bar}</div>`;
   }
