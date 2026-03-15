@@ -910,7 +910,17 @@ const UI = (() => {
     document.getElementById('hud-name').textContent = I18n.t('hiPlayer', { name: state.name });
     document.getElementById('score-val').textContent = state.score;
     document.getElementById('level-val').textContent = state.level;
-    const op = state.operation || 'multiply';
+    let op = state.operation || 'multiply';
+    if (state.operations && state.operations.length > 1) {
+      const target = Targeting.getTarget();
+      if (target && target.key) {
+        const k = target.key;
+        if (k.includes('x'))      op = 'multiply';
+        else if (k.includes('d')) op = 'divide';
+        else if (k.includes('a')) op = 'add';
+        else if (k.includes('s')) op = 'subtract';
+      }
+    }
     const opSuffix = op === 'multiply' ? '' : op.charAt(0).toUpperCase() + op.slice(1);
     const tableLabel = state.minTable === state.maxTable
       ? I18n.t(`tablesFocus${opSuffix}`, { table: state.minTable })
