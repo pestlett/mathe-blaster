@@ -88,38 +88,110 @@ const Audio = (() => {
 
   // ---- Music sequences ----
   // Each theme has 6 layers: melody, bass, harmony, boss, hopeful, run
+  // Melody loops are 15–21 s long so listeners don't pick up the repeat.
+  // Loop durations: space 17.6 s | ocean 21.3 s | sky 15.4 s | cats 20.2 s
   const SEQUENCES = {
     space: {
-      melody:  { notes: [57,60,62,64,57,60,64,60,55,57,60,55], tempo: 0.22, type: 'sawtooth', gain: 0.06 },
-      bass:    { notes: [45,45,40,40,43,43,40,45],             tempo: 0.44, type: 'sine',     gain: 0.04 },
-      harmony: { notes: [69,72,71,69,67,69,72,67],             tempo: 0.22, type: 'sawtooth', gain: 0.04 },
-      boss:    { notes: [64,62,60,57,55,57,60,55,52,55,57,52], tempo: 0.18, type: 'sawtooth', gain: 0.07 },
-      hopeful: { notes: [57,60,64,69],                         tempo: 0.22, type: 'sawtooth', gain: 0.08 },
-      run:     { notes: [45,52,45,52,43,50,43,50],             tempo: 0.44, type: 'sine',     gain: 0.03 },
+      // A natural minor (A B C D E F G), sawtooth — lone, haunting, vast.
+      // 80 notes × 0.22 s = 17.6 s. Four 20-note phrases; ends on D (unresolved
+      // 4th) so the loop restart lands as release rather than a hard reset.
+      melody: {
+        notes: [
+          // Phrase 1 — cautious exploration, establish home
+          57,60,62,60,57,59,60,64, 62,60,57,55,57,60,64,65, 64,62,60,57,
+          // Phrase 2 — rising tension, venture higher
+          60,64,67,64,60,62,64,67, 69,67,65,64,62,60,62,65, 64,62,59,60,
+          // Phrase 3 — dark descent into the lower register
+          55,57,60,57,55,52,55,57, 60,62,60,57,55,52,50,52, 55,57,60,62,
+          // Phrase 4 — reach up, end suspended on D
+          64,67,69,72,69,67,65,64, 67,69,71,69,67,65,64,62, 60,62,64,62,
+        ],
+        tempo: 0.22, type: 'sawtooth', gain: 0.06,
+      },
+      bass:    { notes: [45,45,52,52,48,50,52,55, 45,43,48,50,45,52,50,45], tempo: 0.44, type: 'sine',     gain: 0.04 },
+      harmony: { notes: [69,72,71,69,67,69,72,74, 72,71,69,72,74,72,69,71], tempo: 0.22, type: 'sawtooth', gain: 0.04 },
+      boss:    { notes: [64,62,60,57,55,57,60,55,52,55,57,52],              tempo: 0.18, type: 'sawtooth', gain: 0.07 },
+      hopeful: { notes: [57,60,64,69],                                       tempo: 0.22, type: 'sawtooth', gain: 0.08 },
+      run:     { notes: [45,52,45,52,43,50,43,50],                           tempo: 0.44, type: 'sine',     gain: 0.03 },
     },
     ocean: {
-      melody:  { notes: [60,62,64,67,69,67,64,62,60,64,67,64], tempo: 0.38, type: 'sine', gain: 0.08 },
-      bass:    { notes: [36,36,43,43,36,38,40,36],             tempo: 0.76, type: 'sine', gain: 0.05 },
-      harmony: { notes: [72,74,76,79,81,79,76,72],             tempo: 0.38, type: 'sine', gain: 0.05 },
-      boss:    { notes: [60,67,64,60,67,72,67,64,60,62,64,67], tempo: 0.30, type: 'sine', gain: 0.08 },
-      hopeful: { notes: [60,64,67,72],                         tempo: 0.38, type: 'sine', gain: 0.09 },
-      run:     { notes: [36,43,36,43,36,38,40,36],             tempo: 0.76, type: 'sine', gain: 0.04 },
+      // C major pentatonic (C D E G A), sine — gentle, flowing, wave-like.
+      // 56 notes × 0.38 s = 21.3 s. Four 14-note phrases; each phrase is a wave
+      // that rises a little higher than the last, then recedes. Ends on D (open).
+      melody: {
+        notes: [
+          // Phrase 1 — low swell
+          60,64,67,64,60,62,64,67, 69,67,64,62,60,64,
+          // Phrase 2 — mid swell, reaching the octave
+          67,69,72,69,67,64,67,72, 74,72,69,67,64,67,
+          // Phrase 3 — high crest
+          72,74,76,74,72,69,72,76, 79,76,74,72,69,67,
+          // Phrase 4 — recede to calm; ends open on D
+          64,62,60,62,64,67,64,60, 62,67,69,67,64,62,
+        ],
+        tempo: 0.38, type: 'sine', gain: 0.08,
+      },
+      bass:    { notes: [36,36,43,43,36,38,40,36, 33,33,40,38,36,43,38,36], tempo: 0.76, type: 'sine', gain: 0.05 },
+      harmony: { notes: [72,74,76,79,76,74,72,69, 72,76,79,76,74,72,74,76], tempo: 0.38, type: 'sine', gain: 0.05 },
+      boss:    { notes: [60,67,64,60,67,72,67,64,60,62,64,67],              tempo: 0.30, type: 'sine', gain: 0.08 },
+      hopeful: { notes: [60,64,67,72],                                       tempo: 0.38, type: 'sine', gain: 0.09 },
+      run:     { notes: [36,43,36,43,36,38,40,36],                           tempo: 0.76, type: 'sine', gain: 0.04 },
     },
     sky: {
-      melody:  { notes: [60,64,67,72,67,64,65,69,72,67,64,60], tempo: 0.16, type: 'triangle', gain: 0.09 },
-      bass:    { notes: [48,48,55,55,53,53,55,48],             tempo: 0.32, type: 'triangle', gain: 0.05 },
-      harmony: { notes: [76,79,81,84,83,81,79,76],             tempo: 0.16, type: 'triangle', gain: 0.05 },
-      boss:    { notes: [60,62,63,65,63,62,60,58,57,58,60,62], tempo: 0.13, type: 'triangle', gain: 0.09 },
-      hopeful: { notes: [67,72,76,84],                         tempo: 0.16, type: 'triangle', gain: 0.10 },
-      run:     { notes: [48,55,48,55,53,60,53,48],             tempo: 0.32, type: 'triangle', gain: 0.04 },
+      // C major (all 7 notes), triangle — bright, nimble, birds-in-flight.
+      // 96 notes × 0.16 s = 15.4 s. Four 24-note sections. Ends on B (leading
+      // tone) so the loop restart on C feels like a natural resolution.
+      melody: {
+        notes: [
+          // Section 1 — bright opening run
+          60,64,67,72,71,69,67,65, 64,67,69,71,72,74,72,71, 69,67,65,64,62,64,67,69,
+          // Section 2 — soar into the upper register
+          71,72,74,76,74,72,71,69, 72,74,76,79,76,74,72,71, 74,76,79,76,74,72,71,69,
+          // Section 3 — lyrical middle, warmer and lower
+          67,65,64,62,64,65,67,69, 71,69,67,65,64,65,67,71, 72,71,69,67,65,64,62,60,
+          // Section 4 — final ascent; end on B (leading tone)
+          62,64,67,71,74,76,79,76, 74,72,71,69,71,72,74,76, 74,72,71,72,74,71,69,71,
+        ],
+        tempo: 0.16, type: 'triangle', gain: 0.09,
+      },
+      bass:    { notes: [48,48,55,55,53,53,55,48, 50,52,53,55,53,52,50,48], tempo: 0.32, type: 'triangle', gain: 0.05 },
+      harmony: { notes: [76,79,81,84,83,81,79,76, 79,81,83,84,83,81,76,74, 72,74,76,79,81,79,76,74], tempo: 0.16, type: 'triangle', gain: 0.05 },
+      boss:    { notes: [60,62,63,65,63,62,60,58,57,58,60,62],              tempo: 0.13, type: 'triangle', gain: 0.09 },
+      hopeful: { notes: [67,72,76,84],                                       tempo: 0.16, type: 'triangle', gain: 0.10 },
+      run:     { notes: [48,55,48,55,53,60,53,48],                           tempo: 0.32, type: 'triangle', gain: 0.04 },
     },
     cats: {
-      melody:  { notes: [64,67,69,72,71,69,67,64,62,64,67,69], tempo: 0.28, type: 'triangle', gain: 0.07 },
-      bass:    { notes: [40,43,40,47,40,43,47,40],             tempo: 0.56, type: 'triangle', gain: 0.04 },
-      harmony: { notes: [76,79,81,83,81,79,76,74],             tempo: 0.28, type: 'triangle', gain: 0.04 },
-      boss:    { notes: [64,67,69,71,69,67,64,62,60,62,64,67], tempo: 0.22, type: 'triangle', gain: 0.08 },
-      hopeful: { notes: [64,67,71,76],                         tempo: 0.28, type: 'triangle', gain: 0.08 },
-      run:     { notes: [40,47,40,47,40,43,47,40],             tempo: 0.56, type: 'triangle', gain: 0.03 },
+      // E minor pentatonic (E G A B D), triangle — playful, mischievous, curious.
+      // 72 notes × 0.28 s = 20.2 s. Nine 8-note phrases that span the full range,
+      // dip into the low register for mystery, and end on G (open minor 3rd).
+      melody: {
+        notes: [
+          // Phrase 1 — perky opening statement
+          64,67,71,69,67,71,74,71,
+          // Phrase 2 — leap high, ears pricked
+          76,74,71,69,71,74,76,79,
+          // Phrase 3 — playful swoop back down
+          76,74,71,74,71,67,64,67,
+          // Phrase 4 — mid-range dance
+          71,74,76,74,71,69,71,74,
+          // Phrase 5 — low, sneaking
+          62,64,67,64,62,59,62,64,
+          // Phrase 6 — build back up with intent
+          67,69,71,74,71,74,76,74,
+          // Phrase 7 — confident middle-range flourish
+          71,69,67,71,74,71,69,67,
+          // Phrase 8 — dip to lowest (mysterious)
+          64,62,59,57,59,62,64,67,
+          // Phrase 9 — settle, end open on G
+          71,74,71,67,64,67,71,67,
+        ],
+        tempo: 0.28, type: 'triangle', gain: 0.07,
+      },
+      bass:    { notes: [40,43,40,47,43,40,47,43, 40,35,40,43,47,43,40,47], tempo: 0.56, type: 'triangle', gain: 0.04 },
+      harmony: { notes: [76,79,81,83,81,79,76,79, 81,83,81,79,76,74,76,79], tempo: 0.28, type: 'triangle', gain: 0.04 },
+      boss:    { notes: [64,67,69,71,69,67,64,62,60,62,64,67],              tempo: 0.22, type: 'triangle', gain: 0.08 },
+      hopeful: { notes: [64,67,71,76],                                       tempo: 0.28, type: 'triangle', gain: 0.08 },
+      run:     { notes: [40,47,40,47,40,43,47,40],                           tempo: 0.56, type: 'triangle', gain: 0.03 },
     },
   };
 
