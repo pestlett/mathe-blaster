@@ -1337,6 +1337,7 @@ function startGame(settings) {
   state.name = settings.name;
   state.age = settings.age;
   state.theme = settings.theme;
+  document.body.dataset.theme = settings.theme;
   state.minTable = settings.minTable;
   state.maxTable = settings.maxTable;
   state.operation = settings.operation || 'multiply';
