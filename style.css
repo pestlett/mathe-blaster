@@ -1321,6 +1321,13 @@ input[type="number"]::-webkit-outer-spin-button {
   clip-path: inset(0 calc(100% - var(--help-progress, 0%)) 0 0);
   pointer-events: none;
 }
+/* Special-item targeted state */
+#btn-help.help-special {
+  color: rgba(247,201,72,0.3);
+  border-color: rgba(247,201,72,0.12);
+  background: rgba(247,201,72,0.05);
+  cursor: not-allowed;
+}
 
 #try-again-msg {
   min-height: 1.6rem;
