@@ -797,7 +797,7 @@ const TutorialRun = {
     const voiceDemo = this.pickQuestion();
     await this.narrate(
       I18n.t('tutorialVoiceLine', { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
-      { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'], overlayPosition: 'bottom' }
+      { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'], overlayPosition: 'top' }
     );
     if (!tutorialActive()) return;
     tutorialState.allowQuestionSpeech = true;
@@ -836,7 +836,7 @@ const TutorialRun = {
     await this.narrate(I18n.t('tutorialHelpLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['btn-help'],
-      overlayPosition: 'bottom',
+      overlayPosition: 'top',
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
