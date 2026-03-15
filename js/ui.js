@@ -204,7 +204,7 @@ const UI = (() => {
     });
 
     // Mode (normal / practice)
-    document.querySelectorAll('.mode-btn').forEach(btn => {
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
