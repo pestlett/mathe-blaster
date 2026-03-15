@@ -714,7 +714,7 @@ const TutorialRun = {
     state.correctThisLevel = 8;
     state.attemptsThisLevel = 8;
     UI.showTutorialOverlay(
-      I18n.t('tutorialTryObjective', { remaining: tutorialState.userQuestionsRemaining, word: tutorialState.triggerWord }),
+      I18n.t(isMobile() ? 'tutorialTryObjectiveMobile' : 'tutorialTryObjective', { remaining: tutorialState.userQuestionsRemaining, word: tutorialState.triggerWord }),
       I18n.t('tutorialYourTurnTitle')
     );
     this.resumePlayerControl();
@@ -734,7 +734,7 @@ const TutorialRun = {
       const q2 = this.pickQuestion([q1.answer]);
       const boss = Objects.createBoss([q1, q2], window.innerWidth, window.innerHeight, 56);
       this.addObject(boss, 'center', 125, 34);
-      UI.showTutorialOverlay(I18n.t('tutorialBossObjective', { word: tutorialState.triggerWord }), I18n.t('tutorialYourTurnTitle'));
+      UI.showTutorialOverlay(I18n.t(isMobile() ? 'tutorialBossObjectiveMobile' : 'tutorialBossObjective', { word: tutorialState.triggerWord }), I18n.t('tutorialYourTurnTitle'));
       this.resumePlayerControl();
     }
   },
@@ -763,21 +763,28 @@ const TutorialRun = {
     await this.wait(1000);
     if (!tutorialActive()) return;
 
-    await this.narrate(I18n.t('tutorialIntroLine'), {
-      title: I18n.t('tutorialOverlayTitle'),
-      highlightIds: ['input-wrapper', 'btn-fire', 'btn-mic'],
-    });
-    if (!tutorialActive()) return;
+    if (isMobile()) {
+      await this.narrate(I18n.t('tutorialIntroLineMobile'), {
+        title: I18n.t('tutorialOverlayTitle'),
+        highlightIds: ['btn-mic'],
+      });
+    } else {
+      await this.narrate(I18n.t('tutorialIntroLine'), {
+        title: I18n.t('tutorialOverlayTitle'),
+        highlightIds: ['input-wrapper', 'btn-fire', 'btn-mic'],
+      });
+      if (!tutorialActive()) return;
 
-    state.correctThisLevel = 9;
-    state.attemptsThisLevel = 9;
-    this.clearScene();
-    tutorialState.allowQuestionSpeech = true;
-    this.spawnQuestion('center', { y: 120, speed: 50 });
-    this.resumeDemo();
-    await this.wait(2200);
-    await this.typeAnswer(Targeting.getTarget()?.answer);
-    await this.wait(1800);
+      state.correctThisLevel = 9;
+      state.attemptsThisLevel = 9;
+      this.clearScene();
+      tutorialState.allowQuestionSpeech = true;
+      this.spawnQuestion('center', { y: 120, speed: 50 });
+      this.resumeDemo();
+      await this.wait(2200);
+      await this.typeAnswer(Targeting.getTarget()?.answer);
+      await this.wait(1800);
+    }
 
     state.correctThisLevel = 8;
     state.attemptsThisLevel = 8;
