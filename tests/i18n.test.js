@@ -13,11 +13,12 @@ describe('I18n.t()', () => {
   let ctx;
   beforeEach(() => { ctx = makeI18nCtx(); });
 
-  test('returns English string by default', () => {
+  test('returns German string by default', () => {
     expect(ctx.I18n.t('gameTitle')).toBe('Mathe');
   });
 
   test('interpolates single variable', () => {
+    ctx.I18n.setLang('en');
     expect(ctx.I18n.t('hiPlayer', { name: 'Emma' })).toBe('Hi Emma!');
   });
 
@@ -30,6 +31,7 @@ describe('I18n.t()', () => {
   });
 
   test('leaves placeholder when variable not supplied', () => {
+    ctx.I18n.setLang('en');
     expect(ctx.I18n.t('hiPlayer')).toBe('Hi {name}!');
   });
 
@@ -45,8 +47,8 @@ describe('I18n.setLang() and getLang()', () => {
   let ctx;
   beforeEach(() => { ctx = makeI18nCtx(); });
 
-  test('default lang is en', () => {
-    expect(ctx.I18n.getLang()).toBe('en');
+  test('default lang is de', () => {
+    expect(ctx.I18n.getLang()).toBe('de');
   });
 
   test('setLang changes language', () => {
@@ -56,7 +58,7 @@ describe('I18n.setLang() and getLang()', () => {
 
   test('setLang unknown lang is ignored', () => {
     ctx.I18n.setLang('xx');
-    expect(ctx.I18n.getLang()).toBe('en');
+    expect(ctx.I18n.getLang()).toBe('de');
   });
 
   test('translations change with language', () => {
@@ -81,6 +83,7 @@ describe('I18n.diffLabel()', () => {
   beforeEach(() => { ctx = makeI18nCtx(); });
 
   test('easy → "Easy" in EN', () => {
+    ctx.I18n.setLang('en');
     expect(ctx.I18n.diffLabel('easy')).toBe('Easy');
   });
 
@@ -104,6 +107,7 @@ describe('I18n.achText()', () => {
   beforeEach(() => { ctx = makeI18nCtx(); });
 
   test('returns label and desc in EN', () => {
+    ctx.I18n.setLang('en');
     const result = ctx.I18n.achText('streak_3');
     expect(result.label).toBe('On Fire');
     expect(result.desc).toBe('Hit a 3× streak');

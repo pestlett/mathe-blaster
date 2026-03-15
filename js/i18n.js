@@ -755,7 +755,7 @@ const I18n = (() => {
   // Difficulty key → translated label
   const DIFF_KEYS = { easy: 'diffEasy', medium: 'diffMedium', hard: 'diffHard' };
 
-  let lang = localStorage.getItem('multiblaster_lang') || 'en';
+  let lang = localStorage.getItem('multiblaster_lang') || 'de';
 
   function setLang(l) {
     if (!STRINGS[l]) return;
