@@ -1320,8 +1320,10 @@ const UI = (() => {
       document.querySelectorAll('.dash-op-tab').forEach(t =>
         t.classList.toggle('active', t.dataset.op === op));
 
-      if (op === 'multiply' || op === 'divide') {
+      if (op === 'multiply') {
         renderMatrixPanel(op);
+      } else if (op === 'divide') {
+        renderDividePanel();
       } else {
         renderAddSubPanel(op);
       }
@@ -1340,16 +1342,15 @@ const UI = (() => {
       return 'mastered';
     }
 
-    // ── Matrix panel (× and ÷) ──────────────────────────────────────
+    // ── Matrix panel (×) — einsmaleins 1–10 ─────────────────────────
     function renderMatrixPanel(op) {
-      const isDivide = op === 'divide';
       let html = '<div class="dash-op-panel">';
 
-      // Per-op summary stats
+      // Per-op summary stats (standard 1–10 keys only)
       let opAttempts = 0, opCorrect = 0, opMastered = 0, opSeen = 0;
-      const pattern = isDivide ? /^\d+d\d+$/ : /^\d+x\d+$/;
       for (const k of Object.keys(stats)) {
-        if (!pattern.test(k)) continue;
+        const m = k.match(/^(\d+)x(\d+)$/);
+        if (!m || +m[1] > 10 || +m[2] > 10) continue;
         const s = stats[k];
         opAttempts += s.attempts || 0;
         opCorrect  += s.correct  || 0;
@@ -1364,27 +1365,24 @@ const UI = (() => {
         <div class="dash-op-stat"><span>${opMastered}</span>Mastered</div>
       </div>`;
 
-      // 10×10 grid
-      // For ×: row=a (1-10), col=b (1-10), key=`${a}x${b}`, label=a×b=answer
-      // For ÷: row=divisor a (1-10), col=quotient b (1-10), key=`${a*b}d${a}`, label=a×b÷a=b
+      // 10×10 grid: row=a (1-10), col=b (1-10)
       html += '<div class="dash-matrix">';
-      // Header row: corner + col labels
       html += '<div class="dash-matrix-header-cell"></div>';
       for (let b = 1; b <= 10; b++) {
         html += `<div class="dash-matrix-header-cell">${b}</div>`;
       }
       for (let a = 1; a <= 10; a++) {
-        // Row label
-        html += `<div class="dash-matrix-label">${isDivide ? `÷${a}` : `${a}×`}</div>`;
+        html += `<div class="dash-matrix-label">${a}×</div>`;
         for (let b = 1; b <= 10; b++) {
-          const key = isDivide ? `${a * b}d${a}` : `${a}x${b}`;
+          const key = `${a}x${b}`;
           const s = stats[key];
           const level = s?.masteredLevel ?? 0;
           const cls = masteryClass(level);
-          const answer = isDivide ? b : a * b;
           const acc = s?.attempts > 0 ? Math.round(s.correct / s.attempts * 100) : null;
-          const title = acc !== null ? `${isDivide ? `${a*b}÷${a}` : `${a}×${b}`}=${answer} · ${acc}% (${s.attempts} tries)` : (isDivide ? `${a*b}÷${a}` : `${a}×${b}`);
-          html += `<div class="dash-matrix-cell ${cls}" title="${title}">${answer}</div>`;
+          const title = acc !== null
+            ? `${a}×${b}=${a*b} · ${acc}% (${s.attempts} tries)`
+            : `${a}×${b}=${a*b}`;
+          html += `<div class="dash-matrix-cell ${cls}" title="${title}">${a*b}</div>`;
         }
       }
       html += '</div>'; // .dash-matrix
@@ -1398,20 +1396,70 @@ const UI = (() => {
         <span><span class="dash-legend-dot" style="background:rgba(255,255,255,0.05)"></span>Not seen</span>
       </div>`;
 
-      // Weakest facts (seen but masteredLevel < 3, sorted by level then accuracy)
+      // Weakest einsmaleins facts
       const weak = [];
       for (let a = 1; a <= 10; a++) {
         for (let b = 1; b <= 10; b++) {
-          const key = isDivide ? `${a * b}d${a}` : `${a}x${b}`;
+          const key = `${a}x${b}`;
           const s = stats[key];
           if (!s || s.attempts === 0) continue;
           const acc = s.correct / s.attempts;
           if ((s.masteredLevel || 0) < 3) {
-            const label = isDivide ? `${a*b} ÷ ${a} = ${b}` : `${a} × ${b} = ${a*b}`;
-            weak.push({ label, level: s.masteredLevel || 0, acc, attempts: s.attempts });
+            weak.push({ label: `${a} × ${b} = ${a*b}`, level: s.masteredLevel || 0, acc });
           }
         }
       }
+      weak.sort((x, y) => x.level - y.level || x.acc - y.acc);
+
+      // ── Extended multiply section (Zehner / Halbschriftlich) ────────
+      const extKeys = Object.keys(stats).filter(k => {
+        const m = k.match(/^(\d+)x(\d+)$/);
+        return m && (+m[1] > 10 || +m[2] > 10);
+      });
+
+      let extBuckets = [];
+      if (extKeys.length > 0) {
+        let extAttempts = 0, extCorrect = 0;
+        const extFacts = [];
+        for (const k of extKeys) {
+          const [, rawA, rawB] = k.match(/^(\d+)x(\d+)$/);
+          const a = +rawA, b = +rawB;
+          const s = stats[k];
+          extAttempts += s.attempts || 0;
+          extCorrect  += s.correct  || 0;
+          if (s.attempts > 0) {
+            extFacts.push({ a, b, attempts: s.attempts, correct: s.correct, level: s.masteredLevel || 0 });
+            if ((s.masteredLevel || 0) < 3) {
+              const acc = s.correct / s.attempts;
+              weak.push({ label: `${a} × ${b} = ${a*b}`, level: s.masteredLevel || 0, acc });
+            }
+          }
+        }
+
+        if (extFacts.length > 0) {
+          const maxB = Math.max(...extFacts.map(f => f.b));
+          const bucketSize = maxB >= 100 ? 100 : 10;
+          extBuckets = Array.from({ length: Math.ceil(maxB / bucketSize) }, (_, i) => {
+            const lo = i * bucketSize + 1, hi = (i + 1) * bucketSize;
+            let att = 0, cor = 0;
+            extFacts.filter(f => f.b >= lo && f.b <= hi).forEach(f => { att += f.attempts; cor += f.correct; });
+            return { label: `×${lo}–${hi}`, att, cor };
+          }).filter(bk => bk.att > 0);
+        }
+
+        const extAcc = extAttempts > 0 ? Math.round(extCorrect / extAttempts * 100) : 0;
+        html += `<div class="dash-ext-section">
+          <div class="dash-ext-heading">Extended Multiplication</div>
+          <div class="dash-op-summary" style="margin-bottom:12px">
+            <div class="dash-op-stat"><span>${extAttempts.toLocaleString()}</span>Attempted</div>
+            <div class="dash-op-stat"><span>${extAcc}%</span>Accuracy</div>
+            <div class="dash-op-stat"><span>${extFacts.length}</span>Facts seen</div>
+          </div>
+          <canvas id="dash-ext-mult-chart" class="dash-bar-canvas"></canvas>
+        </div>`;
+      }
+
+      // Weakest facts (combined einsmaleins + extended)
       weak.sort((x, y) => x.level - y.level || x.acc - y.acc);
       const topWeak = weak.slice(0, 6);
       if (topWeak.length > 0) {
@@ -1420,7 +1468,7 @@ const UI = (() => {
           `<span class="dash-weak-badge">${f.label} · ${Math.round(f.acc*100)}%</span>`
         ).join('');
         html += '</div>';
-      } else if (opSeen > 0) {
+      } else if (opSeen > 0 || extKeys.length > 0) {
         html += `<div class="dash-weak-title" style="color:#2ed573">${I18n.t('dashAllGood')}</div>`;
       } else {
         html += `<div class="dash-weak-title">${I18n.t('dashNoData')}</div>`;
@@ -1428,6 +1476,189 @@ const UI = (() => {
 
       html += '</div>'; // .dash-op-panel
       document.getElementById('dash-op-content').innerHTML = html;
+
+      if (extBuckets.length > 0) {
+        _drawBarChart(
+          document.getElementById('dash-ext-mult-chart'),
+          extBuckets,
+          'Accuracy by second factor range'
+        );
+      }
+    }
+
+    // ── Division panel ───────────────────────────────────────────────
+    function renderDividePanel() {
+      const pattern = /^(\d+)d(\d+)$/;
+      let opAttempts = 0, opCorrect = 0, opMastered = 0, opSeen = 0;
+      const factsByDivisor = {};
+
+      for (const k of Object.keys(stats)) {
+        const m = k.match(pattern);
+        if (!m) continue;
+        const dividend = +m[1], divisor = +m[2];
+        const quotient = dividend / divisor;
+        const s = stats[k];
+        opAttempts += s.attempts || 0;
+        opCorrect  += s.correct  || 0;
+        if ((s.masteredLevel || 0) >= 5) opMastered++;
+        if ((s.masteredLevel || 0) >= 1) opSeen++;
+        if (!factsByDivisor[divisor]) factsByDivisor[divisor] = [];
+        factsByDivisor[divisor].push({
+          dividend, divisor, quotient,
+          level: s.masteredLevel || 0,
+          attempts: s.attempts || 0,
+          correct: s.correct || 0,
+          acc: (s.attempts || 0) > 0 ? s.correct / s.attempts : null,
+        });
+      }
+
+      const opAcc = opAttempts > 0 ? Math.round(opCorrect / opAttempts * 100) : 0;
+      const divisors = Object.keys(factsByDivisor).map(Number).sort((a, b) => a - b);
+
+      let html = '<div class="dash-op-panel">';
+      html += `<div class="dash-op-summary">
+        <div class="dash-op-stat"><span>${opAttempts.toLocaleString()}</span>Attempted</div>
+        <div class="dash-op-stat"><span>${opAcc}%</span>Accuracy</div>
+        <div class="dash-op-stat"><span>${opSeen}</span>Facts seen</div>
+        <div class="dash-op-stat"><span>${opMastered}</span>Mastered</div>
+      </div>`;
+
+      if (divisors.length === 0) {
+        html += `<div class="dash-weak-title">${I18n.t('dashNoData')}</div>`;
+        html += '</div>';
+        document.getElementById('dash-op-content').innerHTML = html;
+        return;
+      }
+
+      // Detect display mode from actual data
+      const allQuotients = Object.values(factsByDivisor).flat().map(f => f.quotient);
+      const maxQuotient = Math.max(...allQuotients);
+      const allTens = allQuotients.every(q => Number.isInteger(q) && q % 10 === 0 && q <= 90);
+      const useRows = maxQuotient <= 10 || allTens;
+
+      if (useRows) {
+        // ── Grid view: one row per divisor, cells = dividends ──────────
+        const step = maxQuotient <= 10 ? 1 : 10;
+        const numCols = maxQuotient <= 10 ? 10 : 9; // quotients 1-10 or 10-90
+
+        html += `<div class="dash-divide-grid" style="grid-template-columns:36px repeat(${numCols},1fr)">`;
+        // Column headers = quotient value
+        html += '<div></div>';
+        for (let qi = 1; qi <= numCols; qi++) {
+          html += `<div class="dash-matrix-header-cell">${qi * step}</div>`;
+        }
+        // All standard divisors 2–10
+        for (let d = 2; d <= 10; d++) {
+          html += `<div class="dash-matrix-label">÷${d}</div>`;
+          for (let qi = 1; qi <= numCols; qi++) {
+            const quotient = qi * step;
+            const dividend = d * quotient;
+            const fact = (factsByDivisor[d] || []).find(f => f.quotient === quotient);
+            const level = fact?.level ?? 0;
+            const cls = masteryClass(level);
+            const acc = fact?.acc != null ? Math.round(fact.acc * 100) : null;
+            const title = acc != null
+              ? `${dividend}÷${d}=${quotient} · ${acc}% (${fact.attempts} tries)`
+              : `${dividend}÷${d}=${quotient}`;
+            html += `<div class="dash-matrix-cell ${cls}" title="${title}">${dividend}</div>`;
+          }
+        }
+        html += '</div>';
+
+        // Legend
+        html += `<div class="dash-matrix-legend">
+          <span><span class="dash-legend-dot" style="background:rgba(46,213,115,0.65)"></span>Mastered</span>
+          <span><span class="dash-legend-dot" style="background:rgba(100,220,100,0.45)"></span>Good</span>
+          <span><span class="dash-legend-dot" style="background:rgba(255,200,0,0.45)"></span>Learning</span>
+          <span><span class="dash-legend-dot" style="background:rgba(255,140,0,0.4)"></span>Just started</span>
+          <span><span class="dash-legend-dot" style="background:rgba(255,255,255,0.05)"></span>Not seen</span>
+        </div>`;
+
+      } else {
+        // ── Bar view: one bar per divisor for complex/halbschriftlich ──
+        html += '<div class="dash-divide-bars">';
+        html += '<div class="dash-divide-bars-title">Accuracy by divisor</div>';
+        for (const d of divisors) {
+          const facts = factsByDivisor[d];
+          const ta = facts.reduce((s, f) => s + f.attempts, 0);
+          const tc = facts.reduce((s, f) => s + f.correct, 0);
+          const acc = ta > 0 ? tc / ta : 0;
+          const seen = facts.filter(f => f.level >= 1).length;
+          const mastered = facts.filter(f => f.level >= 5).length;
+          const pct = Math.round(acc * 100);
+          const hue = Math.round(acc * 120);
+          html += `<div class="dash-divisor-bar-row">
+            <div class="dash-divisor-bar-label">÷ ${d}</div>
+            <div class="dash-divisor-bar-track">
+              <div class="dash-divisor-bar-fill" style="width:${pct}%;background:hsl(${hue},75%,50%)"></div>
+            </div>
+            <div class="dash-divisor-bar-pct">${ta > 0 ? pct + '%' : '—'}</div>
+            <div class="dash-divisor-bar-meta">${seen} seen · ${mastered} mastered</div>
+          </div>`;
+        }
+        html += '</div>';
+      }
+
+      // Weakest facts
+      const allFacts = Object.values(factsByDivisor).flat();
+      const weak = allFacts
+        .filter(f => f.attempts > 0 && f.level < 3)
+        .sort((x, y) => x.level - y.level || (x.acc ?? 1) - (y.acc ?? 1))
+        .slice(0, 6);
+
+      if (weak.length > 0) {
+        html += `<div class="dash-weak-section"><div class="dash-weak-title">${I18n.t('dashNeedsPractice')}</div>`;
+        html += weak.map(f => {
+          const acc = f.acc != null ? Math.round(f.acc * 100) : 0;
+          return `<span class="dash-weak-badge">${f.dividend} ÷ ${f.divisor} = ${f.quotient} · ${acc}%</span>`;
+        }).join('');
+        html += '</div>';
+      } else if (opSeen > 0) {
+        html += `<div class="dash-weak-title" style="color:#2ed573">${I18n.t('dashAllGood')}</div>`;
+      } else {
+        html += `<div class="dash-weak-title">${I18n.t('dashNoData')}</div>`;
+      }
+
+      html += '</div>';
+      document.getElementById('dash-op-content').innerHTML = html;
+    }
+
+    // ── Shared bar-chart helper ──────────────────────────────────────
+    function _drawBarChart(canvasEl, buckets, title) {
+      const cw = Math.min(560, window.innerWidth - 80);
+      const ch = 130;
+      canvasEl.width = cw;
+      canvasEl.height = ch;
+      const ctx = canvasEl.getContext('2d');
+      ctx.clearRect(0, 0, cw, ch);
+      const n = buckets.length;
+      const barW = Math.max(20, Math.floor((cw - 40) / n) - 4);
+      const maxH = ch - 36;
+
+      buckets.forEach(({ label, att, cor }, i) => {
+        const acc = att > 0 ? cor / att : null;
+        const bx = 20 + i * (barW + 4);
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(bx, ch - 24 - maxH, barW, maxH);
+        if (acc !== null) {
+          const fillH = Math.max(4, acc * maxH);
+          ctx.fillStyle = `hsl(${Math.round(acc * 120)},80%,55%)`;
+          ctx.fillRect(bx, ch - 24 - fillH, barW, fillH);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 9px Segoe UI, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${Math.round(acc * 100)}%`, bx + barW / 2, ch - 24 - fillH - 3);
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '9px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, bx + barW / 2, ch - 7);
+      });
+
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '10px Segoe UI, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(title, 20, 12);
     }
 
     // ── Add / Subtract panel ─────────────────────────────────────────
@@ -1455,9 +1686,9 @@ const UI = (() => {
       const buckets = [];
       for (let i = 0; i < Math.ceil(maxA / 10); i++) {
         const lo = i * 10 + 1, hi = (i + 1) * 10;
-        let ba = 0, bc = 0;
-        factList.filter(f => f.a >= lo && f.a <= hi).forEach(f => { ba += f.attempts; bc += f.correct; });
-        buckets.push({ label: `${lo}–${hi}`, acc: ba > 0 ? bc / ba : null });
+        let att = 0, cor = 0;
+        factList.filter(f => f.a >= lo && f.a <= hi).forEach(f => { att += f.attempts; cor += f.correct; });
+        if (att > 0) buckets.push({ label: `${lo}–${hi}`, att, cor });
       }
 
       // Weakest facts
@@ -1494,42 +1725,12 @@ const UI = (() => {
       html += '</div>';
       document.getElementById('dash-op-content').innerHTML = html;
 
-      // Draw bar chart after DOM insertion
       if (buckets.length > 0) {
-        const canvasEl = document.getElementById(canvasId);
-        const cw = Math.min(560, window.innerWidth - 80);
-        const ch = 130;
-        canvasEl.width = cw;
-        canvasEl.height = ch;
-        const ctx = canvasEl.getContext('2d');
-        ctx.clearRect(0, 0, cw, ch);
-        const n = buckets.length;
-        const barW = Math.max(20, Math.floor((cw - 40) / n) - 4);
-        const maxH = ch - 36;
-
-        buckets.forEach(({ label, acc }, i) => {
-          const bx = 20 + i * (barW + 4);
-          ctx.fillStyle = 'rgba(255,255,255,0.06)';
-          ctx.fillRect(bx, ch - 24 - maxH, barW, maxH);
-          if (acc !== null) {
-            const fillH = Math.max(4, acc * maxH);
-            ctx.fillStyle = `hsl(${Math.round(acc * 120)},80%,55%)`;
-            ctx.fillRect(bx, ch - 24 - fillH, barW, fillH);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 9px Segoe UI, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(`${Math.round(acc * 100)}%`, bx + barW / 2, ch - 24 - fillH - 3);
-          }
-          ctx.fillStyle = 'rgba(255,255,255,0.45)';
-          ctx.font = '9px Segoe UI, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(label, bx + barW / 2, ch - 7);
-        });
-
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.font = '10px Segoe UI, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(isAdd ? 'Accuracy by first number range' : 'Accuracy by minuend range', 20, 12);
+        _drawBarChart(
+          document.getElementById(canvasId),
+          buckets,
+          isAdd ? 'Accuracy by first number range' : 'Accuracy by minuend range'
+        );
       }
     }
 

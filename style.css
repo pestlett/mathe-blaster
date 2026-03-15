@@ -1890,9 +1890,83 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   margin-bottom: 6px;
 }
 
+/* Division grid — mirrors matrix but shows dividends grouped by divisor */
+.dash-divide-grid {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 16px;
+  font-size: 0.7rem;
+  overflow-x: auto;
+}
+
+/* Per-divisor bar view (complex / halbschriftlich division) */
+.dash-divide-bars {
+  margin-bottom: 16px;
+}
+.dash-divide-bars-title {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.dash-divisor-bar-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 38px 1fr;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.dash-divisor-bar-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+  text-align: right;
+}
+.dash-divisor-bar-track {
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  height: 12px;
+  overflow: hidden;
+}
+.dash-divisor-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .3s;
+}
+.dash-divisor-bar-pct {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: right;
+}
+.dash-divisor-bar-meta {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.35);
+}
+
+/* Extended multiplication section */
+.dash-ext-section {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 16px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+.dash-ext-heading {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
 @media (max-width: 480px) {
   .dash-matrix { gap: 2px; font-size: 0.6rem; }
   .dash-matrix-cell { height: 22px; font-size: 0.58rem; }
+  .dash-divide-grid { gap: 2px; font-size: 0.6rem; }
+  .dash-divisor-bar-row { grid-template-columns: 30px 1fr 32px auto; }
+  .dash-divisor-bar-meta { display: none; }
 }
 
 /* Help / How to Play collapsible */
