@@ -75,6 +75,16 @@ let state = {
 const TUTORIAL_SEED = 20260315;
 let tutorialState = null;
 
+// Expose mutable game state on window for E2E test instrumentation.
+// state/tutorialState are let bindings (not on window by default).
+// __gameState persists because state is mutated in-place, never reassigned.
+// __tutorialState uses a getter so re-assignments are visible.
+window.__gameState = state;
+Object.defineProperty(window, '__tutorialState', {
+  get() { return tutorialState; },
+  configurable: true,
+});
+
 function tutorialActive() {
   return !!(tutorialState && tutorialState.active);
 }
@@ -1003,6 +1013,9 @@ const TutorialRun = {
     await this.enterPlayerTurn();
   },
 };
+
+// Expose TutorialRun for E2E test instrumentation.
+window.TutorialRun = TutorialRun;
 
 // ---- Per-table mastery announcements ----
 // Checks if any table in the current range has had all its facts mastered
@@ -2809,3 +2822,6 @@ function endGame() {
     state.confetti = spawnConfetti(window.innerWidth);
   }
 }
+window.__endGame = endGame;
+window.__Voice = Voice;
+window.__Targeting = Targeting;
