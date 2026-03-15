@@ -14,7 +14,7 @@ A browser-based maths game made with love for **Emma Jewell Colicheo** by her Da
 
 ### Gameplay
 - Falling maths questions that you blast by typing or speaking the answer
-- 3 themes: **Space**, **Ocean**, and **Sky**
+- 4 themes: **Space**, **Ocean**, **Sky**, and **Cats** 🐱
 - 3 difficulty levels: **Easy**, **Medium**, **Hard**
 - **Normal** mode (lose lives when objects hit the bottom) and **Practice** mode (no lives, no pressure)
 - Level progression — speed ramps up as you improve
