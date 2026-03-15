@@ -1512,11 +1512,21 @@ function endGame() {
   session.isChallenge   = state.isChallenge;
   session.challengerScore = state.challengerScore;
 
+  const lastGameSettings = {
+    name: state.name, age: state.age, theme: state.theme,
+    operations: state.operations, operation: state.operations[0],
+    minTable: state.minTable, maxTable: state.maxTable,
+    difficulty: state.difficulty, hintThreshold: state.hintThreshold,
+    practiceMode: state.practiceMode, zehner: state.zehner,
+    halbschriftlich: state.halbschriftlich, addSubRange: state.addSubRange,
+  };
+
   UI.showGameOver(
     session,
     state.missedList,
     newAchievements,
     masteryData,
+    () => { window._challengeConfig = null; startGame(lastGameSettings); },
     () => { window._challengeConfig = null; UI.showScreen('onboarding'); },
     () => UI.showLeaderboard(() => UI.showScreen('gameover')),
     runData

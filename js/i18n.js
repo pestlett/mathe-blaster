@@ -65,8 +65,8 @@ const I18n = (() => {
       extendedTablesUnlocked: '🎉 Extended Tables Unlocked! Try 13–20×',
 
       mixedLabel:       'Mixed Practice',
-      mixedMulDiv:      '× & ÷',
-      mixedAddSub:      '+ & −',
+      mixedMulDiv:      '× / ÷',
+      mixedAddSub:      '+ / −',
       mixedAll:         'All 4 ⚡',
       mixedMulDivNote:  'Multiplication & division together (PIKAS recommended)',
       mixedAddSubNote:  'Addition & subtraction together',
@@ -152,6 +152,7 @@ const I18n = (() => {
       newAchievements:   '🏆 New Achievements!',
       dailyComplete:     '⚡ Daily Challenge Complete!',
       playAgain:         'Play Again',
+      goMenu:            'Menu',
       leaderboard:       'Leaderboard',
       achievementsBtn:   'Achievements',
 
@@ -328,8 +329,8 @@ const I18n = (() => {
       extendedTablesUnlocked: '🎉 Erweiterte Tabellen freigeschaltet! Probiere 13–20×',
 
       mixedLabel:       'Gemischtes Rechnen',
-      mixedMulDiv:      '× & ÷',
-      mixedAddSub:      '+ & −',
+      mixedMulDiv:      '× / ÷',
+      mixedAddSub:      '+ / −',
       mixedAll:         'Alle 4 ⚡',
       mixedMulDivNote:  'Mal- und Geteiltaufgaben gemischt (PIKAS-Empfehlung)',
       mixedAddSubNote:  'Plus- und Minusaufgaben gemischt',
@@ -413,6 +414,7 @@ const I18n = (() => {
       newAchievements:   '🏆 Neue Erfolge!',
       dailyComplete:     '⚡ Tages-Challenge abgeschlossen!',
       playAgain:         'Nochmal spielen',
+      goMenu:            'Menü',
       leaderboard:       'Bestenliste',
       achievementsBtn:   'Erfolge',
 
@@ -584,8 +586,8 @@ const I18n = (() => {
       extendedTablesUnlocked: '🎉 ¡Tablas Extendidas Desbloqueadas! Prueba 13–20×',
 
       mixedLabel:       'Práctica Mixta',
-      mixedMulDiv:      '× & ÷',
-      mixedAddSub:      '+ & −',
+      mixedMulDiv:      '× / ÷',
+      mixedAddSub:      '+ / −',
       mixedAll:         'Las 4 ⚡',
       mixedMulDivNote:  'Multiplicación y división juntas (recomendado por PIKAS)',
       mixedAddSubNote:  'Suma y resta juntas',
@@ -669,6 +671,7 @@ const I18n = (() => {
       newAchievements:   '🏆 ¡Nuevos Logros!',
       dailyComplete:     '⚡ ¡Desafío Diario Completado!',
       playAgain:         'Jugar de nuevo',
+      goMenu:            'Menú',
       leaderboard:       'Clasificación',
       achievementsBtn:   'Logros',
 

@@ -421,6 +421,11 @@ input[type="number"]::-webkit-outer-spin-button {
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 400px) {
+  .numrange-btn { font-size: 0.72rem; padding: 10px 4px; }
 }
 .numrange-btn:hover {
   border-color: rgba(255,255,255,0.4);

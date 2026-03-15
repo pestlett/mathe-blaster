@@ -991,7 +991,7 @@ const UI = (() => {
   }
 
   // ---- Game Over ----
-  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onLeaderboard, runData) {
+  function showGameOver(session, missedList, newAchievements, masteryData, onPlayAgain, onMenu, onLeaderboard, runData) {
     // Context-sensitive heading based on accuracy
     const goHeadingEl = document.querySelector('#screen-gameover h2');
     if (goHeadingEl) {
@@ -1110,6 +1110,8 @@ const UI = (() => {
     }
 
     document.getElementById('btn-play-again').onclick = onPlayAgain;
+    const btnMenu = document.getElementById('btn-menu');
+    if (btnMenu) btnMenu.onclick = onMenu;
     document.getElementById('btn-leaderboard').onclick = onLeaderboard;
     document.getElementById('btn-achievements').onclick = () => showAchievements(() => showScreen('gameover'));
     showScreen('gameover');
