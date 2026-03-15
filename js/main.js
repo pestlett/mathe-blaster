@@ -4,6 +4,10 @@ function isMobile() {
   return navigator.maxTouchPoints > 0;
 }
 
+function isPhone() {
+  return window.innerWidth < 640;
+}
+
 function focusAnswerInput() {
   if (!isMobile()) document.getElementById('answer-input').focus();
 }
@@ -719,7 +723,7 @@ const TutorialRun = {
     state.correctThisLevel = 8;
     state.attemptsThisLevel = 8;
     UI.showTutorialOverlay(
-      I18n.t(isMobile() ? 'tutorialTryObjectiveMobile' : 'tutorialTryObjective', { remaining: tutorialState.userQuestionsRemaining, word: tutorialState.triggerWord }),
+      I18n.t(isPhone() ? 'tutorialTryObjectiveMobile' : 'tutorialTryObjective', { remaining: tutorialState.userQuestionsRemaining, word: tutorialState.triggerWord }),
       I18n.t('tutorialYourTurnTitle')
     );
     this.resumePlayerControl();
@@ -739,7 +743,7 @@ const TutorialRun = {
       const q2 = this.pickQuestion([q1.answer]);
       const boss = Objects.createBoss([q1, q2], window.innerWidth, window.innerHeight, 56);
       this.addObject(boss, 'center', 125, 34);
-      UI.showTutorialOverlay(I18n.t(isMobile() ? 'tutorialBossObjectiveMobile' : 'tutorialBossObjective', { word: tutorialState.triggerWord }), I18n.t('tutorialYourTurnTitle'));
+      UI.showTutorialOverlay(I18n.t(isPhone() ? 'tutorialBossObjectiveMobile' : 'tutorialBossObjective', { word: tutorialState.triggerWord }), I18n.t('tutorialYourTurnTitle'));
       this.resumePlayerControl();
     }
   },
@@ -768,7 +772,7 @@ const TutorialRun = {
     await this.wait(1000);
     if (!tutorialActive()) return;
 
-    if (isMobile()) {
+    if (isPhone()) {
       await this.narrate(I18n.t('tutorialIntroLineMobile'), {
         title: I18n.t('tutorialOverlayTitle'),
         highlightIds: ['btn-mic'],
@@ -795,7 +799,7 @@ const TutorialRun = {
     state.attemptsThisLevel = 8;
     this.clearScene();
     const voiceDemo = this.pickQuestion();
-    const voiceLineKey = isMobile() ? 'tutorialVoiceLineMobile' : 'tutorialVoiceLine';
+    const voiceLineKey = isPhone() ? 'tutorialVoiceLineMobile' : 'tutorialVoiceLine';
     await this.narrate(
       I18n.t(voiceLineKey, { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
       { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'], overlayPosition: 'top' }
