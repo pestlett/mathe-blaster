@@ -414,6 +414,7 @@ const TutorialRun = {
       userQuestionsRemaining: 2,
       triggerWord: (settings.triggerWord || '').trim() || 'fire',
       lifeLossResolver: null,
+      shieldAbsorbResolver: null,
       bossSpawned: false,
     };
     UI.showTutorialOverlay(I18n.t('tutorialPreparing'));
@@ -619,11 +620,26 @@ const TutorialRun = {
     });
   },
 
+  waitForShieldAbsorb() {
+    return new Promise(resolve => {
+      if (!tutorialActive()) { resolve(); return; }
+      tutorialState.shieldAbsorbResolver = resolve;
+    });
+  },
+
   onLifeLost() {
     if (!tutorialActive()) return;
     if (tutorialState.lifeLossResolver) {
       tutorialState.lifeLossResolver();
       tutorialState.lifeLossResolver = null;
+    }
+  },
+
+  onShieldAbsorbed() {
+    if (!tutorialActive()) return;
+    if (tutorialState.shieldAbsorbResolver) {
+      tutorialState.shieldAbsorbResolver();
+      tutorialState.shieldAbsorbResolver = null;
     }
   },
 
@@ -802,11 +818,13 @@ const TutorialRun = {
     this.clearScene();
     await this.narrate(I18n.t('tutorialFreezeLine'), { title: I18n.t('tutorialOverlayTitle') });
     if (!tutorialActive()) return;
+    this.spawnQuestion('left', { y: 155, speed: 46 });
+    this.spawnQuestion('right', { y: 185, speed: 46 });
     this.spawnItem('freeze', 'center', { y: 125, speed: 48 });
     this.resumeDemo();
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
-    await this.wait(1500);
+    await this.wait(1800);
 
     this.clearScene();
     this.spawnQuestion('center', { y: 135, speed: 48 });
@@ -835,14 +853,12 @@ const TutorialRun = {
       highlightIds: ['hud-score', 'score-val', 'hud-center'],
     });
     if (!tutorialActive()) return;
+    this.spawnQuestion('left', { y: Math.round(window.innerHeight * 0.54), speed: 24 });
     this.spawnItem('scoreStar', 'center', { y: 118, speed: 44 });
     this.resumeDemo();
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
-    await this.wait(900);
-    this.clearScene();
-    this.spawnQuestion('center', { y: Math.round(window.innerHeight * 0.5), speed: 24 });
-    await this.wait(350);
+    await this.wait(700);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1800);
 
@@ -853,7 +869,11 @@ const TutorialRun = {
     this.resumeDemo();
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
-    await this.wait(1000);
+    await this.wait(500);
+    const shieldMiss = this.spawnQuestion('center', { y: window.innerHeight - 235, speed: 120 });
+    if (shieldMiss) Targeting.setTarget(shieldMiss);
+    await this.waitForShieldAbsorb();
+    await this.wait(500);
 
     this.clearScene();
     this.spawnQuestion('left', { y: 150, speed: 28 });
@@ -876,7 +896,7 @@ const TutorialRun = {
     this.resumeDemo();
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
-    await this.wait(1400);
+    await this.wait(1800);
 
     this.clearScene();
     state.correctThisLevel = 9;
@@ -1475,6 +1495,7 @@ function update(dt) {
           // Shield absorbs the next miss
           if (state.shieldCharges > 0) {
             state.shieldCharges--;
+            if (state.tutorialMode) TutorialRun.onShieldAbsorbed();
             // ADJACENCY: Shield + Bomb neighbours → each absorb refunds 1 bomb charge
             if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb')) {
               state.bombCharges = (state.bombCharges || 0) + 1;
@@ -1487,6 +1508,7 @@ function update(dt) {
             UI.updateHUD(state);
           } else if (state.shieldBonusActive) {
             state.shieldBonusActive = false;
+            if (state.tutorialMode) TutorialRun.onShieldAbsorbed();
             UI.showLevelUp('🛡 Shield absorbed!', null);
             Audio.play('correct');
             state.missedList.push({ question: obj.question, answer: obj.answer });
