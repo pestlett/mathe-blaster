@@ -1,6 +1,6 @@
 Review a proposed game mechanic change for completeness before implementing.
 
-First read docs/pikas.md — all content decisions must align with the PIKAS curriculum.
+First, invoke the `pikas-validator` agent with the proposed change description — get a pedagogical go/no-go before doing any technical analysis.
 
 Ask me to describe the change in plain English (e.g. "add a timer bonus that gives extra points if the whole level is completed within 60 seconds").
 

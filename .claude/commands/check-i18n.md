@@ -14,6 +14,6 @@ Then:
    - Keys in HTML but not in STRINGS
    - Any placeholder {var} mismatches between languages
 
-If there are missing keys, ask whether to add stub translations (copying the EN string with a TODO comment) or translate them properly. If translating, use natural German (du-form, Grundschule register) and natural Spanish.
+If there are missing keys, ask whether to add stub translations or translate them properly. If translating properly, use the `i18n-translator` agent — it knows the correct register and math terminology for both languages.
 
 After fixing, run npm test to verify i18n.test.js passes.

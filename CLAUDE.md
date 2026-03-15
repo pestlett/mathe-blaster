@@ -59,6 +59,15 @@ Project-specific commands are in `.claude/commands/`. Use them by name:
 | `/review-change` | Pre-implementation review of a proposed mechanic change |
 | `/debug-voice` | Diagnose voice input problems |
 
+## Agents
+Specialist subagents are in `.claude/agents/`. They are invoked automatically
+when relevant, or can be called explicitly:
+
+| Agent | Purpose |
+|-------|---------|
+| `pikas-validator` | Validates any proposed content or mechanic against the PIKAS curriculum — returns GO / NO-GO / GO WITH CONDITIONS |
+| `i18n-translator` | Produces accurate DE + ES translations in the correct primary-school register, writes directly to `js/i18n.js` |
+
 ## Versioning
 The game uses **semantic versioning** (`MAJOR.MINOR.PATCH`).
 
