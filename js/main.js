@@ -423,6 +423,7 @@ const TutorialRun = {
   stop() {
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     state.ttsFreezeActive = false;
+    this.clearHighlights();
     UI.hideTutorialOverlay();
     tutorialState = null;
   },
@@ -431,7 +432,19 @@ const TutorialRun = {
     await new Promise(resolve => setTimeout(resolve, ms));
   },
 
-  async narrate(text, { title = null, resume = false } = {}) {
+  clearHighlights() {
+    document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
+  },
+
+  setHighlights(ids = []) {
+    this.clearHighlights();
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('tutorial-highlight');
+    });
+  },
+
+  async narrate(text, { title = null, resume = false, highlightIds = [] } = {}) {
     if (!tutorialActive()) return;
     tutorialState.inputLocked = true;
     tutorialState.allowQuestionSpeech = false;
@@ -439,9 +452,11 @@ const TutorialRun = {
     Voice.stop();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     state.ttsFreezeActive = false;
+    this.setHighlights(highlightIds);
     UI.showTutorialOverlay(text, title || I18n.t('tutorialOverlayTitle'));
     await speakNarrationLine(text);
     if (!tutorialActive()) return;
+    this.clearHighlights();
     if (resume) {
       Engine.resume();
     }
@@ -576,20 +591,25 @@ const TutorialRun = {
   async demoControlButtons() {
     if (!tutorialActive()) return;
     const btnMute = document.getElementById('btn-mute');
+    this.setHighlights(['btn-mute']);
     await this.pulseButton('btn-mute', 700);
     btnMute?.click();
     await this.wait(450);
     btnMute?.click();
     await this.wait(250);
 
+    this.setHighlights(['btn-mic']);
     await this.pulseButton('btn-mic', 900);
     await this.wait(250);
 
+    this.setHighlights(['btn-pause']);
     await this.pulseButton('btn-pause', 700);
     togglePause();
+    this.setHighlights(['btn-resume']);
     await this.wait(900);
     togglePause();
     await this.wait(350);
+    this.clearHighlights();
   },
 
   waitForLifeLoss() {
@@ -693,7 +713,10 @@ const TutorialRun = {
   },
 
   async run() {
-    await this.narrate(I18n.t('tutorialIntroLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialIntroLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['input-wrapper', 'btn-fire', 'btn-mic'],
+    });
     if (!tutorialActive()) return;
 
     state.correctThisLevel = 9;
@@ -712,7 +735,7 @@ const TutorialRun = {
     const voiceDemo = this.pickQuestion();
     await this.narrate(
       I18n.t('tutorialVoiceLine', { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
-      { title: I18n.t('tutorialOverlayTitle') }
+      { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'] }
     );
     if (!tutorialActive()) return;
     tutorialState.allowQuestionSpeech = true;
@@ -720,7 +743,10 @@ const TutorialRun = {
     await this.demoVoicePhrase(`${tutorialState.triggerWord} ${voiceDemo.answer}`, voiceDemo.answer);
     await this.wait(1600);
 
-    await this.narrate(I18n.t('tutorialControlsLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialControlsLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['btn-mute', 'btn-mic', 'btn-pause'],
+    });
     if (!tutorialActive()) return;
     this.resumeDemo();
     await this.demoControlButtons();
@@ -730,7 +756,10 @@ const TutorialRun = {
     this.spawnQuestion('left', { y: 150, speed: 38 });
     this.spawnQuestion('center', { y: 115, speed: 38 });
     this.spawnQuestion('right', { y: 175, speed: 38 });
-    await this.narrate(I18n.t('tutorialTargetLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialTargetLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['game-canvas'],
+    });
     if (!tutorialActive()) return;
     this.resumeDemo();
     await this.wait(500);
@@ -739,7 +768,10 @@ const TutorialRun = {
     Targeting.moveLeft(state.objects);
     await this.wait(700);
 
-    await this.narrate(I18n.t('tutorialHelpLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialHelpLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['btn-help'],
+    });
     if (!tutorialActive()) return;
     this.resumeDemo();
     await this.wait(450);
@@ -749,7 +781,10 @@ const TutorialRun = {
     this.clearScene();
     const missObj = this.spawnQuestion('center', { y: window.innerHeight - 250, speed: 120 });
     if (missObj) Targeting.setTarget(missObj);
-    await this.narrate(I18n.t('tutorialLivesLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialLivesLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['hud-lives'],
+    });
     if (!tutorialActive()) return;
     this.resumeDemo();
     await this.waitForLifeLoss();
@@ -795,7 +830,10 @@ const TutorialRun = {
     await this.wait(1400);
 
     this.clearScene();
-    await this.narrate(I18n.t('tutorialScoreStarLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialScoreStarLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      highlightIds: ['hud-score', 'score-val', 'hud-center'],
+    });
     if (!tutorialActive()) return;
     this.spawnItem('scoreStar', 'center', { y: 118, speed: 44 });
     this.resumeDemo();
