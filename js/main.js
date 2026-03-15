@@ -560,6 +560,38 @@ const TutorialRun = {
     await this.voiceAnswer(answer);
   },
 
+  async pulseButton(id, duration = 700) {
+    const btn = document.getElementById(id);
+    if (!btn) { await this.wait(duration); return; }
+    if (typeof btn.animate === 'function') {
+      btn.animate([
+        { transform: 'scale(1)', boxShadow: '0 0 0 rgba(247,201,72,0)' },
+        { transform: 'scale(1.14)', boxShadow: '0 0 18px rgba(247,201,72,0.6)' },
+        { transform: 'scale(1)', boxShadow: '0 0 0 rgba(247,201,72,0)' },
+      ], { duration, easing: 'ease-in-out' });
+    }
+    await this.wait(duration);
+  },
+
+  async demoControlButtons() {
+    if (!tutorialActive()) return;
+    const btnMute = document.getElementById('btn-mute');
+    await this.pulseButton('btn-mute', 700);
+    btnMute?.click();
+    await this.wait(450);
+    btnMute?.click();
+    await this.wait(250);
+
+    await this.pulseButton('btn-mic', 900);
+    await this.wait(250);
+
+    await this.pulseButton('btn-pause', 700);
+    togglePause();
+    await this.wait(900);
+    togglePause();
+    await this.wait(350);
+  },
+
   waitForLifeLoss() {
     return new Promise(resolve => {
       if (!tutorialActive()) { resolve(); return; }
@@ -687,6 +719,11 @@ const TutorialRun = {
     this.addObject(Objects.create(voiceDemo, window.innerWidth, window.innerHeight, 52, []), 'center', 120, 52);
     await this.demoVoicePhrase(`${tutorialState.triggerWord} ${voiceDemo.answer}`, voiceDemo.answer);
     await this.wait(1600);
+
+    await this.narrate(I18n.t('tutorialControlsLine'), { title: I18n.t('tutorialOverlayTitle') });
+    if (!tutorialActive()) return;
+    this.resumeDemo();
+    await this.demoControlButtons();
 
     this.clearScene();
     tutorialState.allowQuestionSpeech = false;
