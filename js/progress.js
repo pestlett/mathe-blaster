@@ -53,6 +53,7 @@ const Progress = (() => {
     { id: 'sessions_5',     label: 'Regular',            desc: 'Play 5 sessions',                      check: (d) => (d.sessionsPlayed || 0) >= 5 },
     { id: 'streak_days_3',  label: 'Habit Forming',      desc: 'Play 3 days in a row',                 check: (d) => (d.dayStreakCurrent || 0) >= 3 },
     { id: 'streak_days_7',  label: 'Week Warrior',       desc: 'Play 7 days in a row',                 check: (d) => (d.dayStreakCurrent || 0) >= 7 },
+    { id: 'challenge_win',  label: 'Friend Beater',      desc: 'Beat a friend in a challenge',         check: (d) => (d.challengeWins || 0) >= 1 },
     // Times table mastery achievements
     { id: 'table_2',  label: 'Twice As Nice',   desc: 'Answer every ×2 fact correctly at least once',  check: (_, s) => tableComplete(s, 2)  },
     { id: 'table_3',  label: 'Triple Threat',   desc: 'Answer every ×3 fact correctly at least once',  check: (_, s) => tableComplete(s, 3)  },
@@ -208,6 +209,8 @@ const Progress = (() => {
     lt.bossesDefeated = (lt.bossesDefeated || 0) + (session.bossesDefeated || 0);
     lt.sessionsPlayed = (lt.sessionsPlayed || 0) + 1;
     if (session.missCount === 0) lt.flawlessGames = (lt.flawlessGames || 0) + 1;
+    if (session.isChallenge && session.challengerScore != null && session.score > session.challengerScore)
+      lt.challengeWins = (lt.challengeWins || 0) + 1;
     // Daily play streak
     const today = getDailyKey();
     if (lt.dayStreakLastDate === today) {

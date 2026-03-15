@@ -402,3 +402,39 @@ describe('Play streak', () => {
     expect(ach.check({ dayStreakCurrent: 6 })).toBe(false);
   });
 });
+
+describe('Challenge win achievement', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeProgressCtx(); });
+
+  test('challenge_win achievement exists', () => {
+    const ach = ctx.Progress.ACHIEVEMENTS.find(a => a.id === 'challenge_win');
+    expect(ach).toBeDefined();
+    expect(ach.check({ challengeWins: 1 })).toBe(true);
+    expect(ach.check({ challengeWins: 0 })).toBe(false);
+    expect(ach.check({})).toBe(false);
+  });
+
+  test('winning a challenge increments challengeWins and unlocks achievement', () => {
+    const session = { score: 200, level: 3, accuracy: 0.8, maxStreak: 2, bossesDefeated: 0, missCount: 1,
+                      isChallenge: true, challengerScore: 150 };
+    const newAchs = ctx.Progress.saveSession(session);
+    expect(newAchs.some(a => a.id === 'challenge_win')).toBe(true);
+  });
+
+  test('losing a challenge does not unlock achievement', () => {
+    const session = { score: 100, level: 2, accuracy: 0.7, maxStreak: 1, bossesDefeated: 0, missCount: 2,
+                      isChallenge: true, challengerScore: 150 };
+    const newAchs = ctx.Progress.saveSession(session);
+    expect(newAchs.some(a => a.id === 'challenge_win')).toBe(false);
+  });
+
+  test('non-challenge game does not count', () => {
+    const session = { score: 300, level: 4, accuracy: 0.9, maxStreak: 5, bossesDefeated: 0, missCount: 0,
+                      isChallenge: false };
+    ctx.Progress.saveSession(session);
+    const ach = ctx.Progress.ACHIEVEMENTS.find(a => a.id === 'challenge_win');
+    const d = JSON.parse(ctx.localStorage.getItem('multiblaster_v1'));
+    expect(d.lifetime.challengeWins || 0).toBe(0);
+  });
+});

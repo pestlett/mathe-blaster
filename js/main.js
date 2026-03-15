@@ -1466,6 +1466,8 @@ function endGame() {
     bossesDefeated: state.bossesDefeated || 0,
     missCount: state.missedList.length,
     masteryWin: state.masteryWin || false,
+    isChallenge: state.isChallenge || false,
+    challengerScore: state.challengerScore || null,
   };
   const newAchievements = Progress.saveSession(session);
   if (state.isDaily) {
