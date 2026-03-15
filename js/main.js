@@ -489,6 +489,18 @@ const TutorialRun = {
     UI.updateHUD(state);
   },
 
+  resetBonusDemoState() {
+    this.clearScene();
+    state.freezeActive = 0;
+    state.magnetActive = 0;
+    state.revealBonusActive = 0;
+    state.scoreStarActive = false;
+    state.shieldBonusActive = false;
+    state.bonusFlash = null;
+    state.unpauseFreezeTimer = 0;
+    UI.updateHUD(state);
+  },
+
   slotX(slot = 'center') {
     const w = window.innerWidth;
     if (slot === 'left') return Math.round(w * 0.24);
@@ -608,25 +620,17 @@ const TutorialRun = {
 
   async demoControlButtons() {
     if (!tutorialActive()) return;
-    const btnMute = document.getElementById('btn-mute');
     this.setHighlights(['btn-mute']);
     await this.pulseButton('btn-mute', 700);
-    btnMute?.click();
-    await this.wait(450);
-    btnMute?.click();
-    await this.wait(250);
+    await this.wait(300);
 
     this.setHighlights(['btn-mic']);
     await this.pulseButton('btn-mic', 900);
-    await this.wait(250);
+    await this.wait(300);
 
     this.setHighlights(['btn-pause']);
     await this.pulseButton('btn-pause', 700);
-    togglePause();
-    this.setHighlights(['btn-resume']);
-    await this.wait(900);
-    togglePause();
-    await this.wait(350);
+    await this.wait(300);
     this.clearHighlights();
   },
 
@@ -839,8 +843,8 @@ const TutorialRun = {
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1200);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     await this.narrate(I18n.t('tutorialFreezeLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       overlayPosition: 'bottom',
@@ -853,8 +857,8 @@ const TutorialRun = {
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1800);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     this.spawnQuestion('center', { y: 135, speed: 48 });
     this.resumeDemo();
     await this.wait(350);
@@ -880,8 +884,8 @@ const TutorialRun = {
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1400);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     await this.narrate(I18n.t('tutorialScoreStarLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['hud-score', 'score-val', 'hud-center'],
@@ -896,8 +900,8 @@ const TutorialRun = {
     await this.wait(700);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1800);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     await this.narrate(I18n.t('tutorialShieldLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       overlayPosition: 'bottom',
@@ -912,8 +916,8 @@ const TutorialRun = {
     if (shieldMiss) Targeting.setTarget(shieldMiss);
     await this.waitForShieldAbsorb();
     await this.wait(500);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     this.spawnQuestion('left', { y: 150, speed: 28 });
     this.spawnQuestion('center', { y: 115, speed: 28 });
     this.spawnQuestion('right', { y: 180, speed: 28 });
@@ -927,8 +931,8 @@ const TutorialRun = {
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1600);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     this.spawnQuestion('left', { y: 160, speed: 30 });
     this.spawnQuestion('right', { y: 190, speed: 30 });
     await this.narrate(I18n.t('tutorialRevealLine'), {
@@ -941,8 +945,8 @@ const TutorialRun = {
     await this.wait(350);
     await this.typeAnswer(Targeting.getTarget()?.answer);
     await this.wait(1800);
+    this.resetBonusDemoState();
 
-    this.clearScene();
     state.correctThisLevel = 9;
     state.attemptsThisLevel = 9;
     this.spawnQuestion('center', { y: 135, speed: 46 });
