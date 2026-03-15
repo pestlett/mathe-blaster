@@ -12,8 +12,8 @@ function makeObjCtxWithInternals() {
   let src = fs.readFileSync(path.resolve(__dirname, '../js/objects.js'), 'utf8');
   // Expose pickX and minSep on the returned object
   src = src.replace(
-    'return { create, createBoss, createFreeze, createLifeUp, update, triggerDestruction };',
-    'return { create, createBoss, createFreeze, createLifeUp, update, triggerDestruction, _pickX: pickX, _minSep: minSep };'
+    'return { create, createBoss, createFreeze, createLifeUp, createLightning, createScoreStar, createShield, createMagnet, createReveal, update, triggerDestruction };',
+    'return { create, createBoss, createFreeze, createLifeUp, createLightning, createScoreStar, createShield, createMagnet, createReveal, update, triggerDestruction, _pickX: pickX, _minSep: minSep };'
   );
   src = src.replace(/^(?:const|let)\s+([A-Z][A-Za-z0-9_]*)\s*=/m, 'var $1 =');
   vm.runInContext(src, ctx);

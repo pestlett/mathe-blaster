@@ -52,6 +52,15 @@ let state = {
   lifeUpTimer: 0,   // accumulates seconds toward next life-up spawn
   freezeTimer: 0,   // accumulates seconds toward next freeze spawn
   freezeActive: 0,  // seconds remaining on active freeze
+  lightningTimer: 0,
+  scoreStarTimer: 0,
+  shieldTimer: 0,
+  magnetTimer: 0,
+  revealTimer: 0,
+  magnetActive: 0,
+  revealBonusActive: 0,
+  scoreStarActive: false,
+  shieldBonusActive: false,
   gameTimeSecs: 0,  // total seconds played this session (drives spawn stagger)
   answerStartTime: 0,
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
@@ -665,6 +674,15 @@ function startGame(settings) {
   state.freezeTimer = 0;
   state._bossSpawnedThisLevel = false;
   state.freezeActive = 0;
+  state.lightningTimer = 0;
+  state.scoreStarTimer = 0;
+  state.shieldTimer = 0;
+  state.magnetTimer = 0;
+  state.revealTimer = 0;
+  state.magnetActive = 0;
+  state.revealBonusActive = 0;
+  state.scoreStarActive = false;
+  state.shieldBonusActive = false;
   state.levelTransitionTimer = 0;
   state.unpauseFreezeTimer = 0;
   state.ttsFreezeActive = false;
@@ -745,6 +763,25 @@ function update(dt) {
     state.freezeActive = Math.max(0, state.freezeActive - dt);
   }
 
+  // Tick down magnet and reveal bonuses
+  if (state.magnetActive > 0) {
+    state.magnetActive = Math.max(0, state.magnetActive - dt);
+    // Pull all live objects toward horizontal centre
+    const cx = window.innerWidth / 2;
+    for (const obj of state.objects) {
+      if (!obj.dead && !obj.dying && !obj.destroyed && !obj.isLifeUp && !obj.isFreeze &&
+          !obj.isLightning && !obj.isScoreStar && !obj.isShield && !obj.isMagnet && !obj.isReveal && !obj.isBoss) {
+        obj.x += (cx - obj.x) * Math.min(1, dt * 2.5);
+      }
+    }
+  }
+  if (state.revealBonusActive > 0) state.revealBonusActive = Math.max(0, state.revealBonusActive - dt);
+
+  // Set reveal flag on all objects
+  for (const obj of state.objects) {
+    obj._revealBonus = state.revealBonusActive > 0;
+  }
+
   // Tick down level-transition freeze
   if (state.levelTransitionTimer > 0) {
     state.levelTransitionTimer = Math.max(0, state.levelTransitionTimer - dt);
@@ -780,7 +817,8 @@ function update(dt) {
   const levelFreezing   = state.levelTransitionTimer > 0;
   const ttsFreezing     = state.ttsFreezeActive;
   const unpauseFreezing = state.unpauseFreezeTimer > 0;
-  const freezeMult      = (levelFreezing || ttsFreezing || unpauseFreezing) ? 0 : (state.freezeActive > 0 ? 0.25 : 1);
+  const freezeMult      = (levelFreezing || ttsFreezing || unpauseFreezing) ? 0
+    : (state.freezeActive > 0 ? 0.25 : state.magnetActive > 0 ? 0.4 : 1);
 
   // Boss aura: regular objects fall at 65% speed while a boss is alive
   const hasBossActive = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
@@ -789,12 +827,14 @@ function update(dt) {
   // Update all objects (keep animating during ENDING)
   for (const obj of state.objects) {
     // Special items ignore boss aura; boss ignores its own aura; regular objects slowed by it
-    const isSpecial = obj.isFreeze || obj.isLifeUp || obj.isBoss;
+    const isSpecial = obj.isFreeze || obj.isLifeUp || obj.isBoss ||
+      obj.isLightning || obj.isScoreStar || obj.isShield || obj.isMagnet || obj.isReveal;
     const effectiveDt = isSpecial ? dt * freezeMult : dt * freezeMult * bossMult;
     Objects.update(obj, effectiveDt, window.innerHeight - 148);
 
     // Detect first frame of gracing (1s grace window to answer before life is lost)
-    if (obj.gracing && !obj._graceHandled && !obj.isFreeze && !obj.isLifeUp && !obj.isBoss) {
+    if (obj.gracing && !obj._graceHandled && !obj.isFreeze && !obj.isLifeUp && !obj.isBoss &&
+        !obj.isLightning && !obj.isScoreStar && !obj.isShield && !obj.isMagnet && !obj.isReveal) {
       obj._graceHandled = true;
       if (!state.practiceMode) {
         UI.showLevelUp(I18n.t('lastChanceMsg'), null);
@@ -807,8 +847,8 @@ function update(dt) {
       if (Targeting.getTarget() === obj) {
         document.getElementById('answer-input').value = '';
       }
-      if (obj.isLifeUp) {
-        // Life-up missed — just disappears, no penalty
+      if (obj.isLifeUp || obj.isLightning || obj.isScoreStar || obj.isShield || obj.isMagnet || obj.isReveal) {
+        // Bonus item missed — just disappears, no penalty
       } else {
         // Crash counts as a wrong attempt — lowers mastery for this fact
         if (!obj.isFreeze) {
@@ -837,6 +877,13 @@ function update(dt) {
             UI.showLevelUp(
               (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_shieldBomb'))
                 ? 'Shield! +1 Bomb' : 'Shield!', null);
+            state.missedList.push({ question: obj.question, answer: obj.answer });
+            UI.showMissFlash(obj.question, obj.answer);
+            UI.updateHUD(state);
+          } else if (state.shieldBonusActive) {
+            state.shieldBonusActive = false;
+            UI.showLevelUp('🛡 Shield absorbed!', null);
+            Audio.play('correct');
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
             UI.updateHUD(state);
@@ -952,11 +999,80 @@ function update(dt) {
     state.lifeUpTimer = 0; // reset timer when at full health or one already active
   }
 
+  // ⚡ Lightning — level 6+, ~45s
+  const hasLightning = state.objects.some(o => o.isLightning && !o.dead && !o.dying && !o.destroyed);
+  if (!hasLightning && state.level >= 6) {
+    state.lightningTimer += dt;
+    if (state.lightningTimer >= 45) {
+      state.lightningTimer = 0;
+      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      const item = Objects.createLightning(q, window.innerWidth, speed, liveX);
+      if (item) state.objects.push(item); else state.lightningTimer = 43;
+    }
+  } else if (hasLightning) { state.lightningTimer = 0; }
+
+  // 🌟 Score Star — always, ~35s
+  const hasScoreStar = state.objects.some(o => o.isScoreStar && !o.dead && !o.dying && !o.destroyed);
+  if (!hasScoreStar && !state.scoreStarActive) {
+    state.scoreStarTimer += dt;
+    if (state.scoreStarTimer >= 35) {
+      state.scoreStarTimer = 0;
+      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      const item = Objects.createScoreStar(q, window.innerWidth, speed, liveX);
+      if (item) state.objects.push(item); else state.scoreStarTimer = 33;
+    }
+  } else { state.scoreStarTimer = 0; }
+
+  // 🛡 Shield — only when at full health, ~40s
+  const hasShield = state.objects.some(o => o.isShield && !o.dead && !o.dying && !o.destroyed);
+  if (!hasShield && !state.shieldBonusActive && state.lives >= state.maxLives) {
+    state.shieldTimer += dt;
+    if (state.shieldTimer >= 40) {
+      state.shieldTimer = 0;
+      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      const item = Objects.createShield(q, window.innerWidth, speed, liveX);
+      if (item) state.objects.push(item); else state.shieldTimer = 38;
+    }
+  } else { state.shieldTimer = 0; }
+
+  // 🧲 Magnet — 4+ live question objects, ~50s
+  const liveQuestionCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed &&
+    !o.isLifeUp && !o.isFreeze && !o.isLightning && !o.isScoreStar && !o.isShield && !o.isMagnet && !o.isReveal && !o.isBoss).length;
+  const hasMagnet = state.objects.some(o => o.isMagnet && !o.dead && !o.dying && !o.destroyed);
+  if (!hasMagnet && state.magnetActive <= 0 && liveQuestionCount >= 4) {
+    state.magnetTimer += dt;
+    if (state.magnetTimer >= 50) {
+      state.magnetTimer = 0;
+      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      const item = Objects.createMagnet(q, window.innerWidth, speed, liveX);
+      if (item) state.objects.push(item); else state.magnetTimer = 48;
+    }
+  } else if (hasMagnet) { state.magnetTimer = 0; }
+
+  // 💡 Reveal — accuracy < 60%, ~60s
+  const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 1;
+  const hasReveal = state.objects.some(o => o.isReveal && !o.dead && !o.dying && !o.destroyed);
+  if (!hasReveal && state.revealBonusActive <= 0 && state.totalAttempts >= 5 && accuracy < 0.6) {
+    state.revealTimer += dt;
+    if (state.revealTimer >= 60) {
+      state.revealTimer = 0;
+      const q = _pickQuestion(state.objects.filter(o => !o.dead).map(o => o.answer));
+      const liveX = state.objects.filter(o => !o.dead).map(o => o.x);
+      const item = Objects.createReveal(q, window.innerWidth, speed, liveX);
+      if (item) state.objects.push(item); else state.revealTimer = 58;
+    }
+  } else if (hasReveal) { state.revealTimer = 0; }
+
   // Spawn new question objects (skip during level transition or TTS)
   // Stagger start: allow 1 object immediately, add a slot every 4s so the screen
   // doesn't fill instantly at game start. Fully ramped after (maxObj-1)*4 seconds.
   const staggerMax = Math.min(maxObj, 1 + Math.floor(state.gameTimeSecs / 4));
-  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze).length;
+  const aliveCount = state.objects.filter(o => !o.dead && !o.dying && !o.destroyed && !o.isLifeUp && !o.isFreeze &&
+    !o.isLightning && !o.isScoreStar && !o.isShield && !o.isMagnet && !o.isReveal).length;
   if (!levelFreezing && !ttsFreezing && !unpauseFreezing && aliveCount < staggerMax) {
     const excludeAnswers = state.objects.filter(o => !o.dead).map(o => o.answer);
     const q = _pickQuestion(excludeAnswers);
@@ -977,7 +1093,7 @@ function update(dt) {
   const hzTopN    = state.hotZoneBoost ? HOT_ZONE_TOP_WIDE    : HOT_ZONE_TOP;
   const hzBottomN = state.hotZoneBoost ? HOT_ZONE_BOTTOM_WIDE : HOT_ZONE_BOTTOM;
   for (const obj of state.objects) {
-    if (!obj.isLifeUp) obj.hintActive = obj.wrongAttempts >= state.hintThreshold;
+    if (!obj.isLifeUp && !obj.isLightning && !obj.isScoreStar && !obj.isShield && !obj.isMagnet && !obj.isReveal) obj.hintActive = obj.wrongAttempts >= state.hintThreshold;
     // Pulsar / Sonar Ping / Radar Sweep: reveal answer when lowest enters hot zone
     if (state.revealOnHotZone && !obj.isFreeze && !obj.isLifeUp && !obj.isBoss) {
       const inZone = obj.y >= window.innerHeight * hzTopN && obj.y <= window.innerHeight * hzBottomN;
@@ -1002,8 +1118,13 @@ function update(dt) {
   // Update input placeholder — hint when a life-up is targeted
   const currentTarget = Targeting.getTarget();
   const inp = document.getElementById('answer-input');
-  inp.placeholder = (currentTarget && currentTarget.isLifeUp) ? I18n.t('lifeUpPlaceholder')
-    : (currentTarget && currentTarget.isFreeze) ? I18n.t('freezePlaceholder')
+  inp.placeholder = (currentTarget && currentTarget.isLifeUp)    ? I18n.t('lifeUpPlaceholder')
+    : (currentTarget && currentTarget.isFreeze)    ? I18n.t('freezePlaceholder')
+    : (currentTarget && currentTarget.isLightning) ? I18n.t('lightningPlaceholder')
+    : (currentTarget && currentTarget.isScoreStar) ? I18n.t('scoreStarPlaceholder')
+    : (currentTarget && currentTarget.isShield)    ? I18n.t('shieldPlaceholder')
+    : (currentTarget && currentTarget.isMagnet)    ? I18n.t('magnetPlaceholder')
+    : (currentTarget && currentTarget.isReveal)    ? I18n.t('revealPlaceholder')
     : I18n.t('answerPlaceholder');
 }
 
@@ -1049,6 +1170,8 @@ function render(ctx, w, h, t) {
   if (state.freezeActive > 0) {
     Themes.drawFreezeOverlay(ctx, w, h, state.freezeActive);
   }
+  if (state.magnetActive > 0) Themes.drawMagnetOverlay(ctx, w, h, state.magnetActive);
+  if (state.revealBonusActive > 0) Themes.drawRevealOverlay(ctx, w, h, state.revealBonusActive);
 
   // Streak vignette (drawn inside the shake transform so it shakes too)
   if (state.streakFlashTimer > 0) {
@@ -1211,6 +1334,74 @@ function submitAnswer() {
     return;
   }
 
+  if (target.isLightning) {
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#ffe066');
+      let cleared = 0;
+      for (const obj of state.objects) {
+        if (!obj.dead && !obj.dying && !obj.destroyed && !obj.isBoss &&
+            !obj.isLifeUp && !obj.isFreeze && !obj.isLightning && !obj.isScoreStar &&
+            !obj.isShield && !obj.isMagnet && !obj.isReveal) {
+          Objects.triggerDestruction(obj, '#ffe066');
+          cleared++;
+        }
+      }
+      if (cleared > 0) UI.showLevelUp(`⚡ ${cleared} cleared!`, null);
+      Audio.play('correct');
+      input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
+      Targeting.syncTarget(state.objects);
+    } else { Audio.play('wrong'); UI.shakeInput(); UI.showTryAgain(target.question, target.answer); input.value = ''; }
+    focusAnswerInput(); return;
+  }
+
+  if (target.isScoreStar) {
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#ffd700');
+      state.scoreStarActive = true;
+      UI.showLevelUp('🌟 Next answer ×3!', null);
+      Audio.play('correct');
+      input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
+      Targeting.syncTarget(state.objects);
+    } else { Audio.play('wrong'); UI.shakeInput(); UI.showTryAgain(target.question, target.answer); input.value = ''; }
+    focusAnswerInput(); return;
+  }
+
+  if (target.isShield) {
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#a29bfe');
+      state.shieldBonusActive = true;
+      UI.showLevelUp('🛡 Shield ready!', null);
+      Audio.play('correct');
+      input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
+      Targeting.syncTarget(state.objects);
+    } else { Audio.play('wrong'); UI.shakeInput(); UI.showTryAgain(target.question, target.answer); input.value = ''; }
+    focusAnswerInput(); return;
+  }
+
+  if (target.isMagnet) {
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#fd79a8');
+      state.magnetActive = 4.0;
+      UI.showLevelUp('🧲 Magnet 4s!', null);
+      Audio.play('freeze');
+      input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
+      Targeting.syncTarget(state.objects);
+    } else { Audio.play('wrong'); UI.shakeInput(); UI.showTryAgain(target.question, target.answer); input.value = ''; }
+    focusAnswerInput(); return;
+  }
+
+  if (target.isReveal) {
+    if (val === target.answer) {
+      Objects.triggerDestruction(target, '#55efc4');
+      state.revealBonusActive = 3.0;
+      UI.showLevelUp('💡 Answers revealed 3s!', null);
+      Audio.play('correct');
+      input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
+      Targeting.syncTarget(state.objects);
+    } else { Audio.play('wrong'); UI.shakeInput(); UI.showTryAgain(target.question, target.answer); input.value = ''; }
+    focusAnswerInput(); return;
+  }
+
   const elapsed = Date.now() - state.answerStartTime;
   state.totalAttempts++;
   state.attemptsThisLevel++;
@@ -1291,6 +1482,11 @@ function submitAnswer() {
         UI.showLevelUp(`Lucky ×${luckyMult}!`, null);
       }
     }
+    if (state.scoreStarActive) {
+      pts *= 3;
+      state.scoreStarActive = false;
+      UI.showLevelUp('🌟 ×3!', null);
+    }
     state.score += pts;
 
     // Destroy object
@@ -1309,6 +1505,7 @@ function submitAnswer() {
       for (const obj of state.objects) {
         if (obj !== target && !obj.dying && !obj.dead && !obj.destroyed &&
             !obj.isFreeze && !obj.isLifeUp && !obj.isBoss &&
+            !obj.isLightning && !obj.isScoreStar && !obj.isShield && !obj.isMagnet && !obj.isReveal &&
             obj.answer === target.answer) {
           Objects.triggerDestruction(obj, particleColor);
           state.score += Math.round(pts * 0.5);

@@ -19,7 +19,7 @@ A browser-based maths game made with love for **Emma Jewell Colicheo** by her Da
 - **Normal** mode (lose lives when objects hit the bottom) and **Practice** mode (no lives, no pressure)
 - Level progression — speed ramps up as you improve
 - Streak and combo system for bonus points (×1.5 at 3, ×2 at 5, speed bonus for fast answers)
-- Special items: **Boss rounds**, **Freeze powerups**, and **Life-up hearts**
+- Special items: **Boss rounds**, **Freeze** (slows objects 5s), **Life-up hearts**, **Lightning** (clears all objects, level 6+), **Score Star** (next answer ×3), **Shield** (absorbs one miss, full health only), **Magnet** (pulls objects to centre 4s, when crowded), and **Reveal** (shows all answers 3s, when accuracy drops)
 
 ### Operations
 - **Multiplication** and **Division** — the kleines Einmaleins (1×1 to 10×10, PIKAS curriculum)
