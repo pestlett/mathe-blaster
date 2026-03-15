@@ -1078,11 +1078,14 @@ function submitAnswer() {
 
   // Boss: cycles through multiple questions; shrinks on correct, grows on wrong
   if (target.isBoss) {
+    state.totalAttempts++;
+    state.attemptsThisLevel++;
     if (val === target.answer) {
       const particleColor = Themes.particleColorForTheme(state.theme);
       Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime, { hintActive: !!target.hintActive });
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
       state.totalCorrect++;
+      state.correctThisLevel++;
       state.streak++;
       state.maxStreak = Math.max(state.maxStreak, state.streak);
       state.score += 15;
