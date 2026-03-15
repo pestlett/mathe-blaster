@@ -780,6 +780,24 @@ const UI = (() => {
   }
 
   // ---- HUD ----
+  // Theme-specific icons for active bonus HUD pills
+  const _hudBonusIcons = {
+    freeze:    { space: '❄', ocean: '❄', sky: '❄', cats: '❄', color: '#00d4ff' },
+    scoreStar: { space: '✨', ocean: '⭐', sky: '☀️', cats: '🐟', color: '#ffd700' },
+    shield:    { space: '🛡', ocean: '🐚', sky: '☁️', cats: '🎀', color: '#00ccff' },
+    magnet:    { space: '🌑', ocean: '🌀', sky: '🌪', cats: '🧶', color: '#cc66ff' },
+    reveal:    { space: '🔭', ocean: '🔦', sky: '💡', cats: '👁',  color: '#00ffaa' },
+  };
+
+  function _bonusPill(type, theme, pct) {
+    const b = _hudBonusIcons[type];
+    const icon = b[theme] || b.space;
+    const bar = pct !== null
+      ? `<span class="hud-bonus-bar-wrap"><span class="hud-bonus-bar-fill" style="width:${Math.round(pct * 100)}%;background:${b.color}"></span></span>`
+      : '';
+    return `<div class="hud-bonus-pill" style="border-color:${b.color}88"><span class="bp-icon">${icon}</span>${bar}</div>`;
+  }
+
   function updateHUD(state) {
     document.getElementById('hud-name').textContent = I18n.t('hiPlayer', { name: state.name });
     document.getElementById('score-val').textContent = state.score;
@@ -798,6 +816,19 @@ const UI = (() => {
     }
     document.getElementById('hud-tables').textContent = hudTables;
     renderLives(state.lives, state.maxLives, state.theme);
+
+    // Active bonus indicators below score
+    const bonusEl = document.getElementById('hud-bonuses');
+    if (bonusEl) {
+      let pills = '';
+      const th = state.theme || 'space';
+      if (state.freezeActive > 0)      pills += _bonusPill('freeze',    th, state.freezeActive / 5.0);
+      if (state.scoreStarActive)        pills += _bonusPill('scoreStar', th, null);
+      if (state.shieldBonusActive)      pills += _bonusPill('shield',    th, null);
+      if (state.magnetActive > 0)       pills += _bonusPill('magnet',    th, state.magnetActive / 4.0);
+      if (state.revealBonusActive > 0)  pills += _bonusPill('reveal',    th, state.revealBonusActive / 3.0);
+      bonusEl.innerHTML = pills;
+    }
   }
 
   function renderLives(lives, max, theme) {

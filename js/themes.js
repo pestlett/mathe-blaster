@@ -1698,9 +1698,40 @@ const Themes = (() => {
     _drawBonusOrb(ctx, obj, showLabel, t.glow, t.grad, t.icon, t.label);
   }
 
-  function drawMagnetOverlay(ctx, w, h, secondsLeft) {
-    const alpha = Math.min(0.12, secondsLeft * 0.03);
-    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#fd79a8'; ctx.fillRect(0, 0, w, h); ctx.restore();
+  function drawMagnetOverlay(ctx, w, h, secondsLeft, theme) {
+    const t = Date.now() * 0.001;
+    const colors = { space: '#cc66ff', ocean: '#2288ff', sky: '#7799bb', cats: '#ff5577' };
+    const color = colors[theme] || '#fd79a8';
+    const cx = w / 2, cy = h / 2;
+
+    // Subtle tint
+    const tintAlpha = Math.min(0.10, secondsLeft * 0.025);
+    ctx.save();
+    ctx.globalAlpha = tintAlpha;
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+
+    // Rotating dashed rings converging to centre — vortex effect
+    ctx.save();
+    const rings = 5;
+    for (let i = 0; i < rings; i++) {
+      const r = (80 + i * 90) * Math.min(1, secondsLeft / 4);
+      const speed = i % 2 === 0 ? 0.6 : -0.4;
+      const dashLen = Math.max(4, r * 0.14);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = Math.min(0.22, secondsLeft * 0.07) * (1 - i / rings * 0.6);
+      ctx.setLineDash([dashLen, dashLen]);
+      ctx.lineDashOffset = -(t * speed * r) % (dashLen * 2);
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   function drawRevealOverlay(ctx, w, h, secondsLeft) {
@@ -1715,12 +1746,188 @@ const Themes = (() => {
     ctx.globalAlpha = alpha;
     ctx.fillStyle = '#00aaff';
     ctx.fillRect(0, 0, w, h);
-    // Ice crystal border effect
     ctx.globalAlpha = Math.min(0.6, secondsLeft * 0.12);
     ctx.strokeStyle = '#00d4ff';
     ctx.lineWidth = 6;
     ctx.strokeRect(3, 3, w - 6, h - 6);
     ctx.restore();
+  }
+
+  // ========================
+  //  BONUS ACTIVATION ANIMATIONS
+  // ========================
+
+  // Called from main.js render() with state.bonusFlash = { type, timer, maxTimer }
+  function drawBonusActivation(ctx, w, h, flash, theme) {
+    if (!flash || flash.timer <= 0) return;
+    const pct = flash.timer / flash.maxTimer; // 1=just activated → 0=expired
+    const age = 1 - pct;                       // 0=just activated → 1=expired
+    ctx.save();
+    switch (flash.type) {
+      case 'lightning': _flashLightning(ctx, w, h, age, pct, theme, flash); break;
+      case 'lifeup':    _flashLifeUp(ctx, w, h, age, pct, theme); break;
+      case 'scoreStar': _flashScoreStar(ctx, w, h, age, pct, theme); break;
+      case 'shield':    _flashShield(ctx, w, h, age, pct, theme); break;
+      case 'magnet':    _flashMagnet(ctx, w, h, age, pct, theme); break;
+    }
+    ctx.restore();
+  }
+
+  // Deterministic zigzag bolt helper (sin-based, no randomness)
+  function _boltPath(ctx, startX, phase, w, h) {
+    ctx.beginPath();
+    ctx.moveTo(startX, 0);
+    for (let y = 0; y <= h; y += 30) {
+      const x = Math.max(12, Math.min(w - 12, startX + Math.sin(y * 0.11 + phase) * 42));
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  function _flashLightning(ctx, w, h, age, pct, theme, flash) {
+    const isCats = theme === 'cats';
+
+    if (age < 0.12) {
+      // Bright screen flash
+      ctx.globalAlpha = (age / 0.12) * 0.8;
+      ctx.fillStyle = isCats ? '#ff8855' : '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      return;
+    }
+
+    // Fade-out phase: draw bolts/claws
+    const fadeAlpha = Math.min(1, pct / 0.88);
+
+    if (isCats) {
+      // 5 diagonal claw scratch marks
+      ctx.globalAlpha = fadeAlpha * 0.9;
+      ctx.lineCap = 'round';
+      ctx.shadowColor = '#ff5533';
+      ctx.shadowBlur = 22;
+      // Primary scratches
+      ctx.strokeStyle = '#ff7755';
+      ctx.lineWidth = 5;
+      const n = 5;
+      for (let i = 0; i < n; i++) {
+        const frac = (i + 1) / (n + 1);
+        ctx.beginPath();
+        ctx.moveTo(w * frac - 55, h * 0.04);
+        ctx.lineTo(w * frac + 55, h * 0.82);
+        ctx.stroke();
+      }
+      // Parallel highlight streaks
+      ctx.strokeStyle = '#ffccaa';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = fadeAlpha * 0.4;
+      for (let i = 0; i < n; i++) {
+        const frac = (i + 1) / (n + 1);
+        ctx.beginPath();
+        ctx.moveTo(w * frac - 45, h * 0.04);
+        ctx.lineTo(w * frac + 65, h * 0.82);
+        ctx.stroke();
+      }
+    } else {
+      const color = { space: '#ffe566', ocean: '#00ffdd', sky: '#dd99ff' }[theme] || '#ffe566';
+      ctx.shadowColor = color;
+
+      // Outer glow pass
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 10;
+      ctx.globalAlpha = fadeAlpha * 0.22;
+      ctx.shadowBlur = 0;
+      for (let b = 0; b < 3; b++) _boltPath(ctx, w * (0.2 + b * 0.3), b * 2.1, w, h);
+
+      // Core bolt pass
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = fadeAlpha * 0.95;
+      ctx.shadowBlur = 28;
+      for (let b = 0; b < 3; b++) _boltPath(ctx, w * (0.2 + b * 0.3), b * 2.1, w, h);
+    }
+  }
+
+  function _flashLifeUp(ctx, w, h, age, pct, theme) {
+    // Pulsing edge vignette — 2 quick pulses
+    const color = theme === 'cats' ? '#ff6b81' : '#2ed573';
+    const pulseAlpha = pct * 0.55 * (0.5 + 0.5 * Math.sin(age * Math.PI * 4.5));
+    const edgeW = 50;
+    ctx.globalAlpha = pulseAlpha;
+
+    const sides = [
+      [0, 0, edgeW, h, 0, 0, edgeW, 0],
+      [w - edgeW, 0, edgeW, h, w, 0, w - edgeW, 0],
+      [0, 0, w, edgeW, 0, 0, 0, edgeW],
+      [0, h - edgeW, w, edgeW, 0, h, 0, h - edgeW],
+    ];
+    for (const [rx, ry, rw, rh, x0, y0, x1, y1] of sides) {
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(rx, ry, rw, rh);
+    }
+  }
+
+  function _flashScoreStar(ctx, w, h, age, pct, theme) {
+    const color = { space: '#aaddff', ocean: '#ff8866', sky: '#ffd700', cats: '#f0c030' }[theme] || '#ffd700';
+    const cx = w / 2, cy = h / 2;
+    const maxR = Math.max(w, h) * 0.85;
+    const rays = 14;
+    const reach = Math.min(1, age * 3.5); // expand fast, linger
+
+    ctx.globalAlpha = pct * 0.45;
+    for (let i = 0; i < rays; i++) {
+      const angle = (i / rays) * Math.PI * 2 + age * 0.4;
+      const span = (Math.PI * 2 / rays) * 0.38;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, maxR * reach, angle - span / 2, angle + span / 2);
+      ctx.closePath();
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * reach);
+      g.addColorStop(0, color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+  }
+
+  function _flashShield(ctx, w, h, age, pct, theme) {
+    const color = { space: '#00ccff', ocean: '#55cc88', sky: '#aabbee', cats: '#ff66aa' }[theme] || '#00ccff';
+    const pulse = 0.5 + 0.5 * Math.sin(age * Math.PI * 5);
+    const thick = 14 + 8 * pulse;
+    ctx.globalAlpha = pct * 0.75 * (0.5 + 0.5 * pulse);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = thick;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 35;
+    ctx.strokeRect(thick / 2, thick / 2, w - thick, h - thick);
+    // Second softer ring inside
+    ctx.lineWidth = thick * 0.5;
+    ctx.globalAlpha = pct * 0.3;
+    ctx.shadowBlur = 15;
+    ctx.strokeRect(thick * 1.5, thick * 1.5, w - thick * 3, h - thick * 3);
+  }
+
+  function _flashMagnet(ctx, w, h, age, pct, theme) {
+    const color = { space: '#cc66ff', ocean: '#2288ff', sky: '#7799bb', cats: '#ff5577' }[theme] || '#cc66ff';
+    const cx = w / 2, cy = h / 2;
+    const maxR = Math.max(w, h) * 0.75;
+    const rings = 5;
+    for (let i = 0; i < rings; i++) {
+      // Staggered expanding rings
+      const phase = i / rings;
+      const t = Math.min(1, (age - phase * 0.18) * (1 / (1 - phase * 0.18)));
+      if (t <= 0) continue;
+      const r = maxR * t;
+      const alpha = (1 - t) * pct * 0.55;
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   // ========================
@@ -2439,5 +2646,5 @@ const Themes = (() => {
     return `rgb(${r},${g},${b})`;
   }
 
-  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, particleColorForTheme };
+  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, drawBonusActivation, particleColorForTheme };
 })();

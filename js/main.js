@@ -61,6 +61,7 @@ let state = {
   revealBonusActive: 0,
   scoreStarActive: false,
   shieldBonusActive: false,
+  bonusFlash: null,
   gameTimeSecs: 0,  // total seconds played this session (drives spawn stagger)
   answerStartTime: 0,
   hintThreshold: 3, // wrong attempts before dot-grid hint appears
@@ -683,6 +684,7 @@ function startGame(settings) {
   state.revealBonusActive = 0;
   state.scoreStarActive = false;
   state.shieldBonusActive = false;
+  state.bonusFlash = null;
   state.levelTransitionTimer = 0;
   state.unpauseFreezeTimer = 0;
   state.ttsFreezeActive = false;
@@ -776,6 +778,11 @@ function update(dt) {
     }
   }
   if (state.revealBonusActive > 0) state.revealBonusActive = Math.max(0, state.revealBonusActive - dt);
+
+  // Tick down bonus activation flash
+  if (state.bonusFlash && state.bonusFlash.timer > 0) {
+    state.bonusFlash.timer = Math.max(0, state.bonusFlash.timer - dt);
+  }
 
   // Set reveal flag on all objects
   for (const obj of state.objects) {
@@ -1170,7 +1177,7 @@ function render(ctx, w, h, t) {
   if (state.freezeActive > 0) {
     Themes.drawFreezeOverlay(ctx, w, h, state.freezeActive);
   }
-  if (state.magnetActive > 0) Themes.drawMagnetOverlay(ctx, w, h, state.magnetActive);
+  if (state.magnetActive > 0) Themes.drawMagnetOverlay(ctx, w, h, state.magnetActive, state.theme);
   if (state.revealBonusActive > 0) Themes.drawRevealOverlay(ctx, w, h, state.revealBonusActive);
 
   // Streak vignette (drawn inside the shake transform so it shakes too)
@@ -1180,6 +1187,11 @@ function render(ctx, w, h, t) {
   }
 
   if (shaking) ctx.restore();
+
+  // Bonus activation animations (drawn outside shake, on top of everything)
+  if (state.bonusFlash && state.bonusFlash.timer > 0) {
+    Themes.drawBonusActivation(ctx, w, h, state.bonusFlash, state.theme);
+  }
 
   // Confetti drawn on top, outside shake so it stays stable
   if (state.confetti.length > 0) {
@@ -1319,7 +1331,16 @@ function submitAnswer() {
     if (val === target.answer) {
       Objects.triggerDestruction(target, '#2ed573');
       state.lives = Math.min(state.maxLives, state.lives + 1);
+      state.bonusFlash = { type: 'lifeup', timer: 0.9, maxTimer: 0.9 };
       UI.updateHUD(state);
+      // Animate the newly gained heart in the HUD
+      const livesEl = document.getElementById('hud-lives');
+      if (livesEl) {
+        livesEl.classList.remove('life-gained');
+        void livesEl.offsetWidth; // force reflow to restart animation
+        livesEl.classList.add('life-gained');
+        setTimeout(() => livesEl.classList.remove('life-gained'), 600);
+      }
       Audio.play('levelUp');
       input.value = '';
       input.placeholder = I18n.t('answerPlaceholder');
@@ -1346,6 +1367,7 @@ function submitAnswer() {
           cleared++;
         }
       }
+      state.bonusFlash = { type: 'lightning', timer: 1.4, maxTimer: 1.4 };
       if (cleared > 0) UI.showLevelUp(`⚡ ${cleared} cleared!`, null);
       Audio.play('correct');
       input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
@@ -1358,6 +1380,7 @@ function submitAnswer() {
     if (val === target.answer) {
       Objects.triggerDestruction(target, '#ffd700');
       state.scoreStarActive = true;
+      state.bonusFlash = { type: 'scoreStar', timer: 0.65, maxTimer: 0.65 };
       UI.showLevelUp('🌟 Next answer ×3!', null);
       Audio.play('correct');
       input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
@@ -1370,6 +1393,7 @@ function submitAnswer() {
     if (val === target.answer) {
       Objects.triggerDestruction(target, '#a29bfe');
       state.shieldBonusActive = true;
+      state.bonusFlash = { type: 'shield', timer: 0.7, maxTimer: 0.7 };
       UI.showLevelUp('🛡 Shield ready!', null);
       Audio.play('correct');
       input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
@@ -1382,6 +1406,7 @@ function submitAnswer() {
     if (val === target.answer) {
       Objects.triggerDestruction(target, '#fd79a8');
       state.magnetActive = 4.0;
+      state.bonusFlash = { type: 'magnet', timer: 0.9, maxTimer: 0.9 };
       UI.showLevelUp('🧲 Magnet 4s!', null);
       Audio.play('freeze');
       input.value = ''; input.placeholder = I18n.t('answerPlaceholder');
