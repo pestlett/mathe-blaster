@@ -584,6 +584,7 @@ const UI = (() => {
         halbschriftlich: selectedHalbschriftlich,
         mixedPreset: selectedOperations ? selectedOperations.join(',') : null,
       });
+      closeSettings();
       onStartTutorial(_buildTutorialSettings(identity));
     }
 
@@ -852,19 +853,22 @@ const UI = (() => {
     }
   }
 
-  function showTutorialOverlay(text, title = null) {
+  function showTutorialOverlay(text, title = null, position = 'top') {
     const overlay = document.getElementById('tutorial-overlay');
     const titleEl = document.getElementById('tutorial-overlay-title');
     const textEl = document.getElementById('tutorial-overlay-text');
     if (!overlay || !titleEl || !textEl) return;
     titleEl.textContent = title || I18n.t('tutorialOverlayTitle');
     textEl.textContent = text || '';
+    overlay.classList.toggle('bottom', position === 'bottom');
+    overlay.classList.toggle('top', position !== 'bottom');
     overlay.classList.remove('hidden');
   }
 
   function hideTutorialOverlay() {
     const overlay = document.getElementById('tutorial-overlay');
     if (!overlay) return;
+    overlay.classList.remove('bottom', 'top');
     overlay.classList.add('hidden');
   }
 

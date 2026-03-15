@@ -445,7 +445,7 @@ const TutorialRun = {
     });
   },
 
-  async narrate(text, { title = null, resume = false, highlightIds = [] } = {}) {
+  async narrate(text, { title = null, resume = false, highlightIds = [], overlayPosition = 'top' } = {}) {
     if (!tutorialActive()) return;
     tutorialState.inputLocked = true;
     tutorialState.allowQuestionSpeech = false;
@@ -454,7 +454,7 @@ const TutorialRun = {
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     state.ttsFreezeActive = false;
     this.setHighlights(highlightIds);
-    UI.showTutorialOverlay(text, title || I18n.t('tutorialOverlayTitle'));
+    UI.showTutorialOverlay(text, title || I18n.t('tutorialOverlayTitle'), overlayPosition);
     await speakNarrationLine(text);
     if (!tutorialActive()) return;
     this.clearHighlights();
@@ -562,13 +562,30 @@ const TutorialRun = {
     submitAnswer();
   },
 
+  async waitForQuestionSpeechCycle(timeoutMs = 7000) {
+    if (!tutorialActive()) return;
+    const startedAt = Date.now();
+    let sawSpeechStart = !!state.ttsFreezeActive;
+    while (!sawSpeechStart && Date.now() - startedAt < timeoutMs) {
+      await this.wait(50);
+      sawSpeechStart = !!state.ttsFreezeActive;
+    }
+    if (!sawSpeechStart) {
+      await this.wait(1200);
+      return;
+    }
+    while (state.ttsFreezeActive && Date.now() - startedAt < timeoutMs) {
+      await this.wait(50);
+    }
+    await this.wait(320);
+  },
+
   async demoVoicePhrase(phrase, answer) {
     if (!tutorialActive()) return;
-    this.resumeDemo();
-    await this.wait(300);
     UI.showTutorialOverlay(
       I18n.t('tutorialVoiceDemoLine', { phrase }),
-      I18n.t('tutorialOverlayTitle')
+      I18n.t('tutorialOverlayTitle'),
+      'bottom'
     );
     await speakTutorialPhrase(phrase);
     if (!tutorialActive()) return;
@@ -751,11 +768,13 @@ const TutorialRun = {
     const voiceDemo = this.pickQuestion();
     await this.narrate(
       I18n.t('tutorialVoiceLine', { word: tutorialState.triggerWord, phrase: `${tutorialState.triggerWord} ${voiceDemo.answer}` }),
-      { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'] }
+      { title: I18n.t('tutorialOverlayTitle'), highlightIds: ['btn-mic'], overlayPosition: 'bottom' }
     );
     if (!tutorialActive()) return;
     tutorialState.allowQuestionSpeech = true;
     this.addObject(Objects.create(voiceDemo, window.innerWidth, window.innerHeight, 52, []), 'center', 120, 52);
+    this.resumeDemo();
+    await this.waitForQuestionSpeechCycle();
     await this.demoVoicePhrase(`${tutorialState.triggerWord} ${voiceDemo.answer}`, voiceDemo.answer);
     await this.wait(1600);
 
@@ -775,6 +794,7 @@ const TutorialRun = {
     await this.narrate(I18n.t('tutorialTargetLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['game-canvas'],
+      overlayPosition: 'bottom',
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
@@ -787,6 +807,7 @@ const TutorialRun = {
     await this.narrate(I18n.t('tutorialHelpLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['btn-help'],
+      overlayPosition: 'bottom',
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
@@ -800,6 +821,7 @@ const TutorialRun = {
     await this.narrate(I18n.t('tutorialLivesLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['hud-lives'],
+      overlayPosition: 'bottom',
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
@@ -807,7 +829,10 @@ const TutorialRun = {
     await this.wait(200);
 
     this.clearScene();
-    await this.narrate(I18n.t('tutorialLifeUpLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialLifeUpLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
     this.spawnItem('lifeup', 'center', { y: 125, speed: 48 });
     this.resumeDemo();
@@ -816,7 +841,10 @@ const TutorialRun = {
     await this.wait(1200);
 
     this.clearScene();
-    await this.narrate(I18n.t('tutorialFreezeLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialFreezeLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
     this.spawnQuestion('left', { y: 155, speed: 46 });
     this.spawnQuestion('right', { y: 185, speed: 46 });
@@ -834,12 +862,18 @@ const TutorialRun = {
     await this.wait(1800);
 
     this.clearScene();
-    await this.narrate(I18n.t('tutorialPowerupsLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialPowerupsLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
 
     this.spawnQuestion('left', { y: 150, speed: 34 });
     this.spawnQuestion('right', { y: 165, speed: 34 });
-    await this.narrate(I18n.t('tutorialLightningLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialLightningLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
     this.spawnItem('lightning', 'center', { y: 120, speed: 44 });
     this.resumeDemo();
@@ -851,6 +885,7 @@ const TutorialRun = {
     await this.narrate(I18n.t('tutorialScoreStarLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['hud-score', 'score-val', 'hud-center'],
+      overlayPosition: 'bottom',
     });
     if (!tutorialActive()) return;
     this.spawnQuestion('left', { y: Math.round(window.innerHeight * 0.54), speed: 24 });
@@ -863,7 +898,10 @@ const TutorialRun = {
     await this.wait(1800);
 
     this.clearScene();
-    await this.narrate(I18n.t('tutorialShieldLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialShieldLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
     this.spawnItem('shield', 'center', { y: 120, speed: 42 });
     this.resumeDemo();
@@ -879,7 +917,10 @@ const TutorialRun = {
     this.spawnQuestion('left', { y: 150, speed: 28 });
     this.spawnQuestion('center', { y: 115, speed: 28 });
     this.spawnQuestion('right', { y: 180, speed: 28 });
-    await this.narrate(I18n.t('tutorialMagnetLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialMagnetLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
     this.spawnItem('magnet', 'center', { y: 120, speed: 42 });
     this.resumeDemo();
@@ -890,7 +931,10 @@ const TutorialRun = {
     this.clearScene();
     this.spawnQuestion('left', { y: 160, speed: 30 });
     this.spawnQuestion('right', { y: 190, speed: 30 });
-    await this.narrate(I18n.t('tutorialRevealLine'), { title: I18n.t('tutorialOverlayTitle') });
+    await this.narrate(I18n.t('tutorialRevealLine'), {
+      title: I18n.t('tutorialOverlayTitle'),
+      overlayPosition: 'bottom',
+    });
     if (!tutorialActive()) return;
     this.spawnItem('reveal', 'center', { y: 120, speed: 42 });
     this.resumeDemo();
