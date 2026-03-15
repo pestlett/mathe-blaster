@@ -1,4 +1,4 @@
-# Multiplication Blaster — Development Guide
+# Mathe Blaster! — Development Guide
 
 ## Working in a git worktree
 **Always work in a git worktree** — never modify the main checkout directly.
