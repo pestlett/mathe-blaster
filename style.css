@@ -1021,22 +1021,26 @@ input[type="number"]::-webkit-outer-spin-button {
   color: rgba(255,255,255,0.92);
 }
 
-.tutorial-skip-btn {
-  display: block;
-  margin-top: 10px;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 0.72rem;
+/* Exit tutorial button in HUD — only visible during tutorial */
+.btn-tutorial-exit {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  border-radius: 8px;
+  color: rgba(255, 180, 180, 0.85);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  padding: 2px 0;
-  text-decoration: underline;
-  width: 100%;
-  text-align: right;
+  padding: 5px 8px;
+  pointer-events: all;
+  margin-top: 4px;
+  min-height: 32px;
   font-family: inherit;
+  transition: background 0.15s, color 0.15s;
 }
-.tutorial-skip-btn:hover {
-  color: rgba(255, 255, 255, 0.65);
+.btn-tutorial-exit:hover {
+  background: rgba(255, 80, 80, 0.2);
+  color: rgba(255, 200, 200, 1);
 }
 
 .tutorial-highlight {

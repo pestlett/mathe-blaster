@@ -418,6 +418,8 @@ const TutorialRun = {
       shieldAbsorbResolver: null,
       bossSpawned: false,
     };
+    document.getElementById('btn-tutorial-exit').hidden = false;
+    document.getElementById('btn-pause-tutorial-exit').hidden = false;
     UI.showTutorialOverlay(I18n.t('tutorialPreparing'));
     this.run().catch(err => console.error('[tutorial] run failed', err));
   },
@@ -427,6 +429,8 @@ const TutorialRun = {
     state.ttsFreezeActive = false;
     this.clearHighlights();
     UI.hideTutorialOverlay();
+    document.getElementById('btn-tutorial-exit').hidden = true;
+    document.getElementById('btn-pause-tutorial-exit').hidden = true;
     tutorialState = null;
   },
 
@@ -1030,7 +1034,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   UI.initOnboarding(startGame, startTutorial);
 
-  document.getElementById('btn-tutorial-skip')?.addEventListener('click', () => TutorialRun.skip());
+  document.getElementById('btn-tutorial-exit').addEventListener('click', () => TutorialRun.skip());
+  document.getElementById('btn-pause-tutorial-exit').addEventListener('click', () => TutorialRun.skip());
 
   const answerInput = document.getElementById('answer-input');
   const btnFire = document.getElementById('btn-fire');
