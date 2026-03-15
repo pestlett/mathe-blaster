@@ -350,6 +350,13 @@
           <label for="input-age" data-i18n="yourAge">Your Age</label>
           <input type="number" id="input-age" data-i18n-ph="agePlaceholder" placeholder="Age" min="1" max="132" style="width:100px">
         </div>
+        <div id="profile-switcher-row" class="form-group profile-switcher-row" style="display:none">
+          <label data-i18n="switchProfile">Switch Profile</label>
+          <div class="profile-switcher-controls">
+            <select id="profile-select" class="profile-select"></select>
+            <button type="button" id="btn-profile-delete" class="btn-profile-delete" data-i18n="deleteProfile">Delete</button>
+          </div>
+        </div>
       </div>
 
       <!-- Game section: mode + difficulty + hint threshold -->

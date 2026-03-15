@@ -249,9 +249,12 @@ const I18n = (() => {
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Mastered all ×-tables (2–10), all ÷-tables (2–10), and practised addition & subtraction'],
 
       settingsTitle:   'Settings',
-      settingsProfile: 'Profile',
-      settingsGame:    'Game',
-      settingsSave:    'Save',
+      settingsProfile:      'Profile',
+      settingsGame:         'Game',
+      settingsSave:         'Save',
+      switchProfile:        'Switch Profile',
+      deleteProfile:        'Delete',
+      confirmDeleteProfile: 'Delete this profile? All progress will be lost.',
     },
 
     de: {
@@ -492,10 +495,13 @@ const I18n = (() => {
       ach_sub_first_correct: ['Erste Differenz',   'Erste Subtraktionsaufgabe richtig beantwortet'],
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Alle ×-Tabellen (2–10), alle ÷-Tabellen (2–10) gemeistert und Addition & Subtraktion geübt'],
 
-      settingsTitle:   'Einstellungen',
-      settingsProfile: 'Profil',
-      settingsGame:    'Spiel',
-      settingsSave:    'Speichern',
+      settingsTitle:        'Einstellungen',
+      settingsProfile:      'Profil',
+      settingsGame:         'Spiel',
+      settingsSave:         'Speichern',
+      switchProfile:        'Profil wechseln',
+      deleteProfile:        'Löschen',
+      confirmDeleteProfile: 'Dieses Profil löschen? Alle Fortschritte gehen verloren.',
     },
 
     es: {
@@ -736,10 +742,13 @@ const I18n = (() => {
       ach_sub_first_correct: ['Primera Resta',     'Responde tu primera pregunta de resta correctamente'],
       ach_klasse3_komplett: ['¡Klasse 3 Komplett! 🎓', 'Has dominado todas las tablas ×2–×10, ÷2–÷10 y practicado suma y resta'],
 
-      settingsTitle:   'Configuración',
-      settingsProfile: 'Perfil',
-      settingsGame:    'Juego',
-      settingsSave:    'Guardar',
+      settingsTitle:        'Configuración',
+      settingsProfile:      'Perfil',
+      settingsGame:         'Juego',
+      settingsSave:         'Guardar',
+      switchProfile:        'Cambiar Perfil',
+      deleteProfile:        'Eliminar',
+      confirmDeleteProfile: '¿Eliminar este perfil? Se perderá todo el progreso.',
     },
   };
 

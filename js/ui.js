@@ -154,7 +154,67 @@ const UI = (() => {
     const btnSettings = document.getElementById('btn-settings');
     const btnSettingsClose = document.getElementById('btn-settings-close');
 
+    // Profile switcher
+    const profileSwitcherRow = document.getElementById('profile-switcher-row');
+    const profileSelect      = document.getElementById('profile-select');
+    const btnProfileDelete   = document.getElementById('btn-profile-delete');
+
+    function _refreshProfileSwitcher() {
+      const profiles = Progress.listProfiles();
+      if (profiles.length < 2) {
+        profileSwitcherRow.style.display = 'none';
+        return;
+      }
+      profileSwitcherRow.style.display = '';
+      const currentName = nameInput.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const currentAge  = parseInt(ageInput.value) || 0;
+      const currentSlug = (currentName || 'guest') + (currentAge > 0 ? `_${currentAge}` : '');
+      profileSelect.innerHTML = profiles.map(p => {
+        const pSlug = p.key.replace('multiblaster_v1_', '');
+        const isCurrent = pSlug === currentSlug;
+        const label = p.age ? `${p.name} (${p.age})` : p.name;
+        return `<option value="${p.key}"${isCurrent ? ' selected' : ''}>${label}</option>`;
+      }).join('');
+    }
+
+    profileSelect?.addEventListener('change', () => {
+      const profiles = Progress.listProfiles();
+      const selected = profiles.find(p => p.key === profileSelect.value);
+      if (!selected) return;
+      nameInput.value = selected.name;
+      ageInput.value  = selected.age || '';
+    });
+
+    btnProfileDelete?.addEventListener('click', () => {
+      const key = profileSelect?.value;
+      if (!key) return;
+      const profiles = Progress.listProfiles();
+      const profile  = profiles.find(p => p.key === key);
+      if (!profile) return;
+      const label = profile.age ? `${profile.name} (${profile.age})` : profile.name;
+      const msg   = I18n.t('confirmDeleteProfile').replace('{name}', label);
+      if (!confirm(msg)) return;
+      Progress.deleteProfile(key);
+      // If we just deleted the profile shown in the name/age fields, pick another
+      const currentName = nameInput.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const currentAge  = parseInt(ageInput.value) || 0;
+      const currentSlug = (currentName || 'guest') + (currentAge > 0 ? `_${currentAge}` : '');
+      const deletedSlug = key.replace('multiblaster_v1_', '');
+      if (deletedSlug === currentSlug) {
+        const remaining = Progress.listProfiles();
+        if (remaining.length > 0) {
+          nameInput.value = remaining[0].name;
+          ageInput.value  = remaining[0].age || '';
+        } else {
+          nameInput.value = '';
+          ageInput.value  = '';
+        }
+      }
+      _refreshProfileSwitcher();
+    });
+
     function openSettings() {
+      _refreshProfileSwitcher();
       settingsModal.classList.add('open');
       document.body.style.overflow = 'hidden';
     }

@@ -402,5 +402,30 @@ const Progress = (() => {
     return newlyUnlocked;
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks };
+  // ---- Profile management ----
+  // Returns all saved player profiles as [{ key, name, age }]
+  function listProfiles() {
+    const profiles = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('multiblaster_v1_')) continue;
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          const name = data?.player?.name || '';
+          const age  = data?.player?.age  || null;
+          if (name) profiles.push({ key, name, age });
+        } catch {}
+      }
+    } catch {}
+    return profiles;
+  }
+
+  // Deletes a player profile by storage key. Refuses to delete the active player.
+  function deleteProfile(key) {
+    if (key === currentKey) return false;
+    try { localStorage.removeItem(key); return true; } catch { return false; }
+  }
+
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile };
 })();
