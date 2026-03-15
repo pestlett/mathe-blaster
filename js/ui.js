@@ -75,6 +75,10 @@ const UI = (() => {
       );
       const isMulDiv = op === 'multiply' || op === 'divide';
       if (zehnerGroup) zehnerGroup.hidden = !isMulDiv;
+      // Numberblocks videos only apply to multiplication tables
+      if (op === 'divide') {
+        document.getElementById('numberblocks-link')?.classList.add('hidden');
+      }
     }
     document.querySelectorAll('.op-btn').forEach(btn => {
       btn.addEventListener('click', () => { _clearMixed(); _applyOp(btn.dataset.op); });
