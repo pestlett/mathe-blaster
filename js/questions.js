@@ -36,13 +36,23 @@ const Questions = (() => {
     return false;
   }
 
-  function _randInt(lo, hi) {
-    return lo + Math.floor(Math.random() * (hi - lo + 1));
+  // Mulberry32: small, fast, seedable PRNG. Returns a function that produces [0,1).
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function _randInt(lo, hi, rng) {
+    return lo + Math.floor((rng || Math.random)() * (hi - lo + 1));
   }
 
   // Generate structured random pairs for large add/subtract ranges.
   // roundMag: granularity for 'easy' mode (10 for ≤100, 100 for ≤1000)
-  function _sampleAddPairs(lo, hi, difficulty, count) {
+  function _sampleAddPairs(lo, hi, difficulty, count, rng) {
     const roundMag = hi >= 200 ? 100 : 10;
     const pairs = [];
     const seen = new Set();
@@ -54,11 +64,11 @@ const Questions = (() => {
         // Round multiples: both are pure multiples of roundMag within [0..hi]
         const maxStep = Math.floor(hi / roundMag);
         if (maxStep < 1) break;
-        a = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
-        b = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
+        a = Math.floor((rng || Math.random)() * (maxStep + 1)) * roundMag;
+        b = Math.floor((rng || Math.random)() * (maxStep + 1)) * roundMag;
       } else {
-        a = _randInt(lo, hi);
-        b = _randInt(lo, hi);
+        a = _randInt(lo, hi, rng);
+        b = _randInt(lo, hi, rng);
       }
       if (difficulty === 'easy'  &&  _hasCarry(a, b)) continue;
       if (difficulty === 'hard'  && !_hasCarry(a, b)) continue;
@@ -70,7 +80,7 @@ const Questions = (() => {
     return pairs;
   }
 
-  function _sampleSubPairs(lo, hi, difficulty, count) {
+  function _sampleSubPairs(lo, hi, difficulty, count, rng) {
     const roundMag = hi >= 200 ? 100 : 10;
     const pairs = [];
     const seen = new Set();
@@ -82,11 +92,11 @@ const Questions = (() => {
         // Round multiples: both are pure multiples of roundMag within [0..hi]
         const maxStep = Math.floor(hi / roundMag);
         if (maxStep < 1) break;
-        a = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
-        b = Math.floor(Math.random() * (maxStep + 1)) * roundMag;
+        a = Math.floor((rng || Math.random)() * (maxStep + 1)) * roundMag;
+        b = Math.floor((rng || Math.random)() * (maxStep + 1)) * roundMag;
       } else {
-        a = _randInt(lo, hi);
-        b = _randInt(lo, hi);
+        a = _randInt(lo, hi, rng);
+        b = _randInt(lo, hi, rng);
       }
       // no negatives: ensure a >= b
       if (a < b) { const tmp = a; a = b; b = tmp; }
@@ -105,7 +115,7 @@ const Questions = (() => {
   // wrongQueue: array of {key} for questions missed this session — given 16× weight.
   // operation: 'multiply' | 'divide' | 'add' | 'subtract'
   // opts.difficulty: 'easy' (no carry/borrow) | 'hard' (only carry/borrow) | anything else = all
-  function buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation = 'multiply', opts = {}) {
+  function buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation = 'multiply', opts = {}, rng = null) {
     const wrongKeys = new Set(wrongQueue.map(q => q.key));
     const pool = [];
 
@@ -149,7 +159,7 @@ const Questions = (() => {
           let attempts = 0;
           while (seen.size < target && attempts < target * 20) {
             attempts++;
-            const quotient = _randInt(loQ, hiQ);
+            const quotient = _randInt(loQ, hiQ, rng);
             if (seen.has(quotient)) continue;
             seen.add(quotient);
             const dividend = a * quotient;
@@ -192,7 +202,7 @@ const Questions = (() => {
           }
         }
         // Sample random pairs
-        const sampled = _sampleAddPairs(lo, hi, difficulty, 250);
+        const sampled = _sampleAddPairs(lo, hi, difficulty, 250, rng);
         for (const { a, b } of sampled) {
           const answer = a + b;
           const key = `${a}a${b}`;
@@ -230,7 +240,7 @@ const Questions = (() => {
           }
         }
         // Sample random pairs
-        const sampled = _sampleSubPairs(lo, hi, difficulty, 250);
+        const sampled = _sampleSubPairs(lo, hi, difficulty, 250, rng);
         for (const { a, b } of sampled) {
           const answer = a - b;
           const key = `${a}s${b}`;
@@ -284,7 +294,7 @@ const Questions = (() => {
           let attempts = 0;
           while (seen.size < target && attempts < target * 20) {
             attempts++;
-            const b = _randInt(loB, hiB);
+            const b = _randInt(loB, hiB, rng);
             if (seen.has(b)) continue;
             seen.add(b);
             const answer = a * b;
@@ -314,13 +324,14 @@ const Questions = (() => {
     return pool;
   }
 
-  function _fallback(minTable, maxTable, operation, opts = {}) {
-    const a = Math.floor(Math.random() * (maxTable - minTable + 1)) + minTable;
+  function _fallback(minTable, maxTable, operation, opts = {}, rng = null) {
+    const rand = rng || Math.random;
+    const a = Math.floor(rand() * (maxTable - minTable + 1)) + minTable;
     if (opts.zehner) {
       const bVals = opts.difficulty === 'easy'
         ? [10,20,30,40,50,60,70,80,90]
         : [10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900];
-      const b = bVals[Math.floor(Math.random() * bVals.length)];
+      const b = bVals[Math.floor(rand() * bVals.length)];
       if (operation === 'divide') {
         const dividend = a * b;
         return { a: dividend, b: a, answer: b, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
@@ -329,45 +340,45 @@ const Questions = (() => {
     }
     if (opts.halbschriftlich && operation === 'multiply') {
       const hiB = (opts.difficulty === 'easy') ? 99 : 999;
-      const b = _randInt(12, hiB);
+      const b = _randInt(12, hiB, rng);
       return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
     }
     if (opts.halbschriftlich && operation === 'divide') {
       const hiQ = (opts.difficulty === 'easy') ? 99 : 999;
-      const quotient = _randInt(12, hiQ);
+      const quotient = _randInt(12, hiQ, rng);
       const dividend = a * quotient;
       return { a: dividend, b: a, answer: quotient, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
     }
     if (operation === 'divide') {
-      const b = Math.floor(Math.random() * 12) + 1;
+      const b = Math.floor(rand() * 12) + 1;
       const dividend = a * b;
       return { a: dividend, b: a, answer: b, key: `${dividend}d${a}`, display: `${dividend} ÷ ${a}` };
     }
     if (operation === 'add') {
-      const b = Math.floor(Math.random() * (maxTable - minTable + 1)) + minTable;
+      const b = Math.floor(rand() * (maxTable - minTable + 1)) + minTable;
       return { a, b, answer: a + b, key: `${a}a${b}`, display: `${a} + ${b}` };
     }
     if (operation === 'subtract') {
-      const b = Math.floor(Math.random() * (a - minTable + 1)) + minTable;
+      const b = Math.floor(rand() * (a - minTable + 1)) + minTable;
       const lo = Math.min(a, b), hi = Math.max(a, b);
       return { a: hi, b: lo, answer: hi - lo, key: `${hi}s${lo}`, display: `${hi} − ${lo}` };
     }
     // multiply
-    const b = Math.floor(Math.random() * (maxTable - minTable + 1)) + minTable;
+    const b = Math.floor(rand() * (maxTable - minTable + 1)) + minTable;
     return { a, b, answer: a * b, key: `${a}x${b}`, display: `${a} × ${b}` };
   }
 
-  function pick(minTable, maxTable, stats, excludeAnswers = [], wrongQueue = [], operation = 'multiply', opts = {}) {
-    let pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, opts);
+  function pick(minTable, maxTable, stats, excludeAnswers = [], wrongQueue = [], operation = 'multiply', opts = {}, rng = null) {
+    let pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, opts, rng);
     // If difficulty filter leaves pool empty, retry without difficulty constraint
     if (pool.length === 0 && opts.difficulty) {
-      pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, { ...opts, difficulty: undefined });
+      pool = buildPool(minTable, maxTable, stats, excludeAnswers, wrongQueue, operation, { ...opts, difficulty: undefined }, rng);
     }
     if (pool.length === 0) {
-      return _fallback(minTable, maxTable, operation, opts);
+      return _fallback(minTable, maxTable, operation, opts, rng);
     }
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pool[Math.floor((rng || Math.random)() * pool.length)];
   }
 
-  return { pick };
+  return { pick, mulberry32 };
 })();

@@ -322,12 +322,13 @@ function maybeSpeak() {
 // unlocked.
 function _pickQuestion(excludeAnswers) {
   const stats = Progress.getStats();
-  const op  = state.operations[Math.floor(Math.random() * state.operations.length)];
+  const op  = state.operations[Math.floor((state.rng || Math.random)() * state.operations.length)];
   const isAddSub = op === 'add' || op === 'subtract';
   const qMin = isAddSub ? 1 : state.minTable;
   const qMax = isAddSub ? state.addSubRange : state.maxTable;
   return Questions.pick(qMin, qMax, stats, excludeAnswers, state.wrongQueue, op,
-    { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich });
+    { difficulty: state.difficulty, zehner: state.zehner, halbschriftlich: state.halbschriftlich },
+    state.rng);
 }
 
 function checkTableMastery() {
@@ -362,6 +363,14 @@ function checkTableMastery() {
 // ---- Bootstrap ----
 window.addEventListener('DOMContentLoaded', () => {
   Engine.init(update, render);
+
+  // Decode challenge link if present (?c=BASE64)
+  try {
+    const param = new URLSearchParams(location.search).get('c');
+    if (param) {
+      window._challengeConfig = JSON.parse(atob(decodeURIComponent(param)));
+    }
+  } catch { window._challengeConfig = null; }
 
   UI.initOnboarding(startGame);
 
@@ -662,6 +671,11 @@ function startGame(settings) {
   state.voiceActive = false;
   state.masteryWin = false;
   state.masteredTablesAnnounced = new Set();
+  // Seeded RNG — generated fresh each game unless a challenge seed is provided
+  state.seed = settings.seed || (Math.random() * 0xFFFFFFFF | 0);
+  state.rng  = Questions.mulberry32(state.seed);
+  state.isChallenge      = settings.isChallenge      || false;
+  state.challengerScore  = settings.challengerScore  || null;
   state.seenTablesAnnounced = new Set(Progress.getTableBadges(settings.minTable, settings.maxTable, settings.operation || 'multiply'));
   state.confetti = [];
   state.streakFlashTimer = 0;
@@ -1483,12 +1497,27 @@ function endGame() {
 
   const masteryData = Progress.getMastery(state.minTable, state.maxTable, state.operation);
 
+  // Build challenge link for sharing
+  const challengePayload = {
+    op: state.operations.length === 1 ? state.operations[0] : 'mixed',
+    ops: state.operations,
+    min: state.minTable, max: state.maxTable,
+    diff: state.difficulty,
+    seed: state.seed,
+    score: state.score,
+    v: 1,
+  };
+  const challengeUrl = `${location.origin}${location.pathname}?c=${encodeURIComponent(btoa(JSON.stringify(challengePayload)))}`;
+  session.challengeUrl  = challengeUrl;
+  session.isChallenge   = state.isChallenge;
+  session.challengerScore = state.challengerScore;
+
   UI.showGameOver(
     session,
     state.missedList,
     newAchievements,
     masteryData,
-    () => { UI.showScreen('onboarding'); },
+    () => { window._challengeConfig = null; UI.showScreen('onboarding'); },
     () => UI.showLeaderboard(() => UI.showScreen('gameover')),
     runData
   );

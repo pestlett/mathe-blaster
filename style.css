@@ -508,6 +508,44 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 0.82rem;
   padding: 10px 8px;
 }
+
+/* Streak banner on game-over */
+.streak-banner {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  margin: 6px 0;
+}
+
+/* Challenge banner on onboarding */
+.challenge-banner {
+  background: rgba(99, 149, 255, 0.15);
+  border: 1px solid rgba(99, 149, 255, 0.4);
+  color: #c8d8ff;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Challenge comparison on game-over */
+.challenge-compare {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.challenge-result {
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 6px;
+  font-size: 1rem;
+}
 @media (max-width: 480px) {
   .home-btns {
     flex-direction: column;

@@ -553,6 +553,7 @@ const UI = (() => {
         numRange: selectedNumRange, zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich,
         mixedPreset: selectedOperations ? selectedOperations.join(',') : null,
       });
+      const _cfg = window._challengeConfig;
       onStart({ name, age, theme: selectedTheme, minTable: min, maxTable: max,
         operation: selectedOp,
         operations: selectedOperations || [selectedOp],
@@ -560,7 +561,11 @@ const UI = (() => {
         difficulty: selectedDiff, hintThreshold: parseInt(hintThreshInput.value),
         practiceMode: selectedMode === 'practice', focusMode: tablesMode === 'single',
         triggerMode: _triggerModeOn, triggerWord: triggerWdInput?.value?.trim() || '',
-        zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich });
+        zehner: selectedZehner, halbschriftlich: selectedHalbschriftlich,
+        seed: _cfg?.seed || null,
+        isChallenge: !!_cfg,
+        challengerScore: _cfg?.score ?? null,
+      });
     });
 
     nameInput.addEventListener('input', () => nameInput.classList.remove('field-error'));
@@ -749,6 +754,29 @@ const UI = (() => {
     _refreshDynamicOnboarding(selectedMode);
     _refreshDailyBtn();
     if (!nameInput.value.trim()) openSettings();
+
+    // Apply challenge config from URL param (must run last so all listeners are ready)
+    const cfg = window._challengeConfig;
+    if (cfg) {
+      // Set operation
+      const ops = cfg.ops || [cfg.op || 'multiply'];
+      if (ops.length === 1) _applyOp(ops[0]);
+      // Set range
+      if (cfg.min) { rangeMin.value = cfg.min; rangeMinVal.textContent = cfg.min; }
+      if (cfg.max) { rangeMax.value = cfg.max; rangeMaxVal.textContent = cfg.max; }
+      // Set difficulty
+      if (cfg.diff) {
+        selectedDiff = cfg.diff;
+        document.querySelectorAll('.diff-btn').forEach(b =>
+          b.classList.toggle('active', b.dataset.diff === cfg.diff));
+      }
+      // Show challenge banner
+      const banner = document.getElementById('challenge-banner');
+      if (banner) {
+        banner.hidden = false;
+        banner.textContent = I18n.t('challengeBanner', { score: cfg.score ?? '?' });
+      }
+    }
   }
 
   // ---- HUD ----
@@ -1034,6 +1062,52 @@ const UI = (() => {
 
     document.getElementById('gameover-mastery').innerHTML =
       masteryData ? _renderMasteryGrid(masteryData) : '';
+
+    // Play streak (show after 2+ consecutive days)
+    const streak = Progress.getPlayStreak();
+    const streakEl = document.getElementById('gameover-streak');
+    if (streakEl) {
+      streakEl.innerHTML = streak.current >= 2
+        ? `<div class="streak-banner">${I18n.t('streakDays', { n: streak.current })}</div>`
+        : '';
+    }
+
+    // Challenge comparison (shown when this was a challenge game)
+    const compareEl = document.getElementById('gameover-challenge-compare');
+    if (compareEl) {
+      if (session.isChallenge && session.challengerScore != null) {
+        const diff = session.score - session.challengerScore;
+        const resultMsg = diff > 0
+          ? I18n.t('challengeWon',  { diff })
+          : diff < 0
+          ? I18n.t('challengeLost', { diff: Math.abs(diff) })
+          : I18n.t('challengeTied');
+        compareEl.innerHTML = `<div class="challenge-compare">
+          <div>${I18n.t('challengerScore')}: <strong>${session.challengerScore}</strong></div>
+          <div>${I18n.t('yourScore')}: <strong>${session.score}</strong></div>
+          <div class="challenge-result">${resultMsg}</div>
+        </div>`;
+      } else {
+        compareEl.innerHTML = '';
+      }
+    }
+
+    // Challenge a Friend button
+    const btnChallenge = document.getElementById('btn-challenge');
+    if (btnChallenge) {
+      btnChallenge.textContent = I18n.t('challengeFriend');
+      btnChallenge.onclick = () => {
+        if (!session.challengeUrl) return;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(session.challengeUrl).then(() => {
+            btnChallenge.textContent = I18n.t('challengeCopied');
+            setTimeout(() => { btnChallenge.textContent = I18n.t('challengeFriend'); }, 2000);
+          }).catch(() => { prompt('Copy this link:', session.challengeUrl); });
+        } else {
+          prompt('Copy this link:', session.challengeUrl);
+        }
+      };
+    }
 
     document.getElementById('btn-play-again').onclick = onPlayAgain;
     document.getElementById('btn-leaderboard').onclick = onLeaderboard;

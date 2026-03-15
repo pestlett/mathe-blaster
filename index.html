@@ -133,6 +133,7 @@
         <input type="hidden" id="focus-mode-toggle" value="0">
         <input type="hidden" id="focus-table" value="10">
       </div>
+      <div id="challenge-banner" class="challenge-banner" hidden></div>
       <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
       <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
       <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
@@ -212,12 +213,15 @@
     <div class="overlay-card">
       <h2 data-i18n="gameOver">Game Over!</h2>
       <div id="gameover-stats"></div>
+      <div id="gameover-streak"></div>
+      <div id="gameover-challenge-compare"></div>
       <div id="gameover-missed"></div>
       <div id="gameover-achievements"></div>
       <div id="gameover-run"></div>
-    <div id="gameover-mastery"></div>
+      <div id="gameover-mastery"></div>
       <div class="overlay-btns">
         <button id="btn-play-again" class="btn-primary" data-i18n="playAgain">Play Again</button>
+        <button id="btn-challenge" class="btn-secondary" data-i18n="challengeFriend">Challenge a Friend</button>
         <button id="btn-leaderboard" class="btn-secondary" data-i18n="leaderboard">Leaderboard</button>
         <button id="btn-achievements" class="btn-secondary" data-i18n="achievementsBtn">Achievements</button>
       </div>

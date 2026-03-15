@@ -357,3 +357,48 @@ describe('Progress.getDailyParams', () => {
     expect(a).toEqual(b);
   });
 });
+
+describe('Play streak', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeProgressCtx(); });
+
+  const session = { score: 100, level: 2, accuracy: 0.9, maxStreak: 3, bossesDefeated: 0, missCount: 0 };
+
+  test('streak starts at 0', () => {
+    expect(ctx.Progress.getPlayStreak().current).toBe(0);
+  });
+
+  test('playing one day sets current to 1', () => {
+    ctx.Progress.saveSession(session);
+    expect(ctx.Progress.getPlayStreak().current).toBe(1);
+  });
+
+  test('playing again on the same day leaves current unchanged', () => {
+    ctx.Progress.saveSession(session);
+    ctx.Progress.saveSession(session);
+    expect(ctx.Progress.getPlayStreak().current).toBe(1);
+  });
+
+  test('best is updated', () => {
+    ctx.Progress.saveSession(session);
+    expect(ctx.Progress.getPlayStreak().best).toBe(1);
+  });
+
+  test('streak_days_3 achievement unlocks at 3-day streak', () => {
+    // Simulate 3 consecutive days by directly setting lifetime streak
+    const d = ctx.localStorage.getItem('multiblaster_v1');
+    // We need to test the achievement check function directly
+    const achs = ctx.Progress.ACHIEVEMENTS;
+    const ach = achs.find(a => a.id === 'streak_days_3');
+    expect(ach).toBeDefined();
+    expect(ach.check({ dayStreakCurrent: 3 })).toBe(true);
+    expect(ach.check({ dayStreakCurrent: 2 })).toBe(false);
+  });
+
+  test('streak_days_7 achievement unlocks at 7-day streak', () => {
+    const ach = ctx.Progress.ACHIEVEMENTS.find(a => a.id === 'streak_days_7');
+    expect(ach).toBeDefined();
+    expect(ach.check({ dayStreakCurrent: 7 })).toBe(true);
+    expect(ach.check({ dayStreakCurrent: 6 })).toBe(false);
+  });
+});

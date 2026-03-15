@@ -25,8 +25,8 @@ function makeQCtxWithBuildPool() {
   let src = fs.readFileSync(path.resolve(__dirname, '../js/questions.js'), 'utf8');
   // Expose buildPool on the returned object
   src = src.replace(
-    'return { pick };',
-    'return { pick, _buildPool: buildPool };'
+    'return { pick, mulberry32 };',
+    'return { pick, mulberry32, _buildPool: buildPool };'
   );
   src = src.replace(/^(?:const|let)\s+([A-Z][A-Za-z0-9_]*)\s*=/m, 'var $1 =');
   vm.runInContext(src, ctx);
@@ -402,5 +402,43 @@ describe('Questions — Halbschriftlich division (Phase 7)', () => {
     expect(pool.length).toBeGreaterThan(0);
     // In zehner divide easy, the answer (quotient) is a multiple of 10
     pool.forEach(q => expect(q.answer % 10).toBe(0));
+  });
+});
+
+describe('mulberry32 PRNG', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeQCtx(); });
+
+  test('produces values in [0, 1)', () => {
+    const rng = ctx.Questions.mulberry32(42);
+    for (let i = 0; i < 100; i++) {
+      const v = rng();
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
+  });
+
+  test('same seed produces same sequence', () => {
+    const rng1 = ctx.Questions.mulberry32(12345);
+    const rng2 = ctx.Questions.mulberry32(12345);
+    for (let i = 0; i < 20; i++) {
+      expect(rng1()).toBe(rng2());
+    }
+  });
+
+  test('different seeds produce different sequences', () => {
+    const rng1 = ctx.Questions.mulberry32(1);
+    const rng2 = ctx.Questions.mulberry32(2);
+    const vals1 = Array.from({ length: 10 }, () => rng1());
+    const vals2 = Array.from({ length: 10 }, () => rng2());
+    expect(vals1).not.toEqual(vals2);
+  });
+
+  test('pick() with fixed seed returns same question twice', () => {
+    const rng1 = ctx.Questions.mulberry32(99999);
+    const rng2 = ctx.Questions.mulberry32(99999);
+    const q1 = ctx.Questions.pick(2, 5, {}, [], [], 'multiply', {}, rng1);
+    const q2 = ctx.Questions.pick(2, 5, {}, [], [], 'multiply', {}, rng2);
+    expect(q1.key).toBe(q2.key);
   });
 });

@@ -51,6 +51,8 @@ const Progress = (() => {
     { id: 'score_1000',     label: 'Thousand Club',      desc: 'Score 1000 points in one game',        check: (d) => d.bestScore >= 1000 },
     { id: 'no_miss',        label: 'Flawless',           desc: 'Finish a game without missing a question', check: (d) => d.flawlessGames >= 1 },
     { id: 'sessions_5',     label: 'Regular',            desc: 'Play 5 sessions',                      check: (d) => (d.sessionsPlayed || 0) >= 5 },
+    { id: 'streak_days_3',  label: 'Habit Forming',      desc: 'Play 3 days in a row',                 check: (d) => (d.dayStreakCurrent || 0) >= 3 },
+    { id: 'streak_days_7',  label: 'Week Warrior',       desc: 'Play 7 days in a row',                 check: (d) => (d.dayStreakCurrent || 0) >= 7 },
     // Times table mastery achievements
     { id: 'table_2',  label: 'Twice As Nice',   desc: 'Answer every ×2 fact correctly at least once',  check: (_, s) => tableComplete(s, 2)  },
     { id: 'table_3',  label: 'Triple Threat',   desc: 'Answer every ×3 fact correctly at least once',  check: (_, s) => tableComplete(s, 3)  },
@@ -186,6 +188,13 @@ const Progress = (() => {
     return newly;
   }
 
+  function _prevDayKey(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() - 1);
+    return `${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`;
+  }
+
   // Save a completed session; returns array of newly unlocked achievements
   function saveSession(session) {
     const d = load();
@@ -199,10 +208,26 @@ const Progress = (() => {
     lt.bossesDefeated = (lt.bossesDefeated || 0) + (session.bossesDefeated || 0);
     lt.sessionsPlayed = (lt.sessionsPlayed || 0) + 1;
     if (session.missCount === 0) lt.flawlessGames = (lt.flawlessGames || 0) + 1;
+    // Daily play streak
+    const today = getDailyKey();
+    if (lt.dayStreakLastDate === today) {
+      // already counted today — no change
+    } else if (lt.dayStreakLastDate === _prevDayKey(today)) {
+      lt.dayStreakCurrent = (lt.dayStreakCurrent || 0) + 1;
+    } else {
+      lt.dayStreakCurrent = 1;
+    }
+    lt.dayStreakBest = Math.max(lt.dayStreakBest || 0, lt.dayStreakCurrent);
+    lt.dayStreakLastDate = today;
     d.sessions.push({ ...session, date: new Date().toISOString() });
     const newlyUnlocked = checkAchievements(d);
     save(d);
     return newlyUnlocked;
+  }
+
+  function getPlayStreak() {
+    const lt = load().lifetime || {};
+    return { current: lt.dayStreakCurrent || 0, best: lt.dayStreakBest || 0 };
   }
 
   function getSessions() {
@@ -436,5 +461,5 @@ const Progress = (() => {
     try { localStorage.removeItem(key); return true; } catch { return false; }
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile, savePlayerSettings };
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
 })();

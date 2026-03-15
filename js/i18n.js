@@ -255,6 +255,15 @@ const I18n = (() => {
       switchProfile:        'Switch Profile',
       deleteProfile:        'Delete',
       confirmDeleteProfile: 'Delete this profile? All progress will be lost.',
+      streakDays:           '🔥 {n}-day streak!',
+      challengeFriend:      '🔗 Challenge a Friend',
+      challengeCopied:      '✓ Link copied!',
+      challengeBanner:      'A friend challenged you! Can you beat their score of {score}?',
+      challengerScore:      "Friend's score",
+      yourScore:            'Your score',
+      challengeWon:         '🎉 You beat them by {diff} points!',
+      challengeLost:        'They beat you by {diff} points — try again!',
+      challengeTied:        "It's a tie!",
     },
 
     de: {
@@ -502,6 +511,15 @@ const I18n = (() => {
       switchProfile:        'Profil wechseln',
       deleteProfile:        'Löschen',
       confirmDeleteProfile: 'Dieses Profil löschen? Alle Fortschritte gehen verloren.',
+      streakDays:           '🔥 {n}-Tage-Serie!',
+      challengeFriend:      '🔗 Freund herausfordern',
+      challengeCopied:      '✓ Link kopiert!',
+      challengeBanner:      'Ein Freund hat dich herausgefordert! Kannst du {score} Punkte schlagen?',
+      challengerScore:      'Punkte des Freundes',
+      yourScore:            'Deine Punkte',
+      challengeWon:         '🎉 Du hast mit {diff} Punkten gewonnen!',
+      challengeLost:        'Sie haben dich um {diff} Punkte geschlagen — nochmal!',
+      challengeTied:        'Unentschieden!',
     },
 
     es: {
@@ -749,6 +767,15 @@ const I18n = (() => {
       switchProfile:        'Cambiar Perfil',
       deleteProfile:        'Eliminar',
       confirmDeleteProfile: '¿Eliminar este perfil? Se perderá todo el progreso.',
+      streakDays:           '🔥 ¡Racha de {n} días!',
+      challengeFriend:      '🔗 Retar a un Amigo',
+      challengeCopied:      '✓ ¡Link copiado!',
+      challengeBanner:      '¡Un amigo te ha retado! ¿Puedes superar su puntuación de {score}?',
+      challengerScore:      'Puntuación del amigo',
+      yourScore:            'Tu puntuación',
+      challengeWon:         '🎉 ¡Ganaste por {diff} puntos!',
+      challengeLost:        'Te ganaron por {diff} puntos — ¡inténtalo de nuevo!',
+      challengeTied:        '¡Empate!',
     },
   };
 
