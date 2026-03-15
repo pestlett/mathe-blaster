@@ -1452,7 +1452,7 @@ const UI = (() => {
   }
 
   // ---- Upgrade Picker ----
-  function showUpgradePicker(options, theme, onPick) {
+  function showUpgradePicker(options, theme, activeUpgrades, onPick) {
     const el = document.getElementById('upgrade-picker');
     const optionsEl = document.getElementById('upgrade-options');
     optionsEl.innerHTML = '';
@@ -1464,11 +1464,38 @@ const UI = (() => {
       btn.innerHTML = `<div class="upgrade-name">${name}</div><div class="upgrade-desc">${desc}</div>`;
       btn.addEventListener('click', () => {
         el.classList.add('hidden');
-        onPick(upg);
+        _showUpgradeAcquired(upg, theme, () => onPick(upg));
       });
       optionsEl.appendChild(btn);
     });
     el.classList.remove('hidden');
+  }
+
+  function _showUpgradeAcquired(upg, theme, onDone) {
+    const acquired = document.getElementById('upgrade-acquired');
+    if (!acquired) { onDone(); return; }
+    document.getElementById('upgrade-acquired-icon').textContent  = upg.icon || '✨';
+    document.getElementById('upgrade-acquired-label').textContent = upgradeNameForTheme(upg, theme);
+    document.getElementById('upgrade-acquired-desc').textContent  = upgradeDescForTheme(upg, theme);
+    acquired.classList.remove('hidden', 'fade-out');
+    // After 1.6s start fade-out, then call onDone at 2s total
+    const fadeTimer = setTimeout(() => acquired.classList.add('fade-out'), 1600);
+    const doneTimer = setTimeout(() => {
+      clearTimeout(fadeTimer);
+      acquired.classList.add('hidden');
+      acquired.classList.remove('fade-out');
+      onDone();
+    }, 2000);
+    // Tapping the overlay skips the wait
+    const skip = () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(doneTimer);
+      acquired.classList.add('hidden');
+      acquired.classList.remove('fade-out');
+      acquired.removeEventListener('click', skip);
+      onDone();
+    };
+    acquired.addEventListener('click', skip);
   }
 
   // ---- Achievements ----

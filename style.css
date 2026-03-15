@@ -1932,6 +1932,52 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   z-index: 300;
 }
 .upgrade-picker.hidden { display: none; }
+
+/* Upgrade acquired flash */
+.upgrade-acquired {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  animation: upgrade-acquired-in 0.3s ease-out;
+}
+.upgrade-acquired.hidden { display: none; }
+.upgrade-acquired.fade-out { animation: upgrade-acquired-out 0.4s ease-in forwards; }
+@keyframes upgrade-acquired-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes upgrade-acquired-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.08); }
+}
+.upgrade-acquired-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  animation: upgrade-icon-pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes upgrade-icon-pop {
+  from { transform: scale(0.4); }
+  to   { transform: scale(1); }
+}
+.upgrade-acquired-label {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #a29bfe;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.upgrade-acquired-desc {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.7);
+  max-width: 300px;
+  text-align: center;
+  line-height: 1.4;
+}
 .upgrade-picker-card {
   background: #1a1a2e;
   border: 2px solid #a29bfe;
