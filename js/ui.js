@@ -202,7 +202,7 @@ const UI = (() => {
     // Mode (normal / practice)
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedMode = btn.dataset.mode;
         _refreshDynamicOnboarding(selectedMode);
@@ -295,7 +295,7 @@ const UI = (() => {
     // Extended tables: expand sliders + single-table grid when unlocked
     function _updateTablesRange() {
       const extended = Progress.isExtendedTablesUnlocked();
-      const newMax = extended ? EXTENDED_MAX : 12;
+      const newMax = extended ? EXTENDED_MAX : 10;
       rangeMin.max = newMax;
       rangeMax.max = newMax;
       // Re-clamp current values
@@ -307,6 +307,11 @@ const UI = (() => {
       if (ticks) {
         ticks.innerHTML = Array.from({ length: newMax }, (_, i) => `<span>${i + 1}</span>`).join('');
       }
+      // Show/hide 11 and 12 single-table buttons based on extended unlock
+      document.querySelectorAll('.table-num-btn').forEach(btn => {
+        const val = parseInt(btn.dataset.val);
+        if (val > 10) btn.style.display = extended ? '' : 'none';
+      });
       // Rebuild extended single-table buttons (13–20)
       const grid = document.getElementById('table-grid');
       grid.querySelectorAll('.table-num-btn.extended').forEach(b => b.remove());
