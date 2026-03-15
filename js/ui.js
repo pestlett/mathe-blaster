@@ -1690,18 +1690,21 @@ const UI = (() => {
       btn.title = `Help on cooldown — ${secs}s remaining`;
       btn.disabled = true;
       btn.classList.add('help-cooldown');
+      btn.classList.remove('help-special');
       btn.style.setProperty('--help-progress', `${((max - cooldown) / max * 100).toFixed(1)}%`);
     } else if (targetIsSpecial) {
       btn.textContent = '💡';
-      btn.title = 'Help — not available for this type';
+      btn.title = 'Help — not available for power-ups (just catch them!)';
       btn.disabled = true;
       btn.classList.remove('help-cooldown');
+      btn.classList.add('help-special');
       btn.style.removeProperty('--help-progress');
     } else {
       btn.textContent = '💡';
       btn.title = 'Help — reveal the answer (H)';
       btn.disabled = false;
       btn.classList.remove('help-cooldown');
+      btn.classList.remove('help-special');
       btn.style.removeProperty('--help-progress');
     }
   }
