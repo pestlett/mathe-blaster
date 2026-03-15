@@ -325,6 +325,11 @@ const Themes = (() => {
         ctx.globalAlpha = 1 - obj.destroyTimer * 2;
         if (obj.isLifeUp) drawLifeUp(ctx, obj, false);
         else if (obj.isFreeze) drawFreezeItem(ctx, obj, false);
+        else if (obj.isLightning) drawLightning(ctx, obj, false);
+        else if (obj.isScoreStar) drawScoreStar(ctx, obj, false);
+        else if (obj.isShield) drawShield(ctx, obj, false);
+        else if (obj.isMagnet) drawMagnet(ctx, obj, false);
+        else if (obj.isReveal) drawReveal(ctx, obj, false);
         else if (obj.isBoss) drawBossObject(ctx, obj, theme, false);
         else drawThemeObject(ctx, obj, theme, false);
         ctx.restore();
@@ -332,11 +337,16 @@ const Themes = (() => {
       return;
     }
     if (obj.dying) {
-      if (obj.isLifeUp || obj.isFreeze) {
+      if (obj.isLifeUp || obj.isFreeze || obj.isLightning || obj.isScoreStar || obj.isShield || obj.isMagnet || obj.isReveal) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, 1 - obj.dieTimer / 1.2);
         if (obj.isLifeUp) drawLifeUp(ctx, obj, false);
-        else drawFreezeItem(ctx, obj, false);
+        else if (obj.isFreeze) drawFreezeItem(ctx, obj, false);
+        else if (obj.isLightning) drawLightning(ctx, obj, false);
+        else if (obj.isScoreStar) drawScoreStar(ctx, obj, false);
+        else if (obj.isShield) drawShield(ctx, obj, false);
+        else if (obj.isMagnet) drawMagnet(ctx, obj, false);
+        else drawReveal(ctx, obj, false);
         ctx.restore();
       } else {
         drawDyingObject(ctx, obj, theme);
@@ -345,6 +355,11 @@ const Themes = (() => {
     }
     if (obj.isLifeUp) drawLifeUp(ctx, obj, true);
     else if (obj.isFreeze) drawFreezeItem(ctx, obj, true);
+    else if (obj.isLightning) drawLightning(ctx, obj, true);
+    else if (obj.isScoreStar) drawScoreStar(ctx, obj, true);
+    else if (obj.isShield) drawShield(ctx, obj, true);
+    else if (obj.isMagnet) drawMagnet(ctx, obj, true);
+    else if (obj.isReveal) drawReveal(ctx, obj, true);
     else if (obj.isBoss) drawBossObject(ctx, obj, theme, true);
     else drawThemeObject(ctx, obj, theme, true);
   }
@@ -361,6 +376,7 @@ const Themes = (() => {
 
     if (obj.hintActive) drawHintGrid(ctx, obj);
     if (obj._answerRevealed) drawAnswerReveal(ctx, obj);
+    if (obj._revealBonus && !obj._answerRevealed) drawRevealBonusAnswer(ctx, obj);
   }
 
   // Draws a glowing answer badge on the object (used by SOS help)
@@ -377,6 +393,27 @@ const Themes = (() => {
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#f7c948';
+    ctx.font = 'bold 17px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('= ' + obj.answer, x, y);
+    ctx.restore();
+  }
+
+  // Draws the answer prominently in teal during the Reveal bonus
+  function drawRevealBonusAnswer(ctx, obj) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y + 32;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.shadowColor = '#55efc4';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = 'rgba(0,30,25,0.82)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x - 22, y - 14, 44, 26, 8) : ctx.rect(x - 22, y - 14, 44, 26);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#55efc4';
     ctx.font = 'bold 17px Segoe UI, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1532,6 +1569,103 @@ const Themes = (() => {
     ctx.restore();
   }
 
+  // ========================
+  //  BONUS ITEMS
+  // ========================
+
+  function _drawBonusOrb(ctx, obj, showLabel, glowColor, gradColors, icon, labelText) {
+    const x = obj.x + obj.wobbleX;
+    const y = obj.y;
+    const pulse = 0.75 + 0.25 * Math.sin(Date.now() * 0.005);
+    const targeted = obj.isTargeted;
+
+    ctx.save();
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = targeted ? 55 : 30;
+
+    // Outer ring
+    const ringR = 36 + (targeted ? 6 * pulse : 0);
+    ctx.strokeStyle = targeted ? '#ffffff' : glowColor;
+    ctx.lineWidth = targeted ? 4 : 2.5;
+    ctx.globalAlpha = targeted ? (0.55 + 0.45 * pulse) : 0.7;
+    ctx.beginPath();
+    ctx.arc(x, y, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (targeted) {
+      ctx.globalAlpha = 0.2 * pulse;
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.arc(x, y, ringR + 8, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Filled circle background
+    ctx.globalAlpha = 0.88;
+    ctx.shadowBlur = 20;
+    const bg = ctx.createRadialGradient(x - 8, y - 8, 2, x, y, 30);
+    bg.addColorStop(0, gradColors[0]);
+    bg.addColorStop(0.6, gradColors[1]);
+    bg.addColorStop(1, gradColors[2]);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Icon
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(icon, x, y - 16);
+
+    if (showLabel) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Segoe UI, sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 5;
+      ctx.fillText(obj.question, x, y + 2);
+      ctx.fillStyle = targeted ? '#fff' : '#eee';
+      ctx.font = 'bold 10px Segoe UI, sans-serif';
+      ctx.shadowBlur = 3;
+      ctx.fillText(labelText, x, y + 20);
+    }
+
+    ctx.restore();
+  }
+
+  function drawLightning(ctx, obj, showLabel) {
+    _drawBonusOrb(ctx, obj, showLabel, '#ffe066', ['#fff7aa', '#f9ca24', '#f0932b'], '⚡', 'clear all!');
+  }
+
+  function drawScoreStar(ctx, obj, showLabel) {
+    _drawBonusOrb(ctx, obj, showLabel, '#ffd700', ['#fff9c4', '#ffd700', '#e67e22'], '🌟', '×3 score!');
+  }
+
+  function drawShield(ctx, obj, showLabel) {
+    _drawBonusOrb(ctx, obj, showLabel, '#a29bfe', ['#d8d4ff', '#a29bfe', '#6c5ce7'], '🛡', 'shield!');
+  }
+
+  function drawMagnet(ctx, obj, showLabel) {
+    _drawBonusOrb(ctx, obj, showLabel, '#fd79a8', ['#ffd6e7', '#fd79a8', '#e84393'], '🧲', 'magnet 4s!');
+  }
+
+  function drawReveal(ctx, obj, showLabel) {
+    _drawBonusOrb(ctx, obj, showLabel, '#55efc4', ['#a8f0db', '#55efc4', '#00b894'], '💡', 'reveal 3s!');
+  }
+
+  function drawMagnetOverlay(ctx, w, h, secondsLeft) {
+    const alpha = Math.min(0.12, secondsLeft * 0.03);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#fd79a8'; ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
+
+  function drawRevealOverlay(ctx, w, h, secondsLeft) {
+    const alpha = Math.min(0.10, secondsLeft * 0.04);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#55efc4'; ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
+
   // Blue tint overlay drawn when freeze is active
   function drawFreezeOverlay(ctx, w, h, secondsLeft) {
     const alpha = Math.min(0.18, secondsLeft * 0.04);
@@ -2263,5 +2397,5 @@ const Themes = (() => {
     return `rgb(${r},${g},${b})`;
   }
 
-  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, particleColorForTheme };
+  return { init, drawBackground, drawObject, drawWeapon, drawFreezeOverlay, drawMagnetOverlay, drawRevealOverlay, particleColorForTheme };
 })();

@@ -88,7 +88,8 @@ const Objects = (() => {
     // Check if it hit the crash line
     if (obj.y >= canvasHeight) {
       obj.y = canvasHeight;
-      if (!obj.isFreeze && !obj.isLifeUp && !obj.isBoss) {
+      if (!obj.isFreeze && !obj.isLifeUp && !obj.isBoss &&
+          !obj.isLightning && !obj.isScoreStar && !obj.isShield && !obj.isMagnet && !obj.isReveal) {
         obj.gracing = true;
         obj.graceTimer = 0;
       } else {
@@ -217,5 +218,50 @@ const Objects = (() => {
     };
   }
 
-  return { create, createBoss, createFreeze, createLifeUp, update, triggerDestruction };
+  function createLightning(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
+    return { isLightning: true, question: question.display, answer: question.answer, key: question.key,
+      x, y: -80, speed: speed * 0.65, isTargeted: false, wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0, age: 0, dying: false, dieTimer: 0, gracing: false, graceTimer: 0,
+      dead: false, destroyTimer: 0, destroyed: false, particles: [], spawnTime: Date.now() };
+  }
+
+  function createScoreStar(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
+    return { isScoreStar: true, question: question.display, answer: question.answer, key: question.key,
+      x, y: -80, speed: speed * 0.65, isTargeted: false, wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0, age: 0, dying: false, dieTimer: 0, gracing: false, graceTimer: 0,
+      dead: false, destroyTimer: 0, destroyed: false, particles: [], spawnTime: Date.now() };
+  }
+
+  function createShield(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
+    return { isShield: true, question: question.display, answer: question.answer, key: question.key,
+      x, y: -80, speed: speed * 0.65, isTargeted: false, wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0, age: 0, dying: false, dieTimer: 0, gracing: false, graceTimer: 0,
+      dead: false, destroyTimer: 0, destroyed: false, particles: [], spawnTime: Date.now() };
+  }
+
+  function createMagnet(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
+    return { isMagnet: true, question: question.display, answer: question.answer, key: question.key,
+      x, y: -80, speed: speed * 0.65, isTargeted: false, wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0, age: 0, dying: false, dieTimer: 0, gracing: false, graceTimer: 0,
+      dead: false, destroyTimer: 0, destroyed: false, particles: [], spawnTime: Date.now() };
+  }
+
+  function createReveal(question, canvasWidth, speed, existingXPositions = []) {
+    const x = pickX(canvasWidth, existingXPositions);
+    if (x === null) return null;
+    return { isReveal: true, question: question.display, answer: question.answer, key: question.key,
+      x, y: -80, speed: speed * 0.65, isTargeted: false, wobbleOffset: Math.random() * Math.PI * 2,
+      wobbleX: 0, age: 0, dying: false, dieTimer: 0, gracing: false, graceTimer: 0,
+      dead: false, destroyTimer: 0, destroyed: false, particles: [], spawnTime: Date.now() };
+  }
+
+  return { create, createBoss, createFreeze, createLifeUp, createLightning, createScoreStar, createShield, createMagnet, createReveal, update, triggerDestruction };
 })();
