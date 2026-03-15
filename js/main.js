@@ -780,7 +780,6 @@ const TutorialRun = {
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
-    await this.demoControlButtons();
 
     this.clearScene();
     tutorialState.allowQuestionSpeech = false;
