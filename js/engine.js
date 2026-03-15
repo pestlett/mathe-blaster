@@ -29,6 +29,7 @@ const Engine = (() => {
   function start() {
     if (running) return;
     running = true;
+    paused = false;
     lastTime = performance.now();
     elapsedTime = 0;
     rafId = requestAnimationFrame(loop);
