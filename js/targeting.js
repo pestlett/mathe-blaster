@@ -8,6 +8,8 @@ const Targeting = (() => {
 
   function getTarget() { return current; }
 
+  function setTarget(obj) { current = obj || null; }
+
   // Call every frame to keep isTargeted flags correct.
   // Only auto-picks a new target when there is genuinely no valid one.
   function syncTarget(objects) {
@@ -59,5 +61,5 @@ const Targeting = (() => {
     current = candidates[0];
   }
 
-  return { reset, getTarget, syncTarget, moveLeft, moveRight };
+  return { reset, getTarget, setTarget, syncTarget, moveLeft, moveRight };
 })();

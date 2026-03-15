@@ -68,7 +68,8 @@ to the player-specific key automatically.
     dayStreakCurrent:       number,
     dayStreakBest:          number,
     dayStreakLastDate:      'YYYY-M-D',
-    extendedTablesUnlocked: boolean
+    extendedTablesUnlocked: boolean,
+    tutorialCompletedAt:    ISO string | undefined
   },
 
   run: {
@@ -166,3 +167,10 @@ These check `run.milestones.*` and `run.runsCompleted` to unlock upgrades:
 | `streakSlow` | max streak ≥ 8 |
 | `reveal` | bosses defeated ≥ 5 |
 | `lastChance` | 10 runs completed |
+
+## Tutorial Progress
+
+- `lifetime.tutorialCompletedAt` is set once the guided tutorial is finished by
+  beating its boss.
+- Tutorial runs do **not** write session stats, mastery, achievements, or
+  leaderboard entries; only the completion flag is persisted.

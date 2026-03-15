@@ -535,6 +535,27 @@ input[type="number"]::-webkit-outer-spin-button {
   text-align: center;
 }
 
+.tutorial-home-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tutorial-home-row[hidden] {
+  display: none;
+}
+
+.tutorial-home-btn {
+  width: 100%;
+  border-color: rgba(247, 201, 72, 0.35);
+  background: rgba(247, 201, 72, 0.08);
+}
+
+.tutorial-settings-btn {
+  width: 100%;
+}
+
 /* Challenge comparison on game-over */
 .challenge-compare {
   background: rgba(255,255,255,0.05);
@@ -948,6 +969,44 @@ input[type="number"]::-webkit-outer-spin-button {
   40%  { transform: translate(-50%, -50%) scale(1); }
   70%  { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
+}
+
+.tutorial-overlay {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 35;
+  width: min(520px, calc(100vw - 28px));
+  pointer-events: none;
+}
+
+.tutorial-overlay.hidden {
+  display: none;
+}
+
+.tutorial-card {
+  background: rgba(8, 12, 26, 0.9);
+  border: 1px solid rgba(247, 201, 72, 0.3);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  padding: 14px 18px;
+  backdrop-filter: blur(10px);
+}
+
+.tutorial-overlay-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.tutorial-overlay-text {
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.92);
 }
 
 /* Voice suggestion pill */
@@ -1897,6 +1956,10 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   letter-spacing: 0.1em;
   color: rgba(255,255,255,0.4);
   margin-bottom: 16px;
+}
+
+#tutorial-settings-row {
+  border-bottom: none;
 }
 
 /* Profile switcher */

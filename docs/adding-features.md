@@ -179,6 +179,37 @@ A new run-mode upgrade requires changes in:
 
 ---
 
+## Guided Tutorial / Scripted Demo
+
+1. **`js/main.js`**
+   - Decide whether the feature reuses `startGame(settings)` with a mode flag
+     (e.g. `tutorialMode`) or needs a separate flow
+   - Disable normal spawns / stat writes if the tutorial is scripted rather than
+     a real scored run
+   - Block player input during fully automated demo segments, then explicitly
+     hand control back
+
+2. **`js/ui.js` + `index.html` + `style.css`**
+   - Add onboarding and replay entry points
+   - Add any overlay / coach-mark UI needed for narration and objectives
+
+3. **`js/progress.js`**
+   - If completion should persist, store a lightweight lifetime flag/timestamp
+     instead of writing fake sessions or mastery
+
+4. **`js/i18n.js`**
+   - Add all narration, CTA, and settings strings in EN / DE / ES
+
+5. **`tests/`**
+   - Add persistence tests for any tutorial-completion storage
+
+6. **Docs**
+   - Update `docs/game-settings.md` for new mode flags
+   - Update `docs/storage-schema.md` for completion persistence
+   - Update `docs/architecture.md` for the control flow
+
+---
+
 ## Docs-Only Changes
 
 When the only change is to documentation:
