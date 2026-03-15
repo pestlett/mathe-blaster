@@ -457,6 +457,9 @@ const TutorialRun = {
     UI.showTutorialOverlay(text, title || I18n.t('tutorialOverlayTitle'), overlayPosition);
     await speakNarrationLine(text);
     if (!tutorialActive()) return;
+    UI.hideTutorialOverlay(); // starts 80ms fade-out
+    await this.wait(90);      // let the fade complete before moving on
+    if (!tutorialActive()) return;
     this.clearHighlights();
     if (resume) {
       Engine.resume();
@@ -618,22 +621,6 @@ const TutorialRun = {
     await this.wait(duration);
   },
 
-  async demoControlButtons() {
-    if (!tutorialActive()) return;
-    this.setHighlights(['btn-mute']);
-    await this.pulseButton('btn-mute', 700);
-    await this.wait(300);
-
-    this.setHighlights(['btn-mic']);
-    await this.pulseButton('btn-mic', 900);
-    await this.wait(300);
-
-    this.setHighlights(['btn-pause']);
-    await this.pulseButton('btn-pause', 700);
-    await this.wait(300);
-    this.clearHighlights();
-  },
-
   waitForLifeLoss() {
     return new Promise(resolve => {
       if (!tutorialActive()) { resolve(); return; }
@@ -750,6 +737,10 @@ const TutorialRun = {
   },
 
   async run() {
+    // Give the game screen a moment to fully render before the first narration
+    await this.wait(1000);
+    if (!tutorialActive()) return;
+
     await this.narrate(I18n.t('tutorialIntroLine'), {
       title: I18n.t('tutorialOverlayTitle'),
       highlightIds: ['input-wrapper', 'btn-fire', 'btn-mic'],
@@ -788,7 +779,6 @@ const TutorialRun = {
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
-    await this.demoControlButtons();
 
     this.clearScene();
     tutorialState.allowQuestionSpeech = false;
@@ -815,9 +805,7 @@ const TutorialRun = {
     });
     if (!tutorialActive()) return;
     this.resumeDemo();
-    await this.wait(450);
-    useHelp();
-    await this.wait(1300);
+    await this.wait(400);
 
     this.clearScene();
     const missObj = this.spawnQuestion('center', { y: window.innerHeight - 250, speed: 120 });
