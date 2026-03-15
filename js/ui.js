@@ -114,6 +114,13 @@ const UI = (() => {
       mixedAll.classList.add('active');
       selectedOperations = ['multiply', 'divide', 'add', 'subtract'];
       _applyOp('multiply'); // show table section (primary)
+      // Also show numrange picker so +/− range can be set independently
+      if (numrangeGroup) {
+        numrangeGroup.hidden = false;
+        if (numrangeNote) numrangeNote.textContent = I18n.t(
+          selectedNumRange >= 1000 ? 'numRange1000Note' : 'numRange100Note'
+        );
+      }
       if (mixedNote) mixedNote.textContent = I18n.t('mixedAllNote');
     });
 
@@ -819,6 +826,12 @@ const UI = (() => {
         } else if (mixedAll) {
           mixedAll.classList.add('active');
           _applyOp('multiply');
+          if (numrangeGroup) {
+            numrangeGroup.hidden = false;
+            if (numrangeNote) numrangeNote.textContent = I18n.t(
+              selectedNumRange >= 1000 ? 'numRange1000Note' : 'numRange100Note'
+            );
+          }
           if (mixedNote) mixedNote.textContent = I18n.t('mixedAllNote');
         }
       }
