@@ -2689,6 +2689,8 @@ function submitAnswer() {
             state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
             Engine.resume();
             state.unpauseFreezeTimer = 1.0;
+            if (!_typingMode) Voice.start();
+            focusAnswerInput();
           });
         }
       }
