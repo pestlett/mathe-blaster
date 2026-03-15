@@ -715,20 +715,16 @@ const UI = (() => {
           b.classList.toggle('active', parseInt(b.dataset.max) === selectedNumRange);
         });
       }
-      if (saved.zehner !== undefined) {
-        selectedZehner = saved.zehner === true || saved.zehner === 'true';
-        document.querySelectorAll('[data-zehner]').forEach(b => {
-          b.classList.toggle('active', (b.dataset.zehner === 'true') === selectedZehner);
-        });
-      }
-      if (saved.halbschriftlich) {
+      if (saved.zehner !== undefined || saved.halbschriftlich !== undefined) {
         selectedHalbschriftlich = saved.halbschriftlich === true || saved.halbschriftlich === 'true';
-        if (selectedHalbschriftlich) {
-          selectedZehner = false;
-          document.querySelectorAll('[data-zehner]').forEach(b => {
-            b.classList.toggle('active', b.dataset.zehner === 'halbschriftlich');
-          });
-        }
+        selectedZehner = !selectedHalbschriftlich && (saved.zehner === true || saved.zehner === 'true');
+        document.querySelectorAll('[data-zehner]').forEach(b => {
+          const v = b.dataset.zehner;
+          const active = selectedHalbschriftlich ? v === 'halbschriftlich'
+                       : selectedZehner          ? v === 'true'
+                       :                           v === 'false';
+          b.classList.toggle('active', active);
+        });
       }
       if (saved.mixedPreset) {
         const ops = saved.mixedPreset.split(',');

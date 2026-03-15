@@ -61,7 +61,7 @@ const I18n = (() => {
       letsGo:           "Let's Go!",
       dailyNew:         '⚡ Daily Challenge — {table}× table · {diff}',
       dailyDone:        '⚡ Daily Challenge ✓ ({table}× · {diff})',
-      parentDashboard:  '📊 Performance Overview',
+      parentDashboard:  'Performance Overview',
       extendedTablesUnlocked: '🎉 Extended Tables Unlocked! Try 13–20×',
 
       mixedLabel:       'Mixed Practice',
@@ -315,7 +315,7 @@ const I18n = (() => {
       letsGo:           "Los geht's!",
       dailyNew:         '⚡ Tages-Challenge — {table}×-Tabelle · {diff}',
       dailyDone:        '⚡ Tages-Challenge ✓ ({table}× · {diff})',
-      parentDashboard:  '📊 Leistungsübersicht',
+      parentDashboard:  'Leistungsübersicht',
       extendedTablesUnlocked: '🎉 Erweiterte Tabellen freigeschaltet! Probiere 13–20×',
 
       mixedLabel:       'Gemischtes Rechnen',
@@ -562,7 +562,7 @@ const I18n = (() => {
       letsGo:           '¡Vamos!',
       dailyNew:         '⚡ Desafío Diario — tabla del {table}× · {diff}',
       dailyDone:        '⚡ Desafío Diario ✓ ({table}× · {diff})',
-      parentDashboard:  '📊 Resumen de Rendimiento',
+      parentDashboard:  'Resumen de Rendimiento',
       extendedTablesUnlocked: '🎉 ¡Tablas Extendidas Desbloqueadas! Prueba 13–20×',
 
       mixedLabel:       'Práctica Mixta',
