@@ -253,9 +253,16 @@
   <!-- Parent Dashboard Screen -->
   <div id="screen-dashboard" class="screen">
     <div class="overlay-card wide">
-      <h2 data-i18n="dashboardTitle">Parent Dashboard</h2>
+      <h2 data-i18n="dashboardTitle">Performance Overview</h2>
       <div id="dashboard-player"></div>
       <div id="dashboard-summary"></div>
+      <div class="dash-op-tabs" id="dash-op-tabs">
+        <button class="dash-op-tab active" data-op="multiply">×</button>
+        <button class="dash-op-tab" data-op="divide">÷</button>
+        <button class="dash-op-tab" data-op="add">+</button>
+        <button class="dash-op-tab" data-op="subtract">−</button>
+      </div>
+      <div id="dash-op-content"></div>
       <div id="dashboard-chart-wrap">
         <canvas id="dashboard-chart"></canvas>
       </div>
