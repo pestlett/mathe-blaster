@@ -1321,7 +1321,7 @@ const RunDemoRun = {
 
     // Close the shop: click the done button, or fall back to calling doneCb directly.
     const picker = document.getElementById('upgrade-picker');
-    const doneBtn = picker?.querySelector('.btn-skip-upgrade');
+    const doneBtn = picker?.querySelector('.shop-done-btn') || picker?.querySelector('.btn-skip-upgrade');
     if (doneBtn) {
       doneBtn.click();
     } else if (picker && !picker.classList.contains('hidden')) {
