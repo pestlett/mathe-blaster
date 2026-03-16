@@ -1917,6 +1917,9 @@ const UI = (() => {
     let orderArr = [...activeUpgrades];
     let armedSellToken = null;
     maxSlots = maxSlots || 4;
+    const REROLL_BASE_COST = 4;
+    const REROLL_COST_STEP = 2;
+    let rerollCount = 0;
 
     const opSymbols = { multiply: '×', divide: '÷', add: '+', subtract: '−' };
     const t = (key, vars = {}) => (typeof I18n !== 'undefined' ? I18n.t(key, vars) : key);
@@ -2185,14 +2188,16 @@ const UI = (() => {
         cardsRow.appendChild(emptyState);
       }
 
-      // Reroll button
-      const rerollCost = 4;
+      // Reroll button — cost increases with each purchase this session
+      const rerollCost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
       rerollBtn.textContent = `${t('shopReroll')} (🪙${rerollCost})`;
       rerollBtn.disabled = currentCoins < rerollCost;
       rerollBtn.addEventListener('click', () => {
-        if (currentCoins < rerollCost) return;
+        const cost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
+        if (currentCoins < cost) return;
         armedSellToken = null;
-        currentCoins -= rerollCost;
+        currentCoins -= cost;
+        rerollCount++;
         const rp = typeof Progress !== 'undefined' ? Progress.getRunProgress() : { unlockedUpgrades: [] };
         const activeIds = orderArr.map(u => u.id);
         const newOpts = drawShopOptions(3, rp.unlockedUpgrades || [], activeIds);
