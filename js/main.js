@@ -1182,7 +1182,7 @@ const RunDemoRun = {
     }
   },
 
-  // Wait for the shop signal, show the shop, auto-pick the scripted upgrade, then narrate
+  // Wait for the shop signal, narrate on open, then auto-pick the scripted upgrade
   async openShop(shopIndex) {
     if (!runDemoActive()) return;
     await this.waitForShop();
@@ -1200,8 +1200,12 @@ const RunDemoRun = {
     UI.showShop(forceOptions, state.runCoins, state.theme, state.activeUpgrades, isFree,
       state.maxUpgradeSlots || 4, result => doneCb(result));
 
-    // Let the player see the shop options before buying
-    await this.wait(2800);
+    // Narrate while the shop is open (before buying), explaining what to pick and why
+    await this.narrate(I18n.t(script.narrateKey), { title: I18n.t('runDemoOverlayTitle') });
+    if (!runDemoActive()) return;
+
+    // Brief pause after the overlay closes so the player can see all three cards
+    await this.wait(1200);
     if (!runDemoActive()) return;
 
     // Click the scripted buy button
@@ -1247,10 +1251,6 @@ const RunDemoRun = {
       });
     }
 
-    // Brief pause after the shop closes, then narrate about the purchase
-    await this.wait(400);
-    if (!runDemoActive()) return;
-    await this.narrate(I18n.t(script.narrateKey), { title: I18n.t('runDemoOverlayTitle') });
   },
 
   async run() {
