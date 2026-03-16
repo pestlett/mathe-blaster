@@ -1,6 +1,7 @@
 # Mathe Blaster! 🚀
 
-[![Tests](https://github.com/pestlett/mathe-blaster/actions/workflows/tests.yml/badge.svg)](https://github.com/pestlett/mathe-blaster/actions/workflows/tests.yml)
+[![Unit Tests](https://github.com/pestlett/mathe-blaster/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/pestlett/mathe-blaster/actions/workflows/unit-tests.yml)
+[![E2E Tests](https://github.com/pestlett/mathe-blaster/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/pestlett/mathe-blaster/actions/workflows/e2e-tests.yml)
 [![Deploy](https://github.com/pestlett/mathe-blaster/actions/workflows/deploy.yml/badge.svg)](https://github.com/pestlett/mathe-blaster/actions/workflows/deploy.yml)
 [![Site](https://img.shields.io/website?url=https%3A%2F%2Fmathe.jewell-colicheo.com&label=site&up_message=online&down_message=offline)](https://mathe.jewell-colicheo.com)
 
