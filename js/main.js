@@ -2703,6 +2703,7 @@ function submitAnswer() {
       if (state.luckyBonusCounter % luckyThreshold === 0) {
         const luckyMult = 2 + Math.floor(Math.random() * 4); // ×2–×5
         pts = Math.round(pts * luckyMult);
+        UI.triggerScoreEffect();
         UI.showLevelUp(`🍀 Lucky ×${luckyMult}!`, null);
         // Cascade Mult: each lucky permanently boosts score multiplier
         if (state.cascadeMultCount > 0) {
@@ -2752,6 +2753,7 @@ function submitAnswer() {
     // Apply global score multiplier, then add to score
     const finalPts = Math.round(pts * (state.scoreMultiplier || 1));
     state.score += finalPts;
+    UI.triggerScoreEffect();
     // Synergy: Score Mult Large + Score Mult Small → +10 flat pts per answer
     if (state.activeUpgradeIds &&
         state.activeUpgradeIds.includes('scoreMultLarge') &&
@@ -2764,18 +2766,22 @@ function submitAnswer() {
       if (state.multiBooster && op === 'multiply') {
         state.score += finalPts; // +×2 effective (double scoring)
         UI.flashUpgrade && UI.flashUpgrade('multiBooster');
+        UI.triggerScoreEffect();
       }
       if (state.divideBooster && op === 'divide') {
         state.score += finalPts;
         UI.flashUpgrade && UI.flashUpgrade('divideBooster');
+        UI.triggerScoreEffect();
       }
       if (state.addBooster && op === 'add') {
         state.score += finalPts;
         UI.flashUpgrade && UI.flashUpgrade('addBooster');
+        UI.triggerScoreEffect();
       }
       if (state.subtractBooster && op === 'subtract') {
         state.score += finalPts;
         UI.flashUpgrade && UI.flashUpgrade('subtractBooster');
+        UI.triggerScoreEffect();
       }
       // SYNERGY: addBooster + subtractBooster → +10 flat pts
       if (state.addBooster && state.subtractBooster &&
@@ -2800,6 +2806,7 @@ function submitAnswer() {
     // Replay Score: replay the full pts calculation N more times
     for (let r = 0; r < (state.replayCount || 0); r++) {
       state.score += finalPts;
+      UI.triggerScoreEffect();
       // Replay earns +1 coin per replay (synergy: replayScore + scoreMultSmall)
       if (state.runMode && state.activeUpgradeIds &&
           state.activeUpgradeIds.includes('scoreMultSmall')) {
@@ -2866,6 +2873,7 @@ function submitAnswer() {
       // Replay Chain: chain scoring fires a second time
       if (state.replayChain && chainCount > 0) {
         state.score += Math.round(pts * 0.5 * chainCount);
+        UI.triggerScoreEffect();
         UI.showLevelUp(`💥 Chain ×2!`, null);
         UI.flashUpgrade && UI.flashUpgrade('replayChain');
       }
@@ -2947,6 +2955,7 @@ function submitAnswer() {
         (state.streak >= 8 && prevStreak < 8);
       if (thresholdCrossed) {
         state.score += finalPts;
+        UI.triggerScoreEffect();
         UI.showLevelUp('🚀 Streak Surge!', null);
         UI.flashUpgrade && UI.flashUpgrade('replayStreak');
       }

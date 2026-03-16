@@ -765,6 +765,22 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 800;
   color: #fff;
   text-shadow: 0 0 10px rgba(247,201,72,0.6);
+  transform-origin: left center;
+  display: inline-block;
+}
+
+@keyframes scoreHudPop {
+  0%   { transform: scale(1)    translateX(0);   color: #fff; }
+  15%  { transform: scale(1.3)  translateX(3px); color: #ffd700; }
+  30%  { transform: scale(0.88) translateX(-3px);color: #ff9a00; }
+  50%  { transform: scale(1.18) translateX(2px); color: #ffd700; }
+  70%  { transform: scale(0.94) translateX(-2px);color: #ffe066; }
+  85%  { transform: scale(1.07) translateX(1px); color: #fff8cc; }
+  100% { transform: scale(1)    translateX(0);   color: #fff; }
+}
+
+#hud-score.score-pop {
+  animation: scoreHudPop var(--score-anim-dur, 400ms) ease-out forwards;
 }
 #hud-level {
   font-size: 1.1rem;

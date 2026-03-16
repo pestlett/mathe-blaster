@@ -2141,6 +2141,25 @@ const UI = (() => {
     }
   }
 
+  // ---- Score HUD Pop Effect ----
+  let _scoreHitCount = 0;
+  let _scoreHitResetTimer = null;
+
+  function triggerScoreEffect() {
+    _scoreHitCount++;
+    if (_scoreHitResetTimer) clearTimeout(_scoreHitResetTimer);
+    _scoreHitResetTimer = setTimeout(() => { _scoreHitCount = 0; }, 500);
+
+    const el = document.getElementById('hud-score');
+    if (!el) return;
+    // Duration: 400ms → 100ms as hits accumulate within the window
+    const dur = Math.max(100, 400 - (_scoreHitCount - 1) * 75);
+    el.style.setProperty('--score-anim-dur', dur + 'ms');
+    el.classList.remove('score-pop');
+    void el.offsetWidth; // force reflow to restart animation
+    el.classList.add('score-pop');
+  }
+
   // ---- Upgrade Flash ----
   function flashUpgrade(id) {
     const pip = document.querySelector(`.hud-upgrade-pip[data-id="${id}"]`);
@@ -2165,5 +2184,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, refreshTutorialEntryPoints, showTutorialOverlay, hideTutorialOverlay, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade, triggerScoreEffect };
 })();
