@@ -172,13 +172,21 @@ The global multiplier is the most powerful lever — every upgrade that raises i
 
 ## Standard Mode Notes
 
-Standard mode offers free upgrade picks every 3 levels with no coin economy or slot limits. The meta is simpler:
+Standard Mode (the default "Let's Go!" button) has **no upgrades, no coins, no slots, and no ante targets**. It is focused on learning the times tables and defeating boss levels (which spawn at levels 5, 10, 15, …).
 
-1. **Always take `streakBoost` first** — it multiplies every subsequent upgrade's value.
-2. **Take `chain` + `commutative` early** — no slot pressure means both fit easily.
-3. **Stack `slowAll`** — with unlimited picks, 3 stacks reduce speed to 40%; combine with `streakBoost` for sustained long streaks.
-4. **`hotZoneBoost` + `reveal` + `scoreMultPerfect`** — a powerful mid-game trio that ramps the global multiplier quickly with the widened zone.
-5. No `slotExpander` needed (unlimited slots in standard mode).
+Powerups spawn automatically during play:
+
+| Powerup | Effect |
+|---------|--------|
+| Score Star (⭐) | Next correct answer scores ×3 |
+| Shield | Absorbs the next missed object |
+| Freeze | Slows all falling objects temporarily |
+| Life Up | Restores one life |
+| Lightning | Destroys all current objects |
+| Magnet | Pulls all objects to centre |
+| Bomb (Space key) | Destroys all objects on screen |
+
+The full scoring formula (base 10 pts, time bonus, streak multiplier, hot-zone multiplier, score star) still applies — powerups are the only source of extra scoring leverage in this mode.
 
 ---
 

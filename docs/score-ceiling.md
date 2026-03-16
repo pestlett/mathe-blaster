@@ -10,8 +10,8 @@ From the home screen you will see two game-start buttons:
 
 | Button | Mode | Description |
 |--------|------|-------------|
-| **"Let's Go!"** | **Standard Mode** | Default. Free upgrade picks every 3 levels. No coin economy, no slot limits, no ante targets. |
-| **"⚔ Run Mode"** | **Run Mode** | Roguelite. Coin economy, 4–6 upgrade slots, ante score targets. Builds matter. |
+| **"Let's Go!"** | **Standard Mode** | Default. No upgrades, no coins, no ante targets. Powerups spawn during play (scoreStar, shield, freeze, lifeup, lightning, magnet, bomb). Goal: learn the tables and beat boss levels. |
+| **"⚔ Run Mode"** | **Run Mode** | Roguelite. Coin economy, 4–6 upgrade slots, ante score targets. Upgrade builds matter. |
 
 Standard Mode is always available — no unlock needed. Run Mode appears directly below the main start button on desktop/laptop (a mobile hint note recommends a keyboard for Run Mode).
 
@@ -71,7 +71,7 @@ With the `compoundGrowth` + `scoreMultPerfect` synergy the multiplier grows **×
 
 ## Ceiling Calculation at Answer 200
 
-Using the optimal all-in build (standard mode, unlimited slots):
+Using the optimal all-in Run Mode build (all upgrades stacked via multiple shop visits):
 
 **Build:**
 `compoundGrowth` · `scoreMultPerfect` · `streakBoost` · `hotZoneBoost` · `reveal` (adj_hotReveal) · `echoStreak` · `replayHotZone` · `quickBonus` · `luckyBonus` · `luckyFrequency` · `echoLucky` (adj_echoLucky) · `replayLucky` × 2 · `scoreMultSmall` × 3 · `scoreMultLarge` × 2 · `replayScore` × 3 · `multiBooster`
@@ -125,7 +125,7 @@ Total added to score (main + multiBooster + 3 × replayScore):
 | Build 4 — Chain Reaction | 10⁸–10⁹ | Wide reach (many kills) but low per-answer ceiling |
 | Build 5 — Operation Specialist | 10⁸–10⁹ | Consistent doubling; scales well in early antes |
 
-Build 1 + elements of Build 2 (adding `luckyBonus`, `echoLucky`, `replayLucky` to the Compound Avalanche core) is the theoretical maximum configuration and is viable in Standard Mode where slot limits don't apply.
+Build 1 + elements of Build 2 (adding `luckyBonus`, `echoLucky`, `replayLucky` to the Compound Avalanche core) is the theoretical maximum configuration. All these upgrades are Run Mode only — Standard Mode has no upgrades.
 
 ---
 

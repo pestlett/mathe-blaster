@@ -127,7 +127,8 @@ Chain kill = base points only (no hot zone / time bonus)
 
 - 10 correct answers → level up
 - Stars awarded: ≥90% accuracy = 3★, ≥70% = 2★, else 1★
-- In run mode: every 3rd level triggers ante check → upgrade picker or run end
+- In standard mode: no upgrades, no ante; powerups (scoreStar, shield, freeze, lifeup, lightning, magnet, bomb) spawn automatically
+- In run mode: every 3rd level triggers ante check → shop (buy/sell/reroll) or run end
 - Boss spawns at level 5, 10, 15, …
 
 ## Adaptive Music System
