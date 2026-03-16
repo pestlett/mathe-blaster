@@ -201,11 +201,12 @@ const Questions = (() => {
             for (let i = 0; i < 16; i++) pool.push({ a, b, answer, key: wq.key, display: `${a} + ${b}` });
           }
         }
-        // Sample random pairs
+        // Sample random pairs (skip wrongQueue keys — already added above with full weight)
         const sampled = _sampleAddPairs(lo, hi, difficulty, 250, rng);
         for (const { a, b } of sampled) {
           const answer = a + b;
           const key = `${a}a${b}`;
+          if (wrongKeys.has(key)) continue;
           if (excludeAnswers.includes(answer)) continue;
           const w = _weight(stats, key, wrongKeys);
           for (let i = 0; i < w; i++) pool.push({ a, b, answer, key, display: `${a} + ${b}` });
@@ -239,11 +240,12 @@ const Questions = (() => {
             for (let i = 0; i < 16; i++) pool.push({ a, b, answer, key: wq.key, display: `${a} − ${b}` });
           }
         }
-        // Sample random pairs
+        // Sample random pairs (skip wrongQueue keys — already added above with full weight)
         const sampled = _sampleSubPairs(lo, hi, difficulty, 250, rng);
         for (const { a, b } of sampled) {
           const answer = a - b;
           const key = `${a}s${b}`;
+          if (wrongKeys.has(key)) continue;
           if (excludeAnswers.includes(answer)) continue;
           const w = _weight(stats, key, wrongKeys);
           for (let i = 0; i < w; i++) pool.push({ a, b, answer, key, display: `${a} − ${b}` });
