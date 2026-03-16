@@ -170,6 +170,66 @@ function drawConfetti(ctx, particles) {
 }
 
 // ---- Streak vignette + shake ----
+// ---- Score tier (drives animation intensity as total score rises) ----
+function getScoreTier(score) {
+  if (score >= 3000) return 3;
+  if (score >= 1500) return 2;
+  if (score >= 500)  return 1;
+  return 0;
+}
+
+// ---- Floating "+N" score text (canvas-drawn, spawns at object position) ----
+const FLOAT_COLORS = ['#ffffff', '#ffd700', '#ff8c00', '#ff4400'];
+const FLOAT_SIZES  = [18, 23, 30, 38];
+
+function spawnFloatingText(x, y, text, tier) {
+  state.floatingTexts.push({
+    x, y,
+    vy: -(85 + tier * 28),
+    vx: (Math.random() - 0.5) * 16,
+    age: 0,
+    maxAge: 1.0 + tier * 0.18,
+    text,
+    tier,
+  });
+}
+
+function updateFloatingTexts(texts, dt) {
+  for (const ft of texts) {
+    ft.age += dt;
+    ft.x   += ft.vx * dt;
+    ft.y   += ft.vy * dt;
+    ft.vy  += 55 * dt; // gentle deceleration / gravity
+  }
+}
+
+function drawFloatingTexts(ctx, texts) {
+  for (const ft of texts) {
+    const progress = ft.age / ft.maxAge;
+    const alpha = progress < 0.15
+      ? progress / 0.15
+      : Math.max(0, 1 - (progress - 0.15) / 0.85);
+    if (alpha <= 0) continue;
+    // Pop: starts oversized and settles to 1×
+    const scale = 1 + Math.max(0, 0.25 - progress) * 2.4;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(ft.x, ft.y);
+    ctx.scale(scale, scale);
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = `bold ${FLOAT_SIZES[ft.tier]}px sans-serif`;
+    if (ft.tier >= 1) {
+      ctx.shadowBlur  = 6 + ft.tier * 6;
+      ctx.shadowColor = FLOAT_COLORS[ft.tier];
+    }
+    ctx.fillStyle = FLOAT_COLORS[ft.tier];
+    ctx.fillText(ft.text, 0, 0);
+    ctx.restore();
+  }
+}
+
+// ---- Streak vignette + shake ----
 function drawStreakOverlay(ctx, w, h, streak, intensity) {
   // Vignette colour scales from amber (×1.5) to hot-red (×2)
   const hot   = streak >= 5;
@@ -1799,6 +1859,7 @@ function startGame(settings) {
     ? new Set()
     : new Set(Progress.getTableBadges(settings.minTable, settings.maxTable, settings.operation || 'multiply'));
   state.confetti = [];
+  state.floatingTexts = [];
   state.streakFlashTimer = 0;
   state.streakFlashLevel = 0;
   state.answerStartTime = Date.now();
@@ -1960,6 +2021,12 @@ function update(dt) {
   if (state.confetti.length > 0) {
     updateConfetti(state.confetti, dt);
     state.confetti = state.confetti.filter(p => p.life > 0);
+  }
+
+  // Update floating score texts
+  if (state.floatingTexts && state.floatingTexts.length > 0) {
+    updateFloatingTexts(state.floatingTexts, dt);
+    state.floatingTexts = state.floatingTexts.filter(ft => ft.age < ft.maxAge);
   }
 
   // Speed multiplier: 0 during level transition, TTS, or unpause grace; 0.25× during freeze item
@@ -2355,6 +2422,11 @@ function render(ctx, w, h, t) {
   // Confetti drawn on top, outside shake so it stays stable
   if (state.confetti.length > 0) {
     drawConfetti(ctx, state.confetti);
+  }
+
+  // Floating score texts (drawn last, always on top)
+  if (state.floatingTexts && state.floatingTexts.length > 0) {
+    drawFloatingTexts(ctx, state.floatingTexts);
   }
 }
 
@@ -2778,7 +2850,9 @@ function submitAnswer() {
     // Apply global score multiplier, then add to score
     const finalPts = Math.round(pts * (state.scoreMultiplier || 1));
     state.score += finalPts;
-    UI.triggerScoreEffect();
+    const _scoreTier = getScoreTier(state.score);
+    spawnFloatingText(target.x, target.y - 20, '+' + finalPts, _scoreTier);
+    UI.triggerScoreEffect(_scoreTier);
     // Synergy: Score Mult Large + Score Mult Small → +10 flat pts per answer
     if (state.activeUpgradeIds &&
         state.activeUpgradeIds.includes('scoreMultLarge') &&
@@ -2847,9 +2921,9 @@ function submitAnswer() {
       if (coinsEarned > 0) state.runCoins = (state.runCoins || 0) + coinsEarned;
     }
 
-    // Destroy object
+    // Destroy object — particle count scales with score tier for extra pizzazz
     const particleColor = Themes.particleColorForTheme(state.theme);
-    Objects.triggerDestruction(target, particleColor);
+    Objects.triggerDestruction(target, particleColor, 8 + getScoreTier(state.score) * 6);
     Audio.play('correct');
     vibrate(40);
 
