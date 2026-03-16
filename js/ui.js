@@ -933,9 +933,35 @@ const UI = (() => {
       const badges = [];
       if (state.shieldCharges > 0) badges.push(`🛡×${state.shieldCharges}`);
       if (state.bombCharges > 0)   badges.push(`💣×${state.bombCharges}`);
-      hudTables += ` | Ante ${state.currentAnte} | 🪙${state.runCoins || 0}` + (badges.length ? ' ' + badges.join(' ') : '');
+      hudTables += ` | 🪙${state.runCoins || 0}` + (badges.length ? ' ' + badges.join(' ') : '');
     }
     document.getElementById('hud-tables').textContent = hudTables;
+
+    const runAnteEl = document.getElementById('hud-run-ante');
+    if (runAnteEl) {
+      if (state.runMode && window.RunMode) {
+        const anteProgress = window.RunMode.getAnteProgressSnapshot(state);
+        const perilState = window.RunMode.getAntePerilState(anteProgress);
+        runAnteEl.dataset.peril = perilState;
+        runAnteEl.classList.remove('hidden');
+        runAnteEl.innerHTML = `
+          <div class="run-ante-kicker">Ante ${anteProgress.ante}</div>
+          <div class="run-ante-main">
+            <span class="run-ante-progress">${anteProgress.scoreGained}</span>
+            <span class="run-ante-sep">/</span>
+            <span class="run-ante-target">${anteProgress.targetScore}</span>
+          </div>
+          <div class="run-ante-bar" aria-hidden="true">
+            <span class="run-ante-bar-fill" style="width:${anteProgress.progressPercent}%"></span>
+          </div>
+        `;
+      } else {
+        runAnteEl.classList.add('hidden');
+        runAnteEl.innerHTML = '';
+        delete runAnteEl.dataset.peril;
+      }
+    }
+
     // Run mode upgrade strip
     const hudUpgradesEl = document.getElementById('hud-upgrades');
     if (hudUpgradesEl) {
@@ -2186,6 +2212,14 @@ const UI = (() => {
     el.classList.add('score-pop');
   }
 
+  function flashRunAnte() {
+    const el = document.getElementById('hud-run-ante');
+    if (!el || el.classList.contains('hidden')) return;
+    el.classList.remove('hud-run-ante-pop');
+    void el.offsetWidth;
+    el.classList.add('hud-run-ante-pop');
+  }
+
   // ---- Upgrade Flash ----
   function flashUpgrade(id) {
     const pip = document.querySelector(`.hud-upgrade-pip[data-id="${id}"]`);
@@ -2210,5 +2244,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, refreshTutorialEntryPoints, showTutorialOverlay, hideTutorialOverlay, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade, triggerScoreEffect };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade, flashRunAnte, triggerScoreEffect };
 })();

@@ -201,6 +201,10 @@ const Audio = (() => {
     return stateWeight;
   }
 
+  function getMusicState() {
+    return pendingMusicState || currentMusicState;
+  }
+
   function fadeLayerTo(gainNode, target, duration) {
     const c = getCtx();
     gainNode.gain.cancelScheduledValues(c.currentTime);
@@ -249,12 +253,6 @@ const Audio = (() => {
     const seq = SEQUENCES[currentTheme];
     if (!seq) return;
 
-    // Apply pending state at loop boundary
-    if (pendingMusicState !== null) {
-      currentMusicState = pendingMusicState;
-      pendingMusicState = null;
-    }
-
     const stateMult   = STATE_TEMPO_MULT[currentMusicState] || 1.0;
     const levelMult   = (currentMusicState === 'freeze') ? 1.0 : _levelTempoMult;
     const effectiveMult = stateMult * levelMult;
@@ -280,8 +278,6 @@ const Audio = (() => {
       const loopDuration = layerSeq.notes.length * adjustedTempo;
       if (loopDuration > maxDuration) maxDuration = loopDuration;
 
-      if (resolveLayerGain(layer) === 0) continue; // skip silent layers
-
       const start = c.currentTime + offset;
       layerSeq.notes.forEach((midi, i) => {
         const t = start + i * adjustedTempo;
@@ -303,24 +299,37 @@ const Audio = (() => {
 
   // ---- Public adaptive music controls ----
 
+  function applyMusicStateNow(newState, duration = 0.5) {
+    currentMusicState = newState;
+    pendingMusicState = null;
+    for (const layer of ['melody', 'bass', 'harmony', 'boss', 'run']) {
+      if (layerGains[layer]) {
+        fadeLayerTo(layerGains[layer], resolveLayerGain(layer), duration);
+      }
+    }
+  }
+
   function setMusicState(newState, onRevert) {
+    if (!newState) return;
+    const activeState = getMusicState();
+    if (newState === activeState && newState !== 'hopeful') return;
+
     if (newState === 'boss' || newState === 'freeze') {
       // Save pre-special state (don't overwrite if already in a special state)
       if (currentMusicState !== 'boss' && currentMusicState !== 'freeze' && currentMusicState !== 'hopeful') {
         _preSpecialState = currentMusicState;
       }
-      pendingMusicState = newState;
+      applyMusicStateNow(newState, 0.35);
     } else if (newState === 'hopeful') {
       if (_hopefulTimeout) clearTimeout(_hopefulTimeout);
-      currentMusicState = 'hopeful';
-      pendingMusicState = null;
+      applyMusicStateNow('hopeful', 0.25);
       _hopefulTimeout = setTimeout(() => {
         _hopefulTimeout = null;
         if (onRevert) onRevert();
-        else pendingMusicState = _preSpecialState;
+        else setMusicState(_preSpecialState);
       }, 4000);
     } else {
-      pendingMusicState = newState;
+      applyMusicStateNow(newState, 0.45);
     }
   }
 
@@ -583,5 +592,5 @@ const Audio = (() => {
   }
 
   return { playMusic, stopMusic, play, setTheme, setMuted, getCtx,
-           setMusicState, notifyStreak, notifyLevel, setRunMode };
+           setMusicState, getMusicState, notifyStreak, notifyLevel, setRunMode };
 })();

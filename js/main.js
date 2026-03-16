@@ -107,14 +107,38 @@ function tutorialQuestionSpeechEnabled() {
 
 // ---- Adaptive music ----
 let _prevFreezeActive = 0;
+const MUSIC_STATE_RANK = { calm: 0, tense: 1, urgent: 2 };
+
+function getLifeMusicState() {
+  if (state.lives <= 1) return 'urgent';
+  if (state.lives < state.maxLives) return 'tense';
+  return 'calm';
+}
+
+function higherMusicState(a, b) {
+  return (MUSIC_STATE_RANK[b] || 0) > (MUSIC_STATE_RANK[a] || 0) ? b : a;
+}
 
 function syncMusicIntensity() {
   if (state.practiceMode) return;
+  const activeMusicState = Audio.getMusicState ? Audio.getMusicState() : null;
+  if (activeMusicState === 'hopeful') return;
+  if (activeMusicState === 'freeze' && state.freezeActive > 0) return;
+
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
   if (hasBoss) { Audio.setMusicState('boss'); return; }
-  if (state.lives <= 1)                Audio.setMusicState('urgent');
-  else if (state.lives < state.maxLives) Audio.setMusicState('tense');
-  else                                   Audio.setMusicState('calm');
+
+  let nextState = getLifeMusicState();
+  if (state.runMode && window.RunMode?.getAnteProgressSnapshot && window.RunMode?.getAnteMusicState) {
+    const anteSnapshot = window.RunMode.getAnteProgressSnapshot(state);
+    nextState = higherMusicState(nextState, window.RunMode.getAnteMusicState(anteSnapshot));
+  }
+  Audio.setMusicState(nextState);
+}
+
+function refreshRunFeedback() {
+  UI.updateHUD(state);
+  syncMusicIntensity();
 }
 
 // ---- Haptic feedback ----
@@ -253,6 +277,7 @@ const HOT_ZONE_BOTTOM_WIDE = 0.725;
 // ---- Ante targets for run mode ----
 // anteTarget(ante) → minimum score to advance from that ante's 3 levels
 function anteTarget(ante) {
+  if (window.RunMode?.anteTarget) return window.RunMode.anteTarget(ante);
   const base = [0, 150, 350, 650, 1050];
   if (ante <= 4) return base[ante] || 0;
   return 1050 + (ante - 4) * 450;
@@ -1169,7 +1194,7 @@ const RunDemoRun = {
     hideSuggestion();
     _lastSpokenTarget = null;
     state.answerStartTime = Date.now();
-    UI.updateHUD(state);
+    refreshRunFeedback();
   },
 
   pickQuestion() {
@@ -2096,7 +2121,7 @@ function update(dt) {
                 ? 'Shield! +1 Bomb' : 'Shield!', null);
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
-            UI.updateHUD(state);
+            refreshRunFeedback();
           } else if (state.shieldBonusActive) {
             state.shieldBonusActive = false;
             if (state.tutorialMode) TutorialRun.onShieldAbsorbed();
@@ -2105,7 +2130,7 @@ function update(dt) {
             state.bonusFlash = { type: 'shieldAbsorbed', timer: 0.85, maxTimer: 0.85 };
             state.missedList.push({ question: obj.question, answer: obj.answer });
             UI.showMissFlash(obj.question, obj.answer);
-            UI.updateHUD(state);
+            refreshRunFeedback();
           } else {
             state.lives = Math.max(0, state.lives - 1);
             if (state.tutorialMode) TutorialRun.onLifeLost();
@@ -2114,7 +2139,7 @@ function update(dt) {
             Audio.play('lifeLost');
             syncMusicIntensity();
             vibrate(200);
-            UI.updateHUD(state);
+            refreshRunFeedback();
             if (state.lives <= 0 && state.phase === 'PLAYING') {
               state.phase = 'ENDING';
               setTimeout(() => endGame(), 1400);
@@ -2490,7 +2515,7 @@ function submitAnswer() {
         state.levelStars.push(bossStars);
 
         if (state.tutorialMode) {
-          UI.updateHUD(state);
+          refreshRunFeedback();
           input.value = '';
           input.placeholder = I18n.t('answerPlaceholder');
           state.answerStartTime = Date.now();
@@ -2541,7 +2566,7 @@ function submitAnswer() {
         Audio.play('levelUp');
         UI.showLevelUp(`${target.questionIndex}/${target.questionsTotal}`, null);
       }
-      UI.updateHUD(state);
+      refreshRunFeedback();
       input.value = '';
       input.placeholder = I18n.t('answerPlaceholder');
       state.answerStartTime = Date.now();
@@ -2565,7 +2590,7 @@ function submitAnswer() {
     if (val === target.answer) {
       Objects.triggerDestruction(target, '#00d4ff');
       state.freezeActive = 5;
-      UI.updateHUD(state);
+      refreshRunFeedback();
       Audio.play('freeze');
       Audio.setMusicState('freeze');
       input.value = '';
@@ -2587,7 +2612,7 @@ function submitAnswer() {
       Objects.triggerDestruction(target, '#2ed573');
       state.lives = Math.min(state.maxLives, state.lives + 1);
       state.bonusFlash = { type: 'lifeup', timer: 0.9, maxTimer: 0.9 };
-      UI.updateHUD(state);
+      refreshRunFeedback();
       // Animate the newly gained heart in the HUD
       const livesEl = document.getElementById('hud-lives');
       if (livesEl) {
@@ -3114,6 +3139,8 @@ function submitAnswer() {
           if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_multStack')) {
             state.runCoins += 1;
           }
+          refreshRunFeedback();
+          UI.flashRunAnte && UI.flashRunAnte();
           Engine.pause();
           const shopDoneCb = (result) => {
             // Apply reordered bar (newOrder already includes bought items from shop UI)
@@ -3137,6 +3164,7 @@ function submitAnswer() {
             state.runCoins = result.newCoins;
             // Recompute adjacency bonuses with updated order
             state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
+            refreshRunFeedback();
             Engine.resume();
             state.unpauseFreezeTimer = 1.0;
             if (!_typingMode && !state.runDemoMode) Voice.start();

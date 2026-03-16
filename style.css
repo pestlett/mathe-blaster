@@ -932,19 +932,100 @@ input[type="number"]::-webkit-outer-spin-button {
   animation: life-gain-pulse 0.55s ease-out forwards;
 }
 
-/* Run-mode ante chip in HUD center */
-.run-ante-chip {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #a29bfe;
-  background: rgba(162,155,254,0.18);
-  border: 1px solid rgba(162,155,254,0.45);
-  border-radius: 20px;
-  padding: 2px 10px;
-  letter-spacing: 0.03em;
+/* Run-mode ante target card */
+#hud-run-ante {
+  --ante-glow: rgba(74, 214, 255, 0.45);
+  --ante-border: rgba(74, 214, 255, 0.5);
+  --ante-fill: linear-gradient(90deg, #57e3ff, #87f7c1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 136px;
+  padding: 7px 10px 8px;
+  border-radius: 14px;
+  color: #fff;
+  background: rgba(4, 10, 24, 0.56);
+  border: 1px solid var(--ante-border);
+  box-shadow: 0 0 18px var(--ante-glow), inset 0 0 12px rgba(255,255,255,0.04);
   pointer-events: none;
 }
-.run-ante-chip.hidden { display: none; }
+#hud-run-ante.hidden { display: none; }
+#hud-run-ante[data-peril="tense"] {
+  --ante-glow: rgba(255, 166, 0, 0.48);
+  --ante-border: rgba(255, 166, 0, 0.55);
+  --ante-fill: linear-gradient(90deg, #ffd166, #ff9f43);
+}
+#hud-run-ante[data-peril="urgent"] {
+  --ante-glow: rgba(255, 71, 87, 0.5);
+  --ante-border: rgba(255, 107, 129, 0.68);
+  --ante-fill: linear-gradient(90deg, #ff6b81, #ff3b3b);
+}
+#hud-run-ante[data-peril="cleared"] {
+  --ante-glow: rgba(46, 213, 115, 0.45);
+  --ante-border: rgba(46, 213, 115, 0.58);
+  --ante-fill: linear-gradient(90deg, #2ed573, #7bed9f);
+}
+.run-ante-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+}
+.run-ante-main {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  line-height: 1;
+}
+.run-ante-progress,
+.run-ante-target {
+  font-weight: 900;
+  text-shadow: 0 0 12px var(--ante-glow);
+}
+.run-ante-progress {
+  font-size: 1.05rem;
+}
+.run-ante-target {
+  font-size: 1.25rem;
+}
+.run-ante-sep {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+}
+.run-ante-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.12);
+}
+.run-ante-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ante-fill);
+  box-shadow: 0 0 12px var(--ante-glow);
+  transition: width 180ms ease-out;
+}
+@keyframes hudRunAntePop {
+  0%   { transform: scale(0.88) translateY(-10px); opacity: 0.55; }
+  35%  { transform: scale(1.08) translateY(0); opacity: 1; }
+  65%  { transform: scale(0.98); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes hudRunAnteTargetPulse {
+  0%   { transform: scale(0.9); filter: brightness(1); }
+  22%  { transform: scale(1.25); filter: brightness(1.9); }
+  48%  { transform: scale(0.92); filter: brightness(1.2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+#hud-run-ante.hud-run-ante-pop {
+  animation: hudRunAntePop 720ms cubic-bezier(.18,.89,.32,1.18);
+}
+#hud-run-ante.hud-run-ante-pop .run-ante-target {
+  animation: hudRunAnteTargetPulse 720ms ease-out;
+}
 
 /* Active upgrades bar — bottom-left of game screen, horizontal row */
 #active-upgrades-bar {
@@ -2904,6 +2985,14 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  #hud-run-ante {
+    min-width: 116px;
+    padding: 5px 8px 6px;
+    gap: 3px;
+  }
+  .run-ante-kicker { font-size: 0.6rem; }
+  .run-ante-progress { font-size: 0.92rem; }
+  .run-ante-target { font-size: 1.05rem; }
   #hud-lives { font-size: 1.1rem; gap: 3px; }
 
   /* Bonus pills: smaller on mobile */
