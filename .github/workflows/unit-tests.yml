@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel stale runs when a newer push supersedes them.
+concurrency:
+  group: unit-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unit:
     runs-on: ubuntu-latest
