@@ -296,6 +296,66 @@ When in run mode, active upgrades are displayed as emoji pips in `#hud-upgrades`
 below the level/tables row. When an upgrade effect fires, `UI.flashUpgrade(id)`
 triggers a CSS pulse animation (`upgradePipFlash`) on the corresponding pip.
 
+## Run Mode Demo
+
+A fully automated, scripted demo run is available via the **"Watch Run Mode Demo"**
+button on the main menu. It shows players what a well-built upgrade stack looks like,
+ending with a score in the billions.
+
+### Activation
+
+```js
+startRunDemo();
+// → startGame({ runMode: true, runDemoMode: true, seed: RUN_DEMO_SEED })
+```
+
+The `runDemoMode: true` flag suppresses:
+- Auto-spawning (demo controls all objects)
+- Boss rounds
+- Progress/mastery recording
+- Voice recognition
+- Ante-fail checks (demo never fails an ante)
+
+### Scripted Shop Sequence
+
+Six shops are scripted via `DEMO_SHOP_SCRIPT`. Each entry specifies forced card
+options, which card to auto-pick, and a narration i18n key:
+
+| Shop | Options shown | Pick | Purpose |
+|------|--------------|------|---------|
+| 1 | luckyBonus, streakBoost, hotZoneBoost | luckyBonus | Seed lucky triggers |
+| 2 | cascadeMult, compoundGrowth, scoreMultSmall | cascadeMult | Start exponential cascade |
+| 3 | compoundGrowth, scoreMultLarge, echoLucky | compoundGrowth | Add compound multiplier growth |
+| 4 | slotExpander, scoreMultLarge, luckyFrequency | slotExpander | Open 5th slot for remaining picks |
+| 5 | scoreMultLarge, replayScore, luckyFrequency | scoreMultLarge | ×2 global multiplier |
+| 6 | replayScore, luckyFrequency, echoLucky | replayScore | Double all base scoring |
+
+After the 6th shop, the demo enters **turbo phase**: `state.scoreMultiplier × 500`
+to simulate an extended optimised run, then rapid auto-answering until the score
+reaches 5 billion points.
+
+### i18n Keys
+
+| Key | Usage |
+|-----|-------|
+| `runDemoBtnLabel` | Main menu button label |
+| `runDemoOverlayTitle` | Overlay heading |
+| `runDemoPreparing` | "Preparing demo…" message |
+| `runDemoIntro` | Opening narration |
+| `runDemoAnte1` | Before ante 1 narration |
+| `runDemoShop1`–`runDemoShop6` | Per-shop narration |
+| `runDemoAfterShop1` | Post-shop 1 narration |
+| `runDemoAfterShop2` | Post-shop 2 narration |
+| `runDemoTurboTitle` | Turbo phase heading |
+| `runDemoTurboIntro` | Turbo phase narration |
+| `runDemoComplete` | Completion narration |
+| `runDemoCompleteTitle` | Completion heading |
+
+### Entry Point
+
+`window.RunDemoRun` is exposed for E2E test instrumentation (mirrors the
+`window.TutorialRun` pattern).
+
 ## Adding a New Upgrade
 
 See `docs/adding-features.md` → "New Upgrade Checklist".
