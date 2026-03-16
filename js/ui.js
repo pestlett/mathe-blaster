@@ -1883,6 +1883,7 @@ const UI = (() => {
     let boughtList = [];
     let freeUsed = !isFreeStarter;
     let orderArr = [...activeUpgrades];
+    maxSlots = maxSlots || 4;
 
     function refreshCoinDisplay() {
       const coinEl = card.querySelector('.shop-coin-display');
@@ -1962,6 +1963,12 @@ const UI = (() => {
           freeUsed = true;
           boughtList.push(upg);
           orderArr.push(upg);
+          // Apply slot-affecting upgrades immediately so renderShop shows the new count
+          if (upg.apply) {
+            const tempState = { maxUpgradeSlots: maxSlots };
+            upg.apply(tempState);
+            maxSlots = tempState.maxUpgradeSlots;
+          }
           // Always remove from shop options after purchase
           const idx = options.indexOf(upg);
           if (idx >= 0) options.splice(idx, 1);
