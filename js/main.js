@@ -1182,7 +1182,7 @@ const RunDemoRun = {
     }
   },
 
-  // Wait for the shop signal, narrate, show the shop, then auto-pick the scripted upgrade
+  // Wait for the shop signal, show the shop, auto-pick the scripted upgrade, then narrate
   async openShop(shopIndex) {
     if (!runDemoActive()) return;
     await this.waitForShop();
@@ -1192,25 +1192,19 @@ const RunDemoRun = {
     this._pendingShopCb = null;
     const script = DEMO_SHOP_SCRIPT[shopIndex] || DEMO_SHOP_SCRIPT[DEMO_SHOP_SCRIPT.length - 1];
 
-    // Narrate before revealing the shop
-    await this.narrate(I18n.t(script.narrateKey), { title: I18n.t('runDemoOverlayTitle') });
-    if (!runDemoActive()) {
-      doneCb({ newOrder: state.activeUpgrades, sold: [], boughtList: [], newCoins: state.runCoins });
-      return;
-    }
-
     // Build forced shop options from the upgrade registry
     const forceOptions = script.options.map(id => getUpgradeById(id)).filter(Boolean);
     const isFree = shopIndex === 0; // ante 1→2 is always free
 
-    // Show the real shop UI so the player can see it
+    // Show the real shop so the player can read the options
     UI.showShop(forceOptions, state.runCoins, state.theme, state.activeUpgrades, isFree,
       state.maxUpgradeSlots || 4, result => doneCb(result));
 
-    // Give the player a moment to read the shop, then auto-pick
+    // Let the player see the shop options before buying
     await this.wait(2800);
     if (!runDemoActive()) return;
 
+    // Click the scripted buy button
     const shopCards = document.querySelectorAll('.shop-card');
     const pickIdx = forceOptions.findIndex(u => u.id === script.pick);
     let clicked = false;
@@ -1223,10 +1217,15 @@ const RunDemoRun = {
       if (anyBtn) anyBtn.click();
     }
 
-    // Pause so the player can see the purchase, then close the shop
-    await this.wait(1800);
+    // Wait for the upgrade to appear in the slot strip, then close the shop
+    await this.wait(1500);
     if (!runDemoActive()) return;
     document.querySelector('.shop-done-btn')?.click();
+
+    // Brief pause after the shop closes, then narrate about the purchase
+    await this.wait(400);
+    if (!runDemoActive()) return;
+    await this.narrate(I18n.t(script.narrateKey), { title: I18n.t('runDemoOverlayTitle') });
   },
 
   async run() {
