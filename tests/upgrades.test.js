@@ -56,8 +56,8 @@ function findUpgrade(id) {
 }
 
 describe('UPGRADES definitions', () => {
-  test('all 33 upgrades are defined (12 original + 12 shop + 8 new shop + 1 surge)', () => {
-    expect(UPGRADES).toHaveLength(33);
+  test('all 36 upgrades are defined (12 original + 12 shop + 8 new shop + 1 surge + 3 coin)', () => {
+    expect(UPGRADES).toHaveLength(36);
   });
 
   test('every upgrade has required fields', () => {
@@ -119,8 +119,8 @@ describe('UPGRADES definitions', () => {
     expect(UNLOCK_UPGRADE_IDS).toHaveLength(4);
   });
 
-  test('shop pool has 21 upgrades', () => {
-    expect(SHOP_UPGRADE_IDS).toHaveLength(21);
+  test('shop pool has 24 upgrades', () => {
+    expect(SHOP_UPGRADE_IDS).toHaveLength(24);
   });
 });
 
@@ -791,6 +791,24 @@ describe('shop upgrade apply() — flag setting', () => {
     expect(state.bonusCoinPerAnte).toBe(6);
   });
 
+  test('coinOnStreak sets coinOnStreak flag', () => {
+    const state = makeState();
+    findUpgrade('coinOnStreak').apply(state);
+    expect(state.coinOnStreak).toBe(true);
+  });
+
+  test('coinOnPerfect sets coinOnPerfect flag', () => {
+    const state = makeState();
+    findUpgrade('coinOnPerfect').apply(state);
+    expect(state.coinOnPerfect).toBe(true);
+  });
+
+  test('coinOnStar sets coinOnStar flag', () => {
+    const state = makeState();
+    findUpgrade('coinOnStar').apply(state);
+    expect(state.coinOnStar).toBe(true);
+  });
+
   test('replayScore increments replayCount (stackable)', () => {
     const state = makeState();
     findUpgrade('replayScore').apply(state);
@@ -934,6 +952,27 @@ describe('unapplyUpgrade — reverses apply()', () => {
     findUpgrade('starterBoost').apply(state);
     unapplyUpgrade(findUpgrade('starterBoost'), state);
     expect(state.bonusCoinPerAnte).toBe(3);
+  });
+
+  test('unapply coinOnStreak clears flag', () => {
+    const state = makeState();
+    findUpgrade('coinOnStreak').apply(state);
+    unapplyUpgrade(findUpgrade('coinOnStreak'), state);
+    expect(state.coinOnStreak).toBe(false);
+  });
+
+  test('unapply coinOnPerfect clears flag', () => {
+    const state = makeState();
+    findUpgrade('coinOnPerfect').apply(state);
+    unapplyUpgrade(findUpgrade('coinOnPerfect'), state);
+    expect(state.coinOnPerfect).toBe(false);
+  });
+
+  test('unapply coinOnStar clears flag', () => {
+    const state = makeState();
+    findUpgrade('coinOnStar').apply(state);
+    unapplyUpgrade(findUpgrade('coinOnStar'), state);
+    expect(state.coinOnStar).toBe(false);
   });
 
   test('unapply clamps multiplier floor at 1', () => {

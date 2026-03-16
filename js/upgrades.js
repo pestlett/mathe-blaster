@@ -287,6 +287,48 @@ const UPGRADES = [
     },
     apply(state) { state.bonusCoinPerAnte = (state.bonusCoinPerAnte || 0) + 3; },
   },
+  {
+    id: 'coinOnStreak',
+    icon: '🔗',
+    tier: 'shop', rarity: 'uncommon',
+    operations: ['all'],
+    price: 18, sellValue: 9,
+    names: { space: 'Streak Treasury', ocean: 'Tidal Vault', sky: 'Wind Coffers' },
+    desc: {
+      space: 'Each streak milestone earns +1 bonus coin on top of the streak reward.',
+      ocean: 'Tidal vault: every streak checkpoint washes in an extra coin.',
+      sky:   'Wind coffers: streak milestones carry +1 coin on the breeze.',
+    },
+    apply(state) { state.coinOnStreak = true; },
+  },
+  {
+    id: 'coinOnPerfect',
+    icon: '🎯',
+    tier: 'shop', rarity: 'uncommon',
+    operations: ['all'],
+    price: 20, sellValue: 10,
+    names: { space: 'Precision Vault', ocean: 'Pearl Diver', sky: 'Sky Mint' },
+    desc: {
+      space: 'Hot-zone answers earn +1 extra coin — double the precision reward.',
+      ocean: 'Pearl diver: every hot-zone hit surfaces an extra coin.',
+      sky:   'Sky mint: land in the hot zone and pocket an extra coin.',
+    },
+    apply(state) { state.coinOnPerfect = true; },
+  },
+  {
+    id: 'coinOnStar',
+    icon: '⭐',
+    tier: 'shop', rarity: 'rare',
+    operations: ['all'],
+    price: 30, sellValue: 15,
+    names: { space: 'Star Bank', ocean: 'Reef Treasury', sky: 'Cloud Chest' },
+    desc: {
+      space: 'Star ratings pay double: 2★ → +2 coins, 3★ → +4 coins.',
+      ocean: 'Reef treasury: stars shine brighter — double coin rewards per rating.',
+      sky:   'Cloud chest: star ratings fill the chest with double coins.',
+    },
+    apply(state) { state.coinOnStar = true; },
+  },
 
   // Replays
   {
@@ -506,7 +548,7 @@ const UNLOCK_UPGRADE_IDS   = ['commutative','streakSlow','reveal','lastChance'];
 // Shop-tier upgrades (always available in shop regardless of milestones)
 const SHOP_UPGRADE_IDS = [
   'scoreMultSmall','scoreMultLarge','scoreMultPerfect',
-  'echoLucky','echoChain','echoStreak','starterBoost',
+  'echoLucky','echoChain','echoStreak','starterBoost','coinOnStreak','coinOnPerfect','coinOnStar',
   'replayScore','replayLucky','replayChain','replayHotZone','replayStreak',
   'slotExpander','multiBooster','divideBooster','addBooster','subtractBooster',
   'cascadeMult','compoundGrowth','luckyFrequency','surge',
@@ -812,6 +854,9 @@ function unapplyUpgrade(upgrade, state) {
     case 'echoChain':        state.echoChain = false; break;
     case 'echoStreak':       state.echoStreak = false; break;
     case 'starterBoost':     state.bonusCoinPerAnte = Math.max(0, (state.bonusCoinPerAnte || 0) - 3); break;
+    case 'coinOnStreak':     state.coinOnStreak = false; break;
+    case 'coinOnPerfect':    state.coinOnPerfect = false; break;
+    case 'coinOnStar':       state.coinOnStar = false; break;
     case 'replayScore':      state.replayCount = Math.max(0, (state.replayCount || 0) - 1); break;
     case 'replayLucky':      state.replayLuckyCount = Math.max(0, (state.replayLuckyCount || 0) - 1); break;
     case 'replayChain':      state.replayChain = false; break;

@@ -36,6 +36,9 @@ Coins are earned for **skilled play** — not every answer. This keeps the econo
 | Level 2★ | +1 |
 | Level 3★ | +2 |
 | `starterBoost` upgrade (per stack) | +3 extra per ante |
+| `coinOnPerfect` upgrade | +1 extra per hot-zone answer |
+| `coinOnStreak` upgrade | +1 extra per streak milestone |
+| `coinOnStar` upgrade | double star coins (2★ → +2, 3★ → +4) |
 | `adj_multStack` adjacency bonus | +1 extra per ante |
 | `adj_cascadeLucky` adjacency bonus | +1 per 3rd lucky trigger |
 
@@ -137,6 +140,9 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `echoChain` | 22 | 11 | — | ×, ÷ |
 | `echoStreak` | 20 | 10 | — | all |
 | `starterBoost` | 15 | 7 | ✓ | all |
+| `coinOnStreak` | 18 | 9 | — | all |
+| `coinOnPerfect` | 20 | 10 | — | all |
+| `coinOnStar` | 30 | 15 | — | all |
 | `replayScore` | 32 | 16 | ✓ | all |
 | `replayLucky` | 25 | 12 | ✓ | all |
 | `replayChain` | 20 | 10 | — | ×, ÷ |
@@ -194,6 +200,9 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `echoChain` | Each chain kill also destroys the commutative mirror fact if on screen |
 | `echoStreak` | Hot-zone answers: streak multiplier bonus applied a second time as a flat addition |
 | `starterBoost` | +3 coins at the start of each shop visit. Stacks |
+| `coinOnStreak` | +1 extra coin at every streak milestone (on top of the base +2) |
+| `coinOnPerfect` | +1 extra coin for every hot-zone answer (doubles the hot-zone drip) |
+| `coinOnStar` | Star rating coins doubled: 2★ → +2 coins, 3★ → +4 coins |
 
 **Replays** — repeat a scoring action:
 
@@ -277,6 +286,9 @@ state.lastChanceUsed     // boolean
 // Shop economy
 state.runCoins           // number — current coin balance
 state.bonusCoinPerAnte   // number — bonus coins per ante (from starterBoost)
+state.coinOnStreak       // boolean — +1 coin at each streak milestone
+state.coinOnPerfect      // boolean — +1 extra coin per hot-zone answer
+state.coinOnStar         // boolean — star rating coins doubled
 state.shopBuysThisRun    // number — count of shop purchases (for achievement)
 // Score multiplier
 state.scoreMultiplier    // number (1.0 base; multiplied by scoreMultSmall/Large)

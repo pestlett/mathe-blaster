@@ -2916,8 +2916,8 @@ function submitAnswer() {
     // Earn coins for skilled play only — not every answer
     if (state.runMode) {
       let coinsEarned = 0;
-      if (inHotZone) coinsEarned += 1;  // hot zone precision
-      if (state.streak > 0 && state.streak % 5 === 0) coinsEarned += 2;  // streak milestones
+      if (inHotZone) coinsEarned += 1 + (state.coinOnPerfect ? 1 : 0);  // hot zone precision
+      if (state.streak > 0 && state.streak % 5 === 0) coinsEarned += 2 + (state.coinOnStreak ? 1 : 0);  // streak milestones
       if (coinsEarned > 0) state.runCoins = (state.runCoins || 0) + coinsEarned;
     }
 
@@ -3090,7 +3090,8 @@ function submitAnswer() {
 
       // Coin award for level stars (run mode)
       if (state.runMode) {
-        const starCoins = [0, 0, 1, 2][stars] || 0;
+        const baseStarCoins = [0, 0, 1, 2][stars] || 0;
+        const starCoins = state.coinOnStar ? baseStarCoins * 2 : baseStarCoins;
         if (starCoins > 0) state.runCoins = (state.runCoins || 0) + starCoins;
       }
 
