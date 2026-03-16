@@ -50,8 +50,11 @@ Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zo
 - **Buy**: costs coins shown on the card; **unlimited purchases** per visit (limited by slot count and coins)
 - **Slot limit**: active upgrades capped at `state.maxUpgradeSlots` (default 4); buy `slotExpander` to increase
 - **Free pick**: the very first ante (ante 1→2) grants one free pick
-- **Sell**: any owned upgrade can be sold for its `sellValue` (coins returned immediately)
-- **Reroll**: costs 8 coins, draws 3 fresh cards; flat cost (doesn't increase)
+- **Current loadout**: the shop shows owned upgrades with full name + effect text; cards are visually tagged as **action items** (for charge-based tools like `shield` / `bomb`) or **passive effects**
+- **Inspect**: hovering or tapping owned upgrades reveals the same name/effect text via the card tooltip for quick scanning
+- **Sell**: most owned upgrades can be sold for `sellValue`, but selling is a **two-step confirm** to prevent mistakes
+- **Non-sellable support items**: `slotExpander` / Extension Bay stays installed for the whole run and cannot be sold
+- **Reroll**: costs 4 coins, draws 3 fresh cards; flat cost (doesn't increase)
 - **Done**: close shop without buying (sells still apply)
 
 ### Rarity System

@@ -38,6 +38,7 @@ const UPGRADES = [
     id: 'shield',
     icon: '🛡',
     tier: 'start', rarity: 'common',
+    shopKind: 'action',
     stackable: true, maxStacks: 4,
     operations: ['all'],
     price: 7, sellValue: 3,
@@ -68,6 +69,7 @@ const UPGRADES = [
     id: 'bomb',
     icon: '💣',
     tier: 'start', rarity: 'common',
+    shopKind: 'action',
     stackable: true, maxStacks: 4,
     operations: ['all'],
     price: 7, sellValue: 3,
@@ -411,6 +413,7 @@ const UPGRADES = [
     id: 'slotExpander',
     icon: '🗂',
     tier: 'shop', rarity: 'uncommon',
+    sellable: false,
     stackable: true, maxStacks: 4, noSlot: true,
     operations: ['all'],
     price: 25, sellValue: 12,
@@ -791,6 +794,14 @@ function getUpgradeById(id) {
   return UPGRADES.find(u => u.id === id) || null;
 }
 
+function getUpgradeShopKind(upgrade) {
+  return upgrade?.shopKind === 'action' ? 'action' : 'effect';
+}
+
+function isUpgradeSellable(upgrade) {
+  return upgrade?.sellable !== false;
+}
+
 // Draw N upgrades from the available pool (start + unlock tiers only).
 // Stackable upgrades can appear even if already owned; non-stackable are excluded once picked.
 function drawUpgrades(n, unlockedIds, activeIds) {
@@ -879,7 +890,7 @@ if (typeof module !== 'undefined') {
     UPGRADES, SYNERGIES, ADJACENCY,
     STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS, SHOP_UPGRADE_IDS,
     upgradeNameForTheme, upgradeDescForTheme,
-    drawUpgrades, drawShopOptions, getUpgradeById, unapplyUpgrade,
+    drawUpgrades, drawShopOptions, getUpgradeById, getUpgradeShopKind, isUpgradeSellable, unapplyUpgrade,
     getSynergyHintsForUpgrade, getActiveSynergySets,
     getAdjacencyBonuses, getAdjacencyForPair,
   };
