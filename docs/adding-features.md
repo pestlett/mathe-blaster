@@ -69,7 +69,7 @@ A new visual theme (e.g. `forest`, `city`) requires changes in:
    - The adaptive music system (`scheduleLoop`, `setMusicState`, etc.) picks up new themes automatically — no other changes needed in the music logic
 
 3. **`js/upgrades.js`**
-   - Add theme-specific names for all 12 upgrades (the `names` and `desc` objects)
+   - Add theme-specific names for all upgrades (the `names` and `desc` objects)
 
 4. **`js/i18n.js`**
    - Add theme display name in all 3 languages

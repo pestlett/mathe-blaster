@@ -67,9 +67,9 @@ Defined in `main.js` as `DIFFICULTY`:
 
 | Difficulty | maxObjects | baseSpeed (px/s) | maxSpeed (px/s) | lives |
 |------------|-----------|-----------------|----------------|-------|
-| `easy` | 2 | 55 | 120 | 5 |
-| `medium` | 3 | 70 | 160 | 4 |
-| `hard` | 4 | 90 | 210 | 3 |
+| `easy` | 3 | 40 | 130 | 6 |
+| `medium` | 4 | 58 | 190 | 4 |
+| `hard` | 5 | 80 | 260 | 3 |
 
 Speed increases per level: `baseSpeed × (1 + SPEED_INCREASE_PER_LEVEL × (level-1))`
 where `SPEED_INCREASE_PER_LEVEL = 0.18`. Capped at `maxSpeed`.

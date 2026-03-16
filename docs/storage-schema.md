@@ -5,7 +5,7 @@
 | Key pattern | Used for |
 |-------------|---------|
 | `multiblaster_v1` | Legacy single-player data |
-| `multiblaster_v1_${name}${age}` | Per-player profile (multi-profile) |
+| `multiblaster_v1_${name}_${age}` | Per-player profile (multi-profile) |
 
 On first game with a named player, legacy data at `multiblaster_v1` is migrated
 to the player-specific key automatically.
@@ -124,40 +124,43 @@ requires all 10 facts in a table to have `cleanCorrect >= 1`.
 ### Session achievements
 | ID | Condition |
 |----|-----------|
-| `firstCorrect` | First ever correct answer |
-| `streak3` | Streak of 3 |
-| `streak5` | Streak of 5 |
-| `streak10` | Streak of 10 |
-| `level5` | Reach level 5 |
-| `level10` | Reach level 10 |
-| `accuracy90` | Session accuracy ≥ 90% |
-| `score500` | Score ≥ 500 |
-| `score1000` | Score ≥ 1000 |
-| `noMiss` | Finish a game with 0 misses |
-| `addFirst` | First correct addition |
-| `subFirst` | First correct subtraction |
+| `first_correct` | First ever correct answer |
+| `streak_3` | Streak of 3 |
+| `streak_5` | Streak of 5 |
+| `streak_10` | Streak of 10 |
+| `level_5` | Reach level 5 |
+| `level_10` | Reach level 10 |
+| `boss_slay` | Defeat the first boss round |
+| `accuracy_90` | Session accuracy ≥ 90% |
+| `score_500` | Score ≥ 500 |
+| `score_1000` | Score ≥ 1000 |
+| `no_miss` | Finish a game with 0 misses |
+| `sessions_5` | Play 5 sessions |
+| `add_first_correct` | First correct addition |
+| `sub_first_correct` | First correct subtraction |
 
 ### Social / daily
 | ID | Condition |
 |----|-----------|
-| `playStreak3` | 3 consecutive days played |
-| `playStreak7` | 7 consecutive days played |
-| `challengeWin` | Beat a challenger's score |
+| `streak_days_3` | 3 consecutive days played |
+| `streak_days_7` | 7 consecutive days played |
+| `challenge_win` | Beat a challenger's score |
 
 ### Table achievements (multiply)
 | ID | Condition |
 |----|-----------|
-| `table2` … `table10` | All 10 facts for that table: cleanCorrect ≥ 1 |
+| `table_2` … `table_10` | All 10 facts for that table: cleanCorrect ≥ 1 |
 
 ### Table achievements (divide)
 | ID | Condition |
 |----|-----------|
-| `div2` … `div10` | All 10 division facts for that table: cleanCorrect ≥ 1 |
+| `div_first_correct` | First correct division answer |
+| `div_table_2` … `div_table_10` | All 10 division facts for that table: cleanCorrect ≥ 1 |
 
 ### Milestone
 | ID | Condition |
 |----|-----------|
-| `klasseKomplett` | All multiply tables 2–10 + all divide tables 2–10 + addFirst + subFirst |
+| `klasse3_komplett` | All multiply tables 2–10 + all divide tables 2–10 + add & subtract attempted |
 
 ### Run Mode Achievements
 | ID | Condition |
