@@ -149,15 +149,11 @@ const Questions = (() => {
       } else if (halbschriftlich) {
         // Halbschriftliche Division: (divisor × quotient) ÷ divisor = quotient
         // divisor = a (from table range), quotient is multi-digit (no remainder)
-        // Easy: 2-digit quotient (12–99); Medium/Hard: 2-digit AND 3-digit (12–999)
-        const hiQ = difficulty === 'easy' ? 99 : 999;
-        const loQ = 12;
-        for (let a = aRange.lo; a <= aRange.hi; a++) {
-          if (a === 0) continue;
+        // Easy: 2-digit quotient (12–99); Medium/Hard: guaranteed mix of 2-digit (12–99) AND 3-digit (100–999)
+        const addQuotients = (a, loQ, hiQ, count) => {
           const seen = new Set();
-          const target = difficulty === 'easy' ? 18 : 24;
           let attempts = 0;
-          while (seen.size < target && attempts < target * 20) {
+          while (seen.size < count && attempts < count * 20) {
             attempts++;
             const quotient = _randInt(loQ, hiQ, rng);
             if (seen.has(quotient)) continue;
@@ -170,6 +166,16 @@ const Questions = (() => {
             for (let i = 0; i < w; i++) {
               pool.push({ a: dividend, b: a, answer, key, display: `${dividend} ÷ ${a}` });
             }
+          }
+        };
+        for (let a = aRange.lo; a <= aRange.hi; a++) {
+          if (a === 0) continue;
+          if (difficulty === 'easy') {
+            addQuotients(a, 12, 99, 18);
+          } else {
+            // Explicitly split so both sub-ranges are always represented
+            addQuotients(a, 12,  99, 12);
+            addQuotients(a, 100, 999, 12);
           }
         }
       } else {
