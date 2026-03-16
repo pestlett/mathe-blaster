@@ -2184,6 +2184,21 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
 }
 .btn-run-mode:hover { background: rgba(162,155,254,0.12); transform: translateY(-2px); }
 .run-mode-subtitle { font-size: 0.8rem; font-weight: 400; opacity: 0.8; }
+.btn-run-demo {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1.5px dashed #a29bfe;
+  background: transparent;
+  color: #a29bfe;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  opacity: 0.82;
+  transition: background 0.2s, opacity 0.2s;
+}
+.btn-run-demo:hover { background: rgba(162,155,254,0.1); opacity: 1; }
 
 /* Mobile hint below Run Mode button — hidden on desktop, shown on touch devices */
 .run-mode-mobile-hint {

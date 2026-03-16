@@ -75,6 +75,9 @@ let state = {
 const TUTORIAL_SEED = 20260315;
 let tutorialState = null;
 
+const RUN_DEMO_SEED = 20260316;
+let runDemoState = null;
+
 // Expose mutable game state on window for E2E test instrumentation.
 // state/tutorialState are let bindings (not on window by default).
 // __gameState persists because state is mutated in-place, never reassigned.
@@ -93,7 +96,12 @@ function tutorialLocksInput() {
   return !!(tutorialState && tutorialState.active && tutorialState.inputLocked);
 }
 
+function runDemoActive() {
+  return !!(runDemoState && runDemoState.active);
+}
+
 function tutorialQuestionSpeechEnabled() {
+  if (runDemoActive()) return false;
   return !tutorialActive() || !!tutorialState.allowQuestionSpeech;
 }
 
@@ -1017,6 +1025,308 @@ const TutorialRun = {
 // Expose TutorialRun for E2E test instrumentation.
 window.TutorialRun = TutorialRun;
 
+
+// ---- Run Mode Demo ----
+// Scripted shop sequence shown to the player in order
+const DEMO_SHOP_SCRIPT = [
+  // Shop 0 (ante 1→2, free pick): luckyBonus — introduces the lucky mechanic
+  { options: ['luckyBonus', 'streakBoost', 'hotZoneBoost'],  pick: 'luckyBonus',    narrateKey: 'runDemoShop1' },
+  // Shop 1 (ante 2→3): cascadeMult — every lucky now grows the multiplier permanently
+  { options: ['cascadeMult', 'compoundGrowth', 'scoreMultSmall'], pick: 'cascadeMult',    narrateKey: 'runDemoShop2' },
+  // Shop 2 (ante 3→4): compoundGrowth — every answer nudges the multiplier ×1.02
+  { options: ['compoundGrowth', 'scoreMultLarge', 'echoLucky'],   pick: 'compoundGrowth', narrateKey: 'runDemoShop3' },
+  // Shop 3 (ante 4→5): slotExpander — make room so we can hold more upgrades
+  { options: ['slotExpander', 'scoreMultLarge', 'luckyFrequency'], pick: 'slotExpander',  narrateKey: 'runDemoShop4' },
+  // Shop 4 (ante 5→6): scoreMultLarge — ×2 on top of everything
+  { options: ['scoreMultLarge', 'replayScore', 'luckyFrequency'],  pick: 'scoreMultLarge', narrateKey: 'runDemoShop5' },
+  // Shop 5 (ante 6→7): replayScore — every answer scores twice
+  { options: ['replayScore', 'luckyFrequency', 'echoLucky'],       pick: 'replayScore',   narrateKey: 'runDemoShop6' },
+];
+
+const RunDemoRun = {
+  _shopResolver: null,
+  _pendingShopCb: null,
+
+  start(settings) {
+    this.stop();
+    this._shopResolver = null;
+    this._pendingShopCb = null;
+    runDemoState = { active: true, turboMode: false };
+    document.getElementById('btn-tutorial-exit').hidden = false;
+    document.getElementById('btn-pause-tutorial-exit').hidden = false;
+    UI.showTutorialOverlay(I18n.t('runDemoPreparing'), I18n.t('runDemoOverlayTitle'));
+    this.run().catch(err => console.error('[run-demo] run failed', err));
+  },
+
+  stop() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    UI.hideTutorialOverlay();
+    document.getElementById('btn-tutorial-exit').hidden = true;
+    document.getElementById('btn-pause-tutorial-exit').hidden = true;
+    runDemoState = null;
+    this._shopResolver = null;
+    this._pendingShopCb = null;
+  },
+
+  skip() {
+    if (!runDemoActive()) return;
+    Audio.stopMusic();
+    Engine.stop();
+    Voice.stop();
+    state.phase = 'ONBOARDING';
+    const picker = document.getElementById('upgrade-picker');
+    if (picker && !picker.classList.contains('hidden')) picker.classList.add('hidden');
+    document.getElementById('pause-overlay').classList.remove('visible');
+    document.getElementById('btn-mic').classList.remove('above-overlay');
+    this.stop();
+    UI.showScreen('onboarding');
+  },
+
+  async wait(ms) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+  },
+
+  async narrate(text, { title = null, overlayPosition = 'top' } = {}) {
+    if (!runDemoActive()) return;
+    Engine.pause();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    UI.showTutorialOverlay(text, title || I18n.t('runDemoOverlayTitle'), overlayPosition);
+    await speakNarrationLine(text);
+    if (!runDemoActive()) return;
+    UI.hideTutorialOverlay();
+    await this.wait(80);
+  },
+
+  resumeDemo() {
+    if (!runDemoActive()) return;
+    Engine.resume();
+  },
+
+  clearScene() {
+    state.objects = [];
+    Targeting.reset();
+    document.getElementById('answer-input').value = '';
+    hideSuggestion();
+    _lastSpokenTarget = null;
+    state.answerStartTime = Date.now();
+    UI.updateHUD(state);
+  },
+
+  pickQuestion() {
+    const excludeAnswers = state.objects
+      .filter(o => !o.dead && !o.dying && !o.destroyed)
+      .map(o => o.answer);
+    return _pickQuestion(excludeAnswers);
+  },
+
+  spawnQuestion(opts = {}) {
+    const q = opts.question || this.pickQuestion();
+    const obj = Objects.create(q, window.innerWidth, window.innerHeight, opts.speed || 15, []);
+    if (!obj) return null;
+    obj.x = Math.round(window.innerWidth * 0.5);
+    obj.y = opts.y ?? Math.round(window.innerHeight * 0.50);
+    obj.speed = opts.speed || 15;
+    obj.wobbleOffset = 0;
+    obj.wobbleX = 0;
+    state.objects.push(obj);
+    Targeting.syncTarget(state.objects);
+    Targeting.setTarget(obj);
+    state.answerStartTime = Date.now();
+    return obj;
+  },
+
+  async typeAnswer(answer) {
+    if (!runDemoActive() || answer == null) return;
+    const input = document.getElementById('answer-input');
+    input.value = String(answer);
+    await this.wait(55);
+    if (!runDemoActive()) return;
+    submitAnswer();
+  },
+
+  // Auto-play n levels, answering each question as it appears
+  async playLevels(n, intervalMs = 300) {
+    if (!runDemoActive()) return;
+    const targetLevel = state.level + n;
+    while (runDemoActive() && state.level < targetLevel && state.phase === 'PLAYING') {
+      this.clearScene();
+      const q = this.pickQuestion();
+      if (!q) { await this.wait(80); continue; }
+      const obj = this.spawnQuestion({ y: Math.round(window.innerHeight * 0.50), speed: 12 });
+      if (!obj) { await this.wait(80); continue; }
+      await this.wait(intervalMs);
+      if (!runDemoActive() || state.level >= targetLevel) break;
+      await this.typeAnswer(obj.answer);
+    }
+  },
+
+  // Resolved when the ante logic signals a shop should open
+  waitForShop() {
+    return new Promise(resolve => {
+      if (this._pendingShopCb) { resolve(); return; }
+      this._shopResolver = resolve;
+    });
+  },
+
+  // Called by main.js ante logic instead of UI.showShop when runDemoMode is active
+  onShopOpened(doneCb) {
+    if (runDemoState && runDemoState.turboMode) {
+      // In turbo phase, auto-skip shops so the score can keep climbing
+      doneCb({ newOrder: state.activeUpgrades, sold: [], boughtList: [], newCoins: state.runCoins });
+      return;
+    }
+    this._pendingShopCb = doneCb;
+    if (this._shopResolver) {
+      this._shopResolver();
+      this._shopResolver = null;
+    }
+  },
+
+  // Wait for the shop signal, narrate, show the shop, then auto-pick the scripted upgrade
+  async openShop(shopIndex) {
+    if (!runDemoActive()) return;
+    await this.waitForShop();
+    if (!runDemoActive()) return;
+
+    const doneCb = this._pendingShopCb;
+    this._pendingShopCb = null;
+    const script = DEMO_SHOP_SCRIPT[shopIndex] || DEMO_SHOP_SCRIPT[DEMO_SHOP_SCRIPT.length - 1];
+
+    // Narrate before revealing the shop
+    await this.narrate(I18n.t(script.narrateKey), { title: I18n.t('runDemoOverlayTitle') });
+    if (!runDemoActive()) {
+      doneCb({ newOrder: state.activeUpgrades, sold: [], boughtList: [], newCoins: state.runCoins });
+      return;
+    }
+
+    // Build forced shop options from the upgrade registry
+    const forceOptions = script.options.map(id => getUpgradeById(id)).filter(Boolean);
+    const isFree = shopIndex === 0; // ante 1→2 is always free
+
+    // Show the real shop UI so the player can see it
+    UI.showShop(forceOptions, state.runCoins, state.theme, state.activeUpgrades, isFree,
+      state.maxUpgradeSlots || 4, result => doneCb(result));
+
+    // Give the player a moment to read the shop, then auto-pick
+    await this.wait(2800);
+    if (!runDemoActive()) return;
+
+    const shopCards = document.querySelectorAll('.shop-card');
+    const pickIdx = forceOptions.findIndex(u => u.id === script.pick);
+    let clicked = false;
+    if (pickIdx >= 0 && shopCards[pickIdx]) {
+      const buyBtn = shopCards[pickIdx].querySelector('.shop-buy-btn:not([disabled])');
+      if (buyBtn) { buyBtn.click(); clicked = true; }
+    }
+    if (!clicked) {
+      const anyBtn = document.querySelector('.shop-buy-btn:not([disabled])');
+      if (anyBtn) anyBtn.click();
+      else document.querySelector('.shop-done-btn')?.click();
+    }
+  },
+
+  async run() {
+    if (!runDemoActive()) return;
+
+    await this.narrate(I18n.t('runDemoIntro'), { title: I18n.t('runDemoOverlayTitle') });
+    if (!runDemoActive()) return;
+    await this.narrate(I18n.t('runDemoAnte1'), { title: I18n.t('runDemoOverlayTitle'), overlayPosition: 'bottom' });
+    if (!runDemoActive()) return;
+    this.resumeDemo();
+
+    // ── Ante 1 → 2: 3 levels, then free shop ──
+    const s0 = this.openShop(0);
+    await this.playLevels(3, 320);
+    await s0;
+    if (!runDemoActive()) return;
+    await this.narrate(I18n.t('runDemoAfterShop1'), { title: I18n.t('runDemoOverlayTitle') });
+    if (!runDemoActive()) return;
+    this.resumeDemo();
+
+    // ── Ante 2 → 3 ──
+    const s1 = this.openShop(1);
+    await this.playLevels(3, 280);
+    await s1;
+    if (!runDemoActive()) return;
+    await this.narrate(I18n.t('runDemoAfterShop2'), { title: I18n.t('runDemoOverlayTitle') });
+    if (!runDemoActive()) return;
+    this.resumeDemo();
+
+    // ── Ante 3 → 4 ──
+    const s2 = this.openShop(2);
+    await this.playLevels(3, 230);
+    await s2;
+    if (!runDemoActive()) return;
+    this.resumeDemo();
+
+    // ── Ante 4 → 5 ──
+    const s3 = this.openShop(3);
+    await this.playLevels(3, 190);
+    await s3;
+    if (!runDemoActive()) return;
+    this.resumeDemo();
+
+    // ── Ante 5 → 6 ──
+    const s4 = this.openShop(4);
+    await this.playLevels(3, 160);
+    await s4;
+    if (!runDemoActive()) return;
+    this.resumeDemo();
+
+    // ── Ante 6 → 7 ──
+    const s5 = this.openShop(5);
+    await this.playLevels(3, 140);
+    await s5;
+    if (!runDemoActive()) return;
+
+    // ── TURBO PHASE ──
+    await this.narrate(I18n.t('runDemoTurboIntro'), { title: I18n.t('runDemoTurboTitle') });
+    if (!runDemoActive()) return;
+
+    // Mark turbo so further ante shops are auto-skipped
+    runDemoState.turboMode = true;
+
+    // Simulate hundreds of rounds of Compound Growth + Cascade building the multiplier
+    state.scoreMultiplier = (state.scoreMultiplier || 1) * 500;
+    state.streak = 10; // maintain max streak for the scoring formula
+
+    this.resumeDemo();
+
+    const TARGET_SCORE = 5_000_000_000;
+    while (runDemoActive() && state.score < TARGET_SCORE && state.phase === 'PLAYING') {
+      this.clearScene();
+      const q = this.pickQuestion();
+      if (!q) { await this.wait(50); continue; }
+      const obj = this.spawnQuestion({ y: Math.round(window.innerHeight * 0.50), speed: 8 });
+      if (!obj) { await this.wait(50); continue; }
+      state.streak = 10;
+      await this.wait(100);
+      if (!runDemoActive()) return;
+      await this.typeAnswer(obj.answer);
+    }
+
+    if (!runDemoActive()) return;
+    Engine.pause();
+
+    const scoreStr = state.score >= 1_000_000_000
+      ? (state.score / 1_000_000_000).toFixed(1) + ' Billion'
+      : (state.score / 1_000_000).toFixed(0) + ' Million';
+    await this.narrate(I18n.t('runDemoComplete', { score: scoreStr }),
+      { title: I18n.t('runDemoCompleteTitle') });
+    if (!runDemoActive()) return;
+
+    Audio.stopMusic();
+    Engine.stop();
+    Voice.stop();
+    state.phase = 'ONBOARDING';
+    this.stop();
+    UI.showScreen('onboarding');
+  },
+};
+
+window.RunDemoRun = RunDemoRun;
+
+
 // ---- Per-table mastery announcements ----
 // Checks if any table in the current range has had all its facts mastered
 // for the first time this session. Shows a banner and confetti but does NOT
@@ -1076,8 +1386,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   UI.initOnboarding(startGame, startTutorial);
 
-  document.getElementById('btn-tutorial-exit').addEventListener('click', () => TutorialRun.skip());
-  document.getElementById('btn-pause-tutorial-exit').addEventListener('click', () => TutorialRun.skip());
+  document.getElementById('btn-tutorial-exit').addEventListener('click', () => {
+    if (runDemoActive()) RunDemoRun.skip(); else TutorialRun.skip();
+  });
+  document.getElementById('btn-pause-tutorial-exit').addEventListener('click', () => {
+    if (runDemoActive()) RunDemoRun.skip(); else TutorialRun.skip();
+  });
+  document.getElementById('btn-run-demo')?.addEventListener('click', () => startRunDemo());
 
   const answerInput = document.getElementById('answer-input');
   const btnFire = document.getElementById('btn-fire');
@@ -1364,11 +1679,35 @@ function startTutorial(settings) {
   });
 }
 
+function startRunDemo() {
+  const theme = document.querySelector('.theme-card.active')?.dataset.theme || 'space';
+  startGame({
+    name: 'Demo',
+    age: 10,
+    theme,
+    minTable: 2,
+    maxTable: 5,
+    operation: 'multiply',
+    operations: ['multiply'],
+    addSubRange: 100,
+    difficulty: 'easy',
+    practiceMode: false,
+    runMode: true,
+    runDemoMode: true,
+    isDaily: false,
+    isChallenge: false,
+    seed: RUN_DEMO_SEED,
+    triggerWord: '',
+  });
+}
+
 function startGame(settings) {
   _lastHelpBtnKey = null;
   TutorialRun.stop();
+  RunDemoRun.stop();
   Progress.setPlayer(settings.name, settings.age);
   state.tutorialMode = !!settings.tutorialMode;
+  state.runDemoMode  = !!settings.runDemoMode;
   state.name = settings.name;
   state.age = settings.age;
   state.theme = settings.theme;
@@ -1516,6 +1855,9 @@ function startGame(settings) {
   if (state.tutorialMode) {
     Voice.stop();
     TutorialRun.start(settings);
+  } else if (state.runDemoMode) {
+    Voice.stop();
+    RunDemoRun.start(settings);
   } else {
     UI.hideTutorialOverlay();
     Voice.start();
@@ -1718,7 +2060,7 @@ function update(dt) {
 
   // Boss round: spawn one giant boss on levels that are multiples of 5
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
-  const isBossLevel = !state.tutorialMode && state.level > 1 && state.level % 5 === 0 && state.correctThisLevel === 0 && !state._bossSpawnedThisLevel;
+  const isBossLevel = !state.tutorialMode && !state.runDemoMode && state.level > 1 && state.level % 5 === 0 && state.correctThisLevel === 0 && !state._bossSpawnedThisLevel;
   if (isBossLevel && !hasBoss) {
     state._bossSpawnedThisLevel = true;
     Audio.setMusicState('boss');
@@ -1752,7 +2094,7 @@ function update(dt) {
     return;
   }
 
-  if (!state.tutorialMode) {
+  if (!state.tutorialMode && !state.runDemoMode) {
     // Spawn freeze item — at most one on screen, every ~30s
     const hasFreeze = state.objects.some(o => o.isFreeze && !o.dead && !o.dying && !o.destroyed);
     if (!hasFreeze && state.freezeActive <= 0) {
@@ -2006,7 +2348,7 @@ function submitAnswer() {
     state.attemptsThisLevel++;
     if (val === target.answer) {
       const particleColor = Themes.particleColorForTheme(state.theme);
-      if (!state.tutorialMode) {
+      if (!state.tutorialMode && !state.runDemoMode) {
         Progress.recordAttempt(target.key, true, Date.now() - state.answerStartTime, { hintActive: !!target.hintActive });
       }
       state.wrongQueue = state.wrongQueue.filter(q => q.key !== target.key);
@@ -2263,7 +2605,7 @@ function submitAnswer() {
       UI.showLevelUp('💡 Help recharged!', null);
     }
 
-    if (!state.tutorialMode) {
+    if (!state.tutorialMode && !state.runDemoMode) {
       Progress.recordAttempt(target.key, true, elapsed, { hintActive: !!target.hintActive });
       checkTableMastery();
 
@@ -2646,7 +2988,7 @@ function submitAnswer() {
         // Ante check: did player meet the score target?
         const anteTargetScore = anteTarget(state.currentAnte);
         const scoreGained = state.score - state.anteStartScore;
-        if (scoreGained < anteTargetScore) {
+        if (scoreGained < anteTargetScore && !state.runDemoMode) {
           // Missed ante — run ends
           state.phase = 'ENDING';
           setTimeout(() => endGame(), 1400);
@@ -2661,11 +3003,7 @@ function submitAnswer() {
             state.runCoins += 1;
           }
           Engine.pause();
-          const rp = Progress.getRunProgress();
-          const unlockedIds = rp.unlockedUpgrades || [];
-          const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds);
-          const isFreeStarter = (state.currentAnte === 2); // free pick on first ante
-          UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, (result) => {
+          const shopDoneCb = (result) => {
             // Apply reordered bar (newOrder already includes bought items from shop UI)
             state.activeUpgrades   = result.newOrder;
             state.activeUpgradeIds = state.activeUpgrades.map(u => u.id);
@@ -2682,16 +3020,25 @@ function submitAnswer() {
             state.shopBuysThisRun = (state.shopBuysThisRun || 0) + boughtItems.length;
             if (boughtItems.length > 0) {
               state.activeUpgradeIds = state.activeUpgrades.map(u => u.id);
-              Progress.unlockNextUpgrade(state.activeUpgradeIds);
+              if (!state.runDemoMode) Progress.unlockNextUpgrade(state.activeUpgradeIds);
             }
             state.runCoins = result.newCoins;
             // Recompute adjacency bonuses with updated order
             state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
             Engine.resume();
             state.unpauseFreezeTimer = 1.0;
-            if (!_typingMode) Voice.start();
+            if (!_typingMode && !state.runDemoMode) Voice.start();
             focusAnswerInput();
-          });
+          };
+          if (state.runDemoMode) {
+            RunDemoRun.onShopOpened(shopDoneCb);
+          } else {
+            const rp = Progress.getRunProgress();
+            const unlockedIds = rp.unlockedUpgrades || [];
+            const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds);
+            const isFreeStarter = (state.currentAnte === 2); // free pick on first ante
+            UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, shopDoneCb);
+          }
         }
       }
     }
@@ -2705,7 +3052,7 @@ function submitAnswer() {
     target.wrongAttempts = (target.wrongAttempts || 0) + 1;
     state.streak = 0;
     UI.showCombo(0);
-    if (!state.tutorialMode) Progress.recordAttempt(target.key, false, elapsed);
+    if (!state.tutorialMode && !state.runDemoMode) Progress.recordAttempt(target.key, false, elapsed);
     if (!state.wrongQueue.find(q => q.key === target.key)) {
       state.wrongQueue.push({ key: target.key, display: target.question, answer: target.answer });
     }
@@ -2723,6 +3070,7 @@ function submitAnswer() {
 // ---- GAME OVER ----
 function endGame() {
   const wasTutorialRun = state.tutorialMode;
+  const wasRunDemoRun  = state.runDemoMode;
   const tutorialTriggerWord = tutorialState?.triggerWord || '';
   Audio.stopMusic();
   Engine.stop();
@@ -2733,6 +3081,7 @@ function endGame() {
   _lastSpokenTarget = null;
   state.phase = 'GAME_OVER';
   if (wasTutorialRun) TutorialRun.stop();
+  if (wasRunDemoRun)  RunDemoRun.stop();
 
   const accuracy = state.totalAttempts > 0 ? state.totalCorrect / state.totalAttempts : 0;
   const session = {
@@ -2750,15 +3099,15 @@ function endGame() {
     isChallenge: state.isChallenge || false,
     challengerScore: state.challengerScore || null,
   };
-  const newAchievements = wasTutorialRun ? [] : Progress.saveSession(session);
-  if (!wasTutorialRun && state.isDaily) {
+  const newAchievements = (wasTutorialRun || wasRunDemoRun) ? [] : Progress.saveSession(session);
+  if (!wasTutorialRun && !wasRunDemoRun && state.isDaily) {
     Progress.saveDailyResult({ score: state.score, level: state.level, accuracy });
     session.dailyBadge = true;
   }
 
   // Run mode: save result and check unlocks
   let runData = null;
-  if (!wasTutorialRun && state.runMode) {
+  if (!wasTutorialRun && !wasRunDemoRun && state.runMode) {
     const prevRunProgress = Progress.getRunProgress();
     const prevBest = prevRunProgress.bestAnte || 0;
     Progress.saveRunResult({
