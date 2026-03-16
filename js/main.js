@@ -1207,20 +1207,45 @@ const RunDemoRun = {
     // Click the scripted buy button
     const shopCards = document.querySelectorAll('.shop-card');
     const pickIdx = forceOptions.findIndex(u => u.id === script.pick);
-    let clicked = false;
+    let buyClicked = false;
     if (pickIdx >= 0 && shopCards[pickIdx]) {
       const buyBtn = shopCards[pickIdx].querySelector('.shop-buy-btn:not([disabled])');
-      if (buyBtn) { buyBtn.click(); clicked = true; }
+      if (buyBtn) { buyBtn.click(); buyClicked = true; }
     }
-    if (!clicked) {
+    if (!buyClicked) {
       const anyBtn = document.querySelector('.shop-buy-btn:not([disabled])');
       if (anyBtn) anyBtn.click();
     }
 
-    // Wait for the upgrade to appear in the slot strip, then close the shop
-    await this.wait(1500);
+    // Give the upgrade-acquired animation a moment to appear
+    await this.wait(200);
     if (!runDemoActive()) return;
-    document.querySelector('.shop-done-btn')?.click();
+
+    // Tap the upgrade-acquired overlay to skip its 2s animation — this triggers
+    // renderShop() synchronously, putting a fresh done button in the DOM.
+    const acquiredEl = document.getElementById('upgrade-acquired');
+    if (acquiredEl && !acquiredEl.classList.contains('hidden')) {
+      acquiredEl.click();
+      await this.wait(50); // let renderShop() finish
+      if (!runDemoActive()) return;
+    }
+
+    // Close the shop: click the done button, or fall back to calling doneCb directly.
+    const picker = document.getElementById('upgrade-picker');
+    const doneBtn = picker?.querySelector('.btn-skip-upgrade');
+    if (doneBtn) {
+      doneBtn.click();
+    } else if (picker && !picker.classList.contains('hidden')) {
+      // Fallback: hide picker and fire the callback with our known state
+      picker.classList.add('hidden');
+      const boughtUpg = forceOptions.find(u => u.id === script.pick);
+      doneCb({
+        newOrder: boughtUpg ? [...state.activeUpgrades, boughtUpg] : [...state.activeUpgrades],
+        boughtList: boughtUpg ? [boughtUpg] : [],
+        sold: [],
+        newCoins: state.runCoins - (boughtUpg && !isFree ? (boughtUpg.price || 0) : 0),
+      });
+    }
 
     // Brief pause after the shop closes, then narrate about the purchase
     await this.wait(400);
