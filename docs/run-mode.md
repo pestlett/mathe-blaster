@@ -64,7 +64,7 @@ Every upgrade has a `rarity` field that controls how often it appears in shop dr
 | `uncommon` | 3 | ~30% of draws | Teal badge + teal card border |
 | `rare` | 1 | ~10% of draws | Gold badge + gold card border + glow |
 
-Weighted sampling is done without replacement within a single shop draw, so three cards can still include multiple rarities. Common upgrades include all 8 start-tier upgrades, echo upgrades, op boosters, and starterBoost. Rare upgrades include `scoreMultLarge`, `compoundGrowth`, and `surge`.
+Weighted sampling is done without replacement within a single shop draw, so three cards can still include multiple rarities. Common upgrades include all 8 start-tier upgrades, echo upgrades, op boosters, and starterBoost. Rare upgrades include `scoreMultLarge`, `coinOnStar`, `compoundGrowth`, and `surge`.
 
 ## Ante Score Targets
 
@@ -80,7 +80,7 @@ Score is measured from the start of each ante (delta score, not total).
 
 ## Upgrades
 
-33 upgrades total: 8 available from the start, 4 unlocked via milestones, 21 shop-tier.
+36 upgrades total: 8 available from the start, 4 unlocked via milestones, 24 shop-tier.
 
 ### Starting Upgrades (tier: 'start')
 
