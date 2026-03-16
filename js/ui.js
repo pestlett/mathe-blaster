@@ -2152,9 +2152,20 @@ const UI = (() => {
 
     const el = document.getElementById('hud-score');
     if (!el) return;
-    // Duration: 400ms → 100ms as hits accumulate within the window
-    const dur = Math.max(100, 400 - (_scoreHitCount - 1) * 75);
-    el.style.setProperty('--score-anim-dur', dur + 'ms');
+
+    const n = _scoreHitCount;
+    // Speed: 360ms → 80ms as hits pile up
+    const dur = Math.max(80, 360 - (n - 1) * 65) + 'ms';
+    // Scale peak + glow colour escalate through 3 tiers
+    const peak     = n === 1 ? 1.65  : n <= 3 ? 1.95  : 2.3;
+    const glowNear = n === 1 ? '#ffd700' : n <= 3 ? '#ff8c00' : '#ff2200';
+    const glowFar  = n === 1 ? 'rgba(255,215,0,0.25)' : n <= 3 ? 'rgba(255,140,0,0.3)' : 'rgba(255,34,0,0.35)';
+
+    el.style.setProperty('--score-anim-dur',  dur);
+    el.style.setProperty('--score-peak',      peak);
+    el.style.setProperty('--score-glow-near', glowNear);
+    el.style.setProperty('--score-glow-far',  glowFar);
+
     el.classList.remove('score-pop');
     void el.offsetWidth; // force reflow to restart animation
     el.classList.add('score-pop');
