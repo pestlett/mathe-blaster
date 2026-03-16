@@ -63,6 +63,43 @@ Ante 5+: 1050 + (ante-4) × 450 pts
 
 Score is measured from the start of each ante (delta score, not total).
 
+## Ante Progress HUD
+
+During run mode, the HUD displays a progress bar below the score showing
+how many points the player has earned toward the current ante target
+(e.g. "Ante 2: 120 / 350"). The bar fills as points accumulate.
+
+### Peril System
+
+The bar changes colour based on how on-track the player is, relative to
+how far through the current ante's 3 levels they are:
+
+| State | Colour | Condition (level 2 of ante) | Condition (level 3 of ante) |
+|-------|--------|----------------------------|----------------------------|
+| Normal | Purple | progress ≥ 30% | progress ≥ 70% |
+| Behind | Orange | 10% ≤ progress < 30% | 40% ≤ progress < 70% |
+| Danger | Red (pulsing) | progress < 10% | progress < 40% |
+
+Level 1 of each ante never shows peril (just started).
+
+### Music Adaptation
+
+When peril state changes, the music adapts:
+
+- **Behind** → music escalates to at least `tense`; tempo ×1.05 boost
+- **Danger** → music escalates to at least `urgent`; tempo ×1.12 boost;
+  master gain slightly raised for an unsettling feel
+- **Normal** → music returns to base intensity (still considers lives)
+
+These peril effects layer on top of existing music state logic (lives,
+boss, freeze, streaks).
+
+### Ante Advance Animation
+
+When the player passes an ante check and advances, the ante progress bar
+plays a brief scale-and-glow flash animation to draw attention to the
+new target value.
+
 ## Upgrades
 
 32 upgrades total: 8 available from the start, 4 unlocked via milestones, 20 shop-tier.

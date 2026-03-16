@@ -62,7 +62,7 @@ Game ends
 | `objects.js` | Object/particle physics, factory functions | Spawning schedule |
 | `targeting.js` | Arrow-key target reference | Object physics |
 | `themes.js` | Canvas background rendering per theme | UI elements |
-| `audio.js` | Web Audio synthesis, SFX, adaptive layered music | Triggering (main.js calls play(), setMusicState(), notifyStreak(), notifyLevel(), setRunMode()) |
+| `audio.js` | Web Audio synthesis, SFX, adaptive layered music | Triggering (main.js calls play(), setMusicState(), notifyStreak(), notifyLevel(), setRunMode(), notifyAntePeril()) |
 | `progress.js` | localStorage read/write, mastery, achievements | In-memory state |
 | `upgrades.js` | Upgrade definitions, synergies, adjacency | Applying during play (main.js reads state flags) |
 | `ui.js` | DOM screen management, HUD, overlays, onboarding | Canvas |
@@ -159,9 +159,10 @@ State transitions are beat-synchronised (pending state applied at the next loop 
 | `notifyStreak(n)` | Triggers a one-loop gain burst (+30%) with snappy attack on the next loop |
 | `notifyLevel(level)` | Updates `_levelTempoMult` (+2% per level, capped ×1.25) |
 | `setRunMode(bool)` | Fades `run` layer in/out immediately |
+| `notifyAntePeril(peril)` | Sets ante peril tempo multiplier: `'none'` → ×1.0, `'behind'` → ×1.05, `'danger'` → ×1.12. Not applied during `freeze` or `boss`. |
 
 ### Hook points in `main.js`
-`syncMusicIntensity()` recalculates the appropriate state from `state.lives` and live boss presence. Called on: life lost, boss defeated, freeze ended. `setMusicState('boss')` called on boss spawn; `setMusicState('freeze')` on freeze collected; `setMusicState('hopeful', syncMusicIntensity)` on life gained. `Audio.notifyStreak()` called at streak milestones 3, 5, 8. `Audio.notifyLevel()` called on each level-up. `Audio.setRunMode()` called at game start.
+`syncMusicIntensity()` recalculates the appropriate state from `state.lives`, live boss presence, and ante peril (run mode). Ante peril can escalate `calm` → `tense` (behind) or `tense` → `urgent` (danger). Called on: life lost, boss defeated, freeze ended, peril state change. `setMusicState('boss')` called on boss spawn; `setMusicState('freeze')` on freeze collected; `setMusicState('hopeful', syncMusicIntensity)` on life gained. `Audio.notifyStreak()` called at streak milestones 3, 5, 8. `Audio.notifyLevel()` called on each level-up. `Audio.setRunMode()` called at game start. `Audio.notifyAntePeril()` called when ante peril state changes.
 
 ## Canvas Layout
 
