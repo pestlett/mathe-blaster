@@ -2456,6 +2456,20 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   max-width: 460px;
   width: 92%;
   text-align: center;
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(162,155,254,0.3) transparent;
+}
+.upgrade-picker-card::-webkit-scrollbar {
+  width: 6px;
+}
+.upgrade-picker-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+.upgrade-picker-card::-webkit-scrollbar-thumb {
+  background: rgba(162,155,254,0.3);
+  border-radius: 3px;
 }
 .upgrade-picker-title {
   font-size: 1.3rem;
@@ -2627,44 +2641,112 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
 }
 
 /* ---- Shop UI ---- */
+
+.shop-header {
+  margin-bottom: 16px;
+}
+.shop-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #a29bfe;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+.shop-status-bar {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  align-items: center;
+}
 .shop-coin-display {
   color: #f7c948;
   font-weight: 700;
-  margin-left: 10px;
   font-size: 1rem;
+  background: rgba(247,201,72,0.1);
+  border: 1px solid rgba(247,201,72,0.3);
+  border-radius: 20px;
+  padding: 3px 12px;
+}
+.shop-slot-display {
+  font-size: 0.85em;
+  color: var(--theme-contrast, #adf);
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.3);
+  border-radius: 20px;
+  padding: 3px 12px;
 }
 .shop-cards {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .shop-card {
-  background: rgba(162,155,254,0.1);
-  border: 1px solid rgba(162,155,254,0.4);
+  background: rgba(162,155,254,0.08);
+  border: 1px solid rgba(162,155,254,0.35);
   border-radius: 12px;
   padding: 12px 14px;
   text-align: left;
   position: relative;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.shop-card:hover {
+  background: rgba(162,155,254,0.14);
+  transform: translateY(-1px);
+}
+.shop-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 .shop-card-unaffordable {
   opacity: 0.42;
+  pointer-events: none;
 }
+.shop-card-unaffordable .shop-buy-btn { pointer-events: auto; }
+
+.shop-cat-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.shop-cat-effect {
+  background: rgba(100,180,255,0.15);
+  color: #6ec6ff;
+  border: 1px solid rgba(100,180,255,0.35);
+}
+.shop-cat-action {
+  background: rgba(255,160,80,0.15);
+  color: #ffb366;
+  border: 1px solid rgba(255,160,80,0.35);
+}
+.shop-cat-infra {
+  background: rgba(100,220,100,0.15);
+  color: #7defa7;
+  border: 1px solid rgba(100,220,100,0.35);
+}
+
 .shop-buy-btn {
   margin-top: 8px;
-  background: rgba(162,155,254,0.18);
+  background: linear-gradient(135deg, rgba(162,155,254,0.2), rgba(162,155,254,0.1));
   border: 1px solid rgba(162,155,254,0.5);
   border-radius: 8px;
   color: #f0f0f0;
   font-size: 0.82rem;
   font-weight: 700;
-  padding: 5px 12px;
+  padding: 6px 16px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
 .shop-buy-btn:hover:not(:disabled) {
-  background: rgba(162,155,254,0.32);
+  background: linear-gradient(135deg, rgba(162,155,254,0.35), rgba(162,155,254,0.2));
   border-color: #a29bfe;
+  transform: scale(1.02);
 }
 .shop-buy-btn:disabled {
   opacity: 0.4;
@@ -2674,44 +2756,96 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   display: block;
   width: 100%;
   background: transparent;
-  border: 1px solid rgba(247,201,72,0.4);
+  border: 1px solid rgba(247,201,72,0.35);
   border-radius: 8px;
   color: #f7c948;
   font-size: 0.82rem;
-  padding: 6px 0;
+  font-weight: 600;
+  padding: 7px 0;
   cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 0.15s;
+  margin-bottom: 16px;
+  transition: background 0.15s, border-color 0.15s;
 }
 .shop-reroll-btn:hover:not(:disabled) {
-  background: rgba(247,201,72,0.1);
+  background: rgba(247,201,72,0.08);
+  border-color: rgba(247,201,72,0.6);
 }
 .shop-reroll-btn:disabled {
   opacity: 0.35;
   cursor: default;
 }
+
+/* ── Owned upgrades section ── */
+.shop-owned-section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(162,155,254,0.2);
+  border-radius: 12px;
+  padding: 12px 10px 8px;
+  margin-bottom: 10px;
+}
+.shop-owned-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(162,155,254,0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.shop-owned-group {
+  margin-bottom: 8px;
+}
+.shop-group-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+.shop-group-label-effect { color: #6ec6ff; }
+.shop-group-label-action { color: #ffb366; }
+.shop-group-label-infrastructure { color: #7defa7; }
 .shop-owned-row {
   display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.shop-owned-pill {
+  position: relative;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin-bottom: 8px;
+  gap: 5px;
+  background: rgba(162,155,254,0.1);
+  border: 1px solid rgba(162,155,254,0.3);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  cursor: default;
 }
-.shop-sell-btn {
-  display: block;
-  margin-top: 4px;
-  background: transparent;
-  border: 1px solid rgba(253,121,168,0.45);
-  border-radius: 6px;
-  color: #fd79a8;
-  font-size: 0.7rem;
-  padding: 3px 7px;
-  cursor: pointer;
-  transition: background 0.15s;
+.shop-owned-pill:hover {
+  border-color: rgba(162,155,254,0.6);
+  background: rgba(162,155,254,0.18);
+  transform: translateY(-1px);
 }
-.shop-sell-btn:hover {
-  background: rgba(253,121,168,0.12);
+.shop-owned-pill.shop-pill-action {
+  border-color: rgba(255,160,80,0.35);
+  background: rgba(255,160,80,0.06);
+}
+.shop-owned-pill.shop-pill-action:hover {
+  border-color: rgba(255,160,80,0.6);
+  background: rgba(255,160,80,0.12);
+}
+.shop-owned-pill.shop-pill-infra {
+  border-color: rgba(100,220,100,0.35);
+  background: rgba(100,220,100,0.06);
+}
+.shop-owned-pill.shop-pill-infra:hover {
+  border-color: rgba(100,220,100,0.6);
+  background: rgba(100,220,100,0.12);
 }
 .shop-pill-synergy {
   border-color: rgba(247,201,72,0.55) !important;
@@ -2721,20 +2855,117 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   border-color: rgba(253,121,168,0.55) !important;
   background: rgba(253,121,168,0.07) !important;
 }
+.shop-owned-icon {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.shop-owned-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
 
-/* Shop slot display */
-.shop-slot-display {
-  font-size: 0.75em;
-  opacity: 0.8;
-  margin-left: 8px;
-  color: var(--theme-contrast, #adf);
+/* Tooltip on hover */
+.shop-pill-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e1e3a;
+  border: 1px solid rgba(162,155,254,0.5);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.4;
+  width: max-content;
+  max-width: 200px;
+  text-align: left;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.shop-pill-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(162,155,254,0.5);
+}
+.shop-owned-pill:hover .shop-pill-tooltip {
+  display: block;
+}
+
+.shop-sell-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(253,121,168,0.4);
+  border-radius: 5px;
+  color: #fd79a8;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  margin-left: auto;
+}
+.shop-sell-btn:hover {
+  background: rgba(253,121,168,0.1);
+  border-color: rgba(253,121,168,0.7);
+}
+.shop-sell-btn.shop-sell-confirm {
+  background: rgba(253,60,60,0.2);
+  border-color: rgba(253,60,60,0.7);
+  color: #ff6b6b;
+  animation: sell-confirm-pulse 0.6s ease-in-out infinite alternate;
+}
+@keyframes sell-confirm-pulse {
+  from { box-shadow: 0 0 0 0 rgba(253,60,60,0); }
+  to   { box-shadow: 0 0 6px 2px rgba(253,60,60,0.3); }
+}
+.shop-lock-badge {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  opacity: 0.5;
+  margin-left: auto;
+  cursor: help;
+}
+
+/* Done button */
+.shop-done-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: linear-gradient(135deg, rgba(162,155,254,0.15), rgba(162,155,254,0.05));
+  border: 1px solid rgba(162,155,254,0.4);
+  border-radius: 10px;
+  color: #a29bfe;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  letter-spacing: 0.03em;
+}
+.shop-done-btn:hover {
+  background: linear-gradient(135deg, rgba(162,155,254,0.25), rgba(162,155,254,0.1));
+  border-color: #a29bfe;
+  transform: scale(1.01);
 }
 
 /* Shop operation badge */
 .shop-op-badge {
   display: inline-block;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
   border-radius: 4px;
   padding: 1px 5px;
   font-size: 0.7em;

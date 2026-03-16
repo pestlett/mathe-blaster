@@ -9,6 +9,7 @@ const UPGRADES = [
   {
     id: 'chain',
     icon: '⛓',
+    category: 'effect',
     tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 10, sellValue: 5,
@@ -23,6 +24,7 @@ const UPGRADES = [
   {
     id: 'streakBoost',
     icon: '✴',
+    category: 'effect',
     tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 10, sellValue: 5,
@@ -37,6 +39,7 @@ const UPGRADES = [
   {
     id: 'shield',
     icon: '🛡',
+    category: 'action',
     tier: 'start', rarity: 'common',
     stackable: true, maxStacks: 4,
     operations: ['all'],
@@ -52,6 +55,7 @@ const UPGRADES = [
   {
     id: 'slowAll',
     icon: '🌀',
+    category: 'effect',
     tier: 'start', rarity: 'common',
     stackable: true, maxStacks: 3,
     operations: ['all'],
@@ -67,6 +71,7 @@ const UPGRADES = [
   {
     id: 'bomb',
     icon: '💣',
+    category: 'action',
     tier: 'start', rarity: 'common',
     stackable: true, maxStacks: 4,
     operations: ['all'],
@@ -82,6 +87,7 @@ const UPGRADES = [
   {
     id: 'hotZoneBoost',
     icon: '🔥',
+    category: 'effect',
     tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 10, sellValue: 5,
@@ -96,6 +102,7 @@ const UPGRADES = [
   {
     id: 'luckyBonus',
     icon: '🍀',
+    category: 'effect',
     tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 12, sellValue: 6,
@@ -110,6 +117,7 @@ const UPGRADES = [
   {
     id: 'quickBonus',
     icon: '⚡',
+    category: 'effect',
     tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 9, sellValue: 4,
@@ -125,6 +133,7 @@ const UPGRADES = [
   {
     id: 'commutative',
     icon: '🔁',
+    category: 'effect',
     tier: 'unlock', rarity: 'uncommon',
     operations: ['multiply', 'divide'],
     price: 14, sellValue: 7,
@@ -139,6 +148,7 @@ const UPGRADES = [
   {
     id: 'streakSlow',
     icon: '❄',
+    category: 'effect',
     tier: 'unlock', rarity: 'uncommon',
     operations: ['all'],
     price: 12, sellValue: 6,
@@ -153,6 +163,7 @@ const UPGRADES = [
   {
     id: 'reveal',
     icon: '👁',
+    category: 'effect',
     tier: 'unlock', rarity: 'uncommon',
     operations: ['all'],
     price: 12, sellValue: 6,
@@ -167,6 +178,7 @@ const UPGRADES = [
   {
     id: 'lastChance',
     icon: '💫',
+    category: 'action',
     tier: 'unlock', rarity: 'uncommon',
     operations: ['all'],
     price: 16, sellValue: 8,
@@ -185,6 +197,7 @@ const UPGRADES = [
   {
     id: 'scoreMultSmall',
     icon: '✨',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
@@ -200,6 +213,7 @@ const UPGRADES = [
   {
     id: 'scoreMultLarge',
     icon: '🌟',
+    category: 'effect',
     tier: 'shop', rarity: 'rare',
     stackable: true, maxStacks: 2,
     operations: ['all'],
@@ -215,6 +229,7 @@ const UPGRADES = [
   {
     id: 'scoreMultPerfect',
     icon: '🎯',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 28, sellValue: 14,
@@ -231,6 +246,7 @@ const UPGRADES = [
   {
     id: 'echoLucky',
     icon: '🔮',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['all'],
     price: 25, sellValue: 12,
@@ -245,6 +261,7 @@ const UPGRADES = [
   {
     id: 'echoChain',
     icon: '🔗',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['multiply', 'divide'],
     price: 22, sellValue: 11,
@@ -259,6 +276,7 @@ const UPGRADES = [
   {
     id: 'echoStreak',
     icon: '💠',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['all'],
     price: 20, sellValue: 10,
@@ -275,6 +293,7 @@ const UPGRADES = [
   {
     id: 'starterBoost',
     icon: '💰',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     stackable: true, maxStacks: 3,
     operations: ['all'],
@@ -290,6 +309,7 @@ const UPGRADES = [
   {
     id: 'coinOnStreak',
     icon: '🔗',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 18, sellValue: 9,
@@ -304,6 +324,7 @@ const UPGRADES = [
   {
     id: 'coinOnPerfect',
     icon: '🎯',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 20, sellValue: 10,
@@ -318,6 +339,7 @@ const UPGRADES = [
   {
     id: 'coinOnStar',
     icon: '⭐',
+    category: 'effect',
     tier: 'shop', rarity: 'rare',
     operations: ['all'],
     price: 30, sellValue: 15,
@@ -334,6 +356,7 @@ const UPGRADES = [
   {
     id: 'replayScore',
     icon: '🔄',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
@@ -349,6 +372,7 @@ const UPGRADES = [
   {
     id: 'replayLucky',
     icon: '🎲',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
@@ -364,6 +388,7 @@ const UPGRADES = [
   {
     id: 'replayChain',
     icon: '💥',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['multiply', 'divide'],
     price: 20, sellValue: 10,
@@ -378,6 +403,7 @@ const UPGRADES = [
   {
     id: 'replayHotZone',
     icon: '⭕',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 22, sellValue: 11,
@@ -392,6 +418,7 @@ const UPGRADES = [
   {
     id: 'replayStreak',
     icon: '🚀',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 18, sellValue: 9,
@@ -410,6 +437,7 @@ const UPGRADES = [
   {
     id: 'slotExpander',
     icon: '🗂',
+    category: 'infrastructure',
     tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 4, noSlot: true,
     operations: ['all'],
@@ -426,6 +454,7 @@ const UPGRADES = [
   {
     id: 'multiBooster',
     icon: '✖',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['multiply'],
     price: 18, sellValue: 9,
@@ -440,6 +469,7 @@ const UPGRADES = [
   {
     id: 'divideBooster',
     icon: '➗',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['divide'],
     price: 18, sellValue: 9,
@@ -454,6 +484,7 @@ const UPGRADES = [
   {
     id: 'addBooster',
     icon: '➕',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['add'],
     price: 14, sellValue: 7,
@@ -468,6 +499,7 @@ const UPGRADES = [
   {
     id: 'subtractBooster',
     icon: '➖',
+    category: 'effect',
     tier: 'shop', rarity: 'common',
     operations: ['subtract'],
     price: 14, sellValue: 7,
@@ -483,6 +515,7 @@ const UPGRADES = [
   {
     id: 'cascadeMult',
     icon: '📈',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
@@ -498,6 +531,7 @@ const UPGRADES = [
   {
     id: 'compoundGrowth',
     icon: '🌱',
+    category: 'effect',
     tier: 'shop', rarity: 'rare',
     operations: ['all'],
     price: 35, sellValue: 17,
@@ -512,6 +546,7 @@ const UPGRADES = [
   {
     id: 'luckyFrequency',
     icon: '🎰',
+    category: 'effect',
     tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 26, sellValue: 13,
@@ -528,6 +563,7 @@ const UPGRADES = [
   {
     id: 'surge',
     icon: '💎',
+    category: 'action',
     tier: 'shop', rarity: 'rare',
     operations: ['all'],
     price: 50, sellValue: 25,
