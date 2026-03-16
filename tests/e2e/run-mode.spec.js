@@ -50,7 +50,7 @@ async function triggerShop(page) {
 test.describe('Run mode', () => {
   test('run mode starts and shows Ante 1 in HUD', async ({ page }) => {
     await startRunMode(page);
-    await expect(page.locator('#hud-tables')).toContainText('Ante 1');
+    await expect(page.locator('#hud-run-ante')).toContainText('Ante 1');
   });
 
   test('run mode sets runMode flag in state', async ({ page }) => {
