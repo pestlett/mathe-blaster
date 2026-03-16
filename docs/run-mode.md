@@ -43,13 +43,25 @@ Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zo
 
 ### Shop Mechanics
 
-- **3 upgrade cards** drawn from the full pool (start + unlock + shop tiers)
+- **3 upgrade cards** drawn from the full pool (start + unlock + shop tiers) using **rarity-weighted sampling**
 - **Buy**: costs coins shown on the card; **unlimited purchases** per visit (limited by slot count and coins)
 - **Slot limit**: active upgrades capped at `state.maxUpgradeSlots` (default 4); buy `slotExpander` to increase
 - **Free pick**: the very first ante (ante 1→2) grants one free pick
 - **Sell**: any owned upgrade can be sold for its `sellValue` (coins returned immediately)
 - **Reroll**: costs 8 coins, draws 3 fresh cards; flat cost (doesn't increase)
 - **Done**: close shop without buying (sells still apply)
+
+### Rarity System
+
+Every upgrade has a `rarity` field that controls how often it appears in shop draws.
+
+| Rarity | Weight | Frequency | Visual |
+|--------|--------|-----------|--------|
+| `common` | 6 | ~60% of draws | No badge |
+| `uncommon` | 3 | ~30% of draws | Teal badge + teal card border |
+| `rare` | 1 | ~10% of draws | Gold badge + gold card border + glow |
+
+Weighted sampling is done without replacement within a single shop draw, so three cards can still include multiple rarities. Common upgrades include all 8 start-tier upgrades, echo upgrades, op boosters, and starterBoost. Rare upgrades include `scoreMultLarge`, `compoundGrowth`, and `surge`.
 
 ## Ante Score Targets
 
@@ -65,7 +77,7 @@ Score is measured from the start of each ante (delta score, not total).
 
 ## Upgrades
 
-32 upgrades total: 8 available from the start, 4 unlocked via milestones, 20 shop-tier.
+33 upgrades total: 8 available from the start, 4 unlocked via milestones, 21 shop-tier.
 
 ### Starting Upgrades (tier: 'start')
 
@@ -138,6 +150,7 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `cascadeMult` | 30 | 15 | ✓ | all |
 | `compoundGrowth` | 35 | 17 | — | all |
 | `luckyFrequency` | 26 | 13 | — | all |
+| `surge` ⭐ rare | 50 | 25 | — | all |
 
 ### Shop Upgrade Effects
 
@@ -165,6 +178,7 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `cascadeMult` | Each Lucky Bonus permanently raises `scoreMultiplier` by +0.3 per stack. With synergy (adj): +0.6 |
 | `compoundGrowth` | `scoreMultiplier` grows ×1.02 after every correct answer. With synergy: ×1.04 |
 | `luckyFrequency` | Lucky Bonus threshold reduced from every 5 answers to every 3 |
+| `surge` ⭐ **rare** | One-time activation: immediately multiplies `scoreMultiplier` by ×3. Most powerful single purchase in the shop — buy it whenever it appears |
 
 **Slot Expander:**
 

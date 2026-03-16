@@ -56,8 +56,8 @@ function findUpgrade(id) {
 }
 
 describe('UPGRADES definitions', () => {
-  test('all 32 upgrades are defined (12 original + 12 shop + 8 new shop)', () => {
-    expect(UPGRADES).toHaveLength(32);
+  test('all 33 upgrades are defined (12 original + 12 shop + 8 new shop + 1 surge)', () => {
+    expect(UPGRADES).toHaveLength(33);
   });
 
   test('every upgrade has required fields', () => {
@@ -70,6 +70,27 @@ describe('UPGRADES definitions', () => {
       expect(u.tier).toMatch(/^(start|unlock|shop)$/);
       expect(typeof u.apply).toBe('function');
     }
+  });
+
+  test('every upgrade has a valid rarity', () => {
+    for (const u of UPGRADES) {
+      expect(u.rarity).toMatch(/^(common|uncommon|rare)$/);
+    }
+  });
+
+  test('rare upgrades are a small minority', () => {
+    const rares = UPGRADES.filter(u => u.rarity === 'rare');
+    expect(rares.length).toBeGreaterThanOrEqual(2);
+    expect(rares.length).toBeLessThanOrEqual(5);
+  });
+
+  test('surge is rare and triples scoreMultiplier', () => {
+    const surge = UPGRADES.find(u => u.id === 'surge');
+    expect(surge).toBeDefined();
+    expect(surge.rarity).toBe('rare');
+    const state = { scoreMultiplier: 2 };
+    surge.apply(state);
+    expect(state.scoreMultiplier).toBe(6);
   });
 
   test('every upgrade has an operations field', () => {
@@ -98,8 +119,8 @@ describe('UPGRADES definitions', () => {
     expect(UNLOCK_UPGRADE_IDS).toHaveLength(4);
   });
 
-  test('shop pool has 20 upgrades', () => {
-    expect(SHOP_UPGRADE_IDS).toHaveLength(20);
+  test('shop pool has 21 upgrades', () => {
+    expect(SHOP_UPGRADE_IDS).toHaveLength(21);
   });
 });
 
@@ -1050,5 +1071,49 @@ describe('getUpgradeById', () => {
     const upg = getUpgradeById('replayScore');
     expect(upg).not.toBeNull();
     expect(upg.tier).toBe('shop');
+  });
+});
+
+// ---- Rarity-weighted shop sampling ----
+describe('drawShopOptions rarity weighting', () => {
+  test('returns exactly n options when pool is large enough', () => {
+    const results = drawShopOptions(3, [], []);
+    expect(results).toHaveLength(3);
+  });
+
+  test('rare upgrades appear less often than common in large sample', () => {
+    const RUNS = 2000;
+    const counts = {};
+    for (let i = 0; i < RUNS; i++) {
+      const picks = drawShopOptions(3, [], []);
+      for (const u of picks) counts[u.rarity] = (counts[u.rarity] || 0) + 1;
+    }
+    // Common should appear far more than rare
+    expect(counts.common).toBeGreaterThan(counts.rare * 2);
+    expect(counts.uncommon).toBeGreaterThan(counts.rare);
+  });
+
+  test('surge (rare) can still appear in shop', () => {
+    let found = false;
+    for (let i = 0; i < 500; i++) {
+      const picks = drawShopOptions(3, [], []);
+      if (picks.find(u => u.id === 'surge')) { found = true; break; }
+    }
+    expect(found).toBe(true);
+  });
+
+  test('no duplicate upgrades in a single draw (non-stackable)', () => {
+    for (let i = 0; i < 100; i++) {
+      const picks = drawShopOptions(3, [], []);
+      const ids = picks.map(u => u.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
+  });
+
+  test('surge unapply reverses multiplier correctly', () => {
+    const state = { scoreMultiplier: 6 };
+    const surge = UPGRADES.find(u => u.id === 'surge');
+    unapplyUpgrade(surge, state);
+    expect(state.scoreMultiplier).toBeCloseTo(2);
   });
 });

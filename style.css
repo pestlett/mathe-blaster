@@ -2750,6 +2750,35 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   margin-left: 2px;
 }
 
+/* Rarity system */
+.shop-card-uncommon {
+  border-color: rgba(0,206,201,0.6);
+}
+.shop-card-rare {
+  border-color: rgba(253,203,110,0.8);
+  box-shadow: 0 0 10px rgba(253,203,110,0.25);
+}
+.shop-rarity-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-bottom: 5px;
+}
+.shop-rarity-uncommon {
+  background: rgba(0,206,201,0.2);
+  color: #00cec9;
+  border: 1px solid rgba(0,206,201,0.5);
+}
+.shop-rarity-rare {
+  background: rgba(253,203,110,0.2);
+  color: #fdcb6e;
+  border: 1px solid rgba(253,203,110,0.6);
+}
+
 /* Run mode game-over section */
 .run-summary {
   background: rgba(162,155,254,0.1);

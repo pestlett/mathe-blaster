@@ -1,11 +1,15 @@
 // upgrades.js - Roguelike run-mode upgrade definitions
 
+// Rarity weights for shop pool sampling.
+// Higher weight = appears more often.
+const RARITY_WEIGHTS = { common: 6, uncommon: 3, rare: 1 };
+
 const UPGRADES = [
   // ---- Starting upgrades (tier: start) ----
   {
     id: 'chain',
     icon: '⛓',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 10, sellValue: 5,
     names: { space: 'Gravity Well', ocean: 'Riptide', sky: 'Lightning Strike' },
@@ -19,7 +23,7 @@ const UPGRADES = [
   {
     id: 'streakBoost',
     icon: '✴',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 10, sellValue: 5,
     names: { space: 'Solar Flare', ocean: 'Tidal Surge', sky: 'Jet Stream' },
@@ -33,7 +37,7 @@ const UPGRADES = [
   {
     id: 'shield',
     icon: '🛡',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     stackable: true, maxStacks: 4,
     operations: ['all'],
     price: 7, sellValue: 3,
@@ -48,7 +52,7 @@ const UPGRADES = [
   {
     id: 'slowAll',
     icon: '🌀',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     stackable: true, maxStacks: 3,
     operations: ['all'],
     price: 9, sellValue: 4,
@@ -63,7 +67,7 @@ const UPGRADES = [
   {
     id: 'bomb',
     icon: '💣',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     stackable: true, maxStacks: 4,
     operations: ['all'],
     price: 7, sellValue: 3,
@@ -78,7 +82,7 @@ const UPGRADES = [
   {
     id: 'hotZoneBoost',
     icon: '🔥',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 10, sellValue: 5,
     names: { space: 'Event Horizon', ocean: 'Whirlpool', sky: 'Thermal Lift' },
@@ -92,7 +96,7 @@ const UPGRADES = [
   {
     id: 'luckyBonus',
     icon: '🍀',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 12, sellValue: 6,
     names: { space: 'Nebula Luck', ocean: 'Treasure Drift', sky: 'Lucky Wind' },
@@ -106,7 +110,7 @@ const UPGRADES = [
   {
     id: 'quickBonus',
     icon: '⚡',
-    tier: 'start',
+    tier: 'start', rarity: 'common',
     operations: ['all'],
     price: 9, sellValue: 4,
     names: { space: 'Warp Strike', ocean: 'Flash Current', sky: 'Tailwind' },
@@ -121,7 +125,7 @@ const UPGRADES = [
   {
     id: 'commutative',
     icon: '🔁',
-    tier: 'unlock',
+    tier: 'unlock', rarity: 'uncommon',
     operations: ['multiply', 'divide'],
     price: 14, sellValue: 7,
     names: { space: 'Twin Stars', ocean: 'Echo Wave', sky: 'Harmonic' },
@@ -135,7 +139,7 @@ const UPGRADES = [
   {
     id: 'streakSlow',
     icon: '❄',
-    tier: 'unlock',
+    tier: 'unlock', rarity: 'uncommon',
     operations: ['all'],
     price: 12, sellValue: 6,
     names: { space: 'Dark Matter', ocean: 'Abyss Pull', sky: 'Storm Front' },
@@ -149,7 +153,7 @@ const UPGRADES = [
   {
     id: 'reveal',
     icon: '👁',
-    tier: 'unlock',
+    tier: 'unlock', rarity: 'uncommon',
     operations: ['all'],
     price: 12, sellValue: 6,
     names: { space: 'Pulsar', ocean: 'Sonar Ping', sky: 'Radar Sweep' },
@@ -163,7 +167,7 @@ const UPGRADES = [
   {
     id: 'lastChance',
     icon: '💫',
-    tier: 'unlock',
+    tier: 'unlock', rarity: 'uncommon',
     operations: ['all'],
     price: 16, sellValue: 8,
     names: { space: 'Supernova', ocean: 'Tsunami', sky: 'Cyclone' },
@@ -181,7 +185,7 @@ const UPGRADES = [
   {
     id: 'scoreMultSmall',
     icon: '✨',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
     price: 22, sellValue: 11,
@@ -196,7 +200,7 @@ const UPGRADES = [
   {
     id: 'scoreMultLarge',
     icon: '🌟',
-    tier: 'shop',
+    tier: 'shop', rarity: 'rare',
     stackable: true, maxStacks: 2,
     operations: ['all'],
     price: 38, sellValue: 19,
@@ -211,7 +215,7 @@ const UPGRADES = [
   {
     id: 'scoreMultPerfect',
     icon: '🎯',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 28, sellValue: 14,
     names: { space: 'Precision Core', ocean: "Bull's Eye", sky: 'Pinpoint' },
@@ -227,7 +231,7 @@ const UPGRADES = [
   {
     id: 'echoLucky',
     icon: '🔮',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['all'],
     price: 25, sellValue: 12,
     names: { space: 'Nebula Echo', ocean: 'Double Drift', sky: 'Twin Gust' },
@@ -241,7 +245,7 @@ const UPGRADES = [
   {
     id: 'echoChain',
     icon: '🔗',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['multiply', 'divide'],
     price: 22, sellValue: 11,
     names: { space: 'Chain Echo', ocean: 'Wave Echo', sky: 'Lightning Echo' },
@@ -255,7 +259,7 @@ const UPGRADES = [
   {
     id: 'echoStreak',
     icon: '💠',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['all'],
     price: 20, sellValue: 10,
     names: { space: 'Streak Echo', ocean: 'Surge Echo', sky: 'Jet Echo' },
@@ -271,7 +275,7 @@ const UPGRADES = [
   {
     id: 'starterBoost',
     icon: '💰',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     stackable: true, maxStacks: 3,
     operations: ['all'],
     price: 15, sellValue: 7,
@@ -288,7 +292,7 @@ const UPGRADES = [
   {
     id: 'replayScore',
     icon: '🔄',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
     price: 32, sellValue: 16,
@@ -303,7 +307,7 @@ const UPGRADES = [
   {
     id: 'replayLucky',
     icon: '🎲',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
     price: 25, sellValue: 12,
@@ -318,7 +322,7 @@ const UPGRADES = [
   {
     id: 'replayChain',
     icon: '💥',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     operations: ['multiply', 'divide'],
     price: 20, sellValue: 10,
     names: { space: 'Chain Resonance', ocean: 'Splash Repeat', sky: 'Thunder Repeat' },
@@ -332,7 +336,7 @@ const UPGRADES = [
   {
     id: 'replayHotZone',
     icon: '⭕',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 22, sellValue: 11,
     names: { space: 'Zone Loop', ocean: 'Depth Repeat', sky: 'Thermal Repeat' },
@@ -346,7 +350,7 @@ const UPGRADES = [
   {
     id: 'replayStreak',
     icon: '🚀',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 18, sellValue: 9,
     names: { space: 'Streak Surge', ocean: 'Wave Surge', sky: 'Sky Surge' },
@@ -364,7 +368,7 @@ const UPGRADES = [
   {
     id: 'slotExpander',
     icon: '🗂',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 4, noSlot: true,
     operations: ['all'],
     price: 25, sellValue: 12,
@@ -380,7 +384,7 @@ const UPGRADES = [
   {
     id: 'multiBooster',
     icon: '✖',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['multiply'],
     price: 18, sellValue: 9,
     names: { space: 'Factor Amplifier', ocean: 'Multiplier Coral', sky: 'Times Thermal' },
@@ -394,7 +398,7 @@ const UPGRADES = [
   {
     id: 'divideBooster',
     icon: '➗',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['divide'],
     price: 18, sellValue: 9,
     names: { space: 'Division Drive', ocean: 'Split Current', sky: 'Division Downdraft' },
@@ -408,7 +412,7 @@ const UPGRADES = [
   {
     id: 'addBooster',
     icon: '➕',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['add'],
     price: 14, sellValue: 7,
     names: { space: 'Summation Core', ocean: 'Positive Current', sky: 'Updraft Adder' },
@@ -422,7 +426,7 @@ const UPGRADES = [
   {
     id: 'subtractBooster',
     icon: '➖',
-    tier: 'shop',
+    tier: 'shop', rarity: 'common',
     operations: ['subtract'],
     price: 14, sellValue: 7,
     names: { space: 'Negation Field', ocean: 'Counter-current', sky: 'Downdraft Deduct' },
@@ -437,7 +441,7 @@ const UPGRADES = [
   {
     id: 'cascadeMult',
     icon: '📈',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     stackable: true, maxStacks: 3,
     operations: ['all'],
     price: 30, sellValue: 15,
@@ -452,7 +456,7 @@ const UPGRADES = [
   {
     id: 'compoundGrowth',
     icon: '🌱',
-    tier: 'shop',
+    tier: 'shop', rarity: 'rare',
     operations: ['all'],
     price: 35, sellValue: 17,
     names: { space: 'Compound Engine', ocean: 'Growth Reef', sky: 'Compound Thermals' },
@@ -466,7 +470,7 @@ const UPGRADES = [
   {
     id: 'luckyFrequency',
     icon: '🎰',
-    tier: 'shop',
+    tier: 'shop', rarity: 'uncommon',
     operations: ['all'],
     price: 26, sellValue: 13,
     names: { space: 'Lucky Pulsar', ocean: 'Fortune Tide', sky: 'Lucky Draft' },
@@ -476,6 +480,22 @@ const UPGRADES = [
       sky:   'Lucky draft whirls faster — trigger every 3 instead of 5.',
     },
     apply(state) { state.luckyFrequency = true; },
+  },
+
+  // ---- Rare burst upgrade ----
+  {
+    id: 'surge',
+    icon: '💎',
+    tier: 'shop', rarity: 'rare',
+    operations: ['all'],
+    price: 50, sellValue: 25,
+    names: { space: 'Critical Mass', ocean: 'Pressure Wave', sky: 'Thunderhead' },
+    desc: {
+      space: 'Critical mass reached — instantly multiplies your entire score multiplier by ×3.',
+      ocean: 'A pressure wave surges through — one massive ×3 burst to your score multiplier.',
+      sky:   'Thunderhead breaks — a one-time ×3 surge to your score multiplier right now.',
+    },
+    apply(state) { state.scoreMultiplier = (state.scoreMultiplier || 1) * 3; },
   },
 ];
 
@@ -489,7 +509,7 @@ const SHOP_UPGRADE_IDS = [
   'echoLucky','echoChain','echoStreak','starterBoost',
   'replayScore','replayLucky','replayChain','replayHotZone','replayStreak',
   'slotExpander','multiBooster','divideBooster','addBooster','subtractBooster',
-  'cascadeMult','compoundGrowth','luckyFrequency',
+  'cascadeMult','compoundGrowth','luckyFrequency','surge',
 ];
 
 // ---- Synergies & conflicts ----
@@ -745,7 +765,8 @@ function drawUpgrades(n, unlockedIds, activeIds) {
   return pool.slice(0, n);
 }
 
-// Draw N upgrades for the shop (all tiers including shop).
+// Draw N upgrades for the shop using rarity-weighted sampling without replacement.
+// Rare upgrades appear ~6× less often than common ones (weights: common=6, uncommon=3, rare=1).
 function drawShopOptions(n, unlockedIds, activeIds) {
   const pool = UPGRADES.filter(u => {
     if (!u.stackable && activeIds.includes(u.id)) return false;
@@ -753,11 +774,20 @@ function drawShopOptions(n, unlockedIds, activeIds) {
     if (u.tier === 'start') return true;
     return unlockedIds.includes(u.id);
   });
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  const results = [];
+  const remaining = [...pool];
+  while (results.length < n && remaining.length > 0) {
+    const totalWeight = remaining.reduce((sum, u) => sum + (RARITY_WEIGHTS[u.rarity] || RARITY_WEIGHTS.common), 0);
+    let rand = Math.random() * totalWeight;
+    let chosenIdx = remaining.length - 1;
+    for (let i = 0; i < remaining.length; i++) {
+      rand -= (RARITY_WEIGHTS[remaining[i].rarity] || RARITY_WEIGHTS.common);
+      if (rand <= 0) { chosenIdx = i; break; }
+    }
+    results.push(remaining[chosenIdx]);
+    remaining.splice(chosenIdx, 1);
   }
-  return pool.slice(0, n);
+  return results;
 }
 
 // Reverses the effect of an upgrade's apply() for the sell mechanic.
@@ -795,6 +825,7 @@ function unapplyUpgrade(upgrade, state) {
     case 'cascadeMult':      state.cascadeMultCount = Math.max(0, (state.cascadeMultCount || 0) - 1); break;
     case 'compoundGrowth':   state.compoundGrowth = false; break;
     case 'luckyFrequency':   state.luckyFrequency = false; break;
+    case 'surge':            state.scoreMultiplier = Math.max(1, (state.scoreMultiplier || 1) / 3); break;
   }
 }
 

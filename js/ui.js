@@ -1922,9 +1922,15 @@ const UI = (() => {
         const stacksBadge = upg.maxStacks != null
           ? `<span class="shop-stacks-badge">${ownedCount}/${upg.maxStacks}</span>`
           : '';
+        const rarityBadge = upg.rarity === 'rare'
+          ? `<span class="shop-rarity-badge shop-rarity-rare">Rare</span>`
+          : upg.rarity === 'uncommon'
+            ? `<span class="shop-rarity-badge shop-rarity-uncommon">Uncommon</span>`
+            : '';
 
         const card2 = document.createElement('div');
         card2.className = 'shop-card' +
+          (upg.rarity === 'rare' ? ' shop-card-rare' : upg.rarity === 'uncommon' ? ' shop-card-uncommon' : '') +
           (hints.some(h => h.type === 'positive') ? ' upgrade-option-synergy' : '') +
           (hints.some(h => h.type === 'negative') ? ' upgrade-option-conflict' : '') +
           ((!canAfford && !isFreeCard) || slotsFull || atMaxStacks ? ' shop-card-unaffordable' : '');
@@ -1949,6 +1955,7 @@ const UI = (() => {
         }
 
         card2.innerHTML = `
+          ${rarityBadge}
           <div class="upgrade-name"><span class="upgrade-icon-sm">${upg.icon || '✨'}</span> ${name} ${noSlotBadge} ${stacksBadge}</div>
           ${opBadge}
           <div class="upgrade-desc">${desc}</div>
