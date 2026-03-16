@@ -95,7 +95,7 @@ A new visual theme (e.g. `forest`, `city`) requires changes in:
 A new run-mode upgrade requires changes in:
 
 1. **`js/upgrades.js`**
-   - Add an entry to `UPGRADES` array with: `id`, `icon`, `tier`, `names`
+   - Add an entry to `UPGRADES` array with: `id`, `icon`, `category` (`effect`/`action`/`infrastructure`), `tier`, `names`
      (for all themes), `desc` (for all themes), `apply(state)` function
    - If `tier: 'start'`, add ID to `STARTING_UPGRADE_IDS`
    - If `tier: 'unlock'`, add ID to `UNLOCK_UPGRADE_IDS`

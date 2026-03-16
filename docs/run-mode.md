@@ -50,9 +50,19 @@ Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zo
 - **Buy**: costs coins shown on the card; **unlimited purchases** per visit (limited by slot count and coins)
 - **Slot limit**: active upgrades capped at `state.maxUpgradeSlots` (default 4); buy `slotExpander` to increase
 - **Free pick**: the very first ante (ante 1→2) grants one free pick
-- **Sell**: any owned upgrade can be sold for its `sellValue` (coins returned immediately)
-- **Reroll**: costs 8 coins, draws 3 fresh cards; flat cost (doesn't increase)
+- **Sell**: owned upgrades can be sold for their `sellValue` (coins returned immediately); requires **two clicks** to confirm (prevents accidental sales); `slotExpander` (extension bays) **cannot be sold**
+- **Reroll**: costs 4 coins, draws 3 fresh cards; flat cost (doesn't increase)
 - **Done**: close shop without buying (sells still apply)
+
+### Upgrade Categories
+
+Each upgrade has a `category` field that determines how it's displayed in the shop's "Your Loadout" section:
+
+| Category | Label | Colour | Description |
+|----------|-------|--------|-------------|
+| `effect` | Passive Effects | Blue | Passive modifiers (multipliers, echoes, replays, boosters, economy) |
+| `action` | Action Items | Orange | Consumables or one-time effects (shield, bomb, lastChance, surge) |
+| `infrastructure` | Infrastructure | Green | Slot expanders; cannot be sold |
 
 ### Rarity System
 
