@@ -13,6 +13,7 @@ const Audio = (() => {
   let _preSpecialState   = 'calm';
   let _levelTempoMult    = 1.0;
   let _runModeActive     = false;
+  let _perilTempoMult    = 1.0;
   let layerGains         = {};   // { melody, bass, harmony, boss, run } → GainNode
   let masterGain         = null;
   let _hopefulTimeout    = null;
@@ -257,7 +258,8 @@ const Audio = (() => {
 
     const stateMult   = STATE_TEMPO_MULT[currentMusicState] || 1.0;
     const levelMult   = (currentMusicState === 'freeze') ? 1.0 : _levelTempoMult;
-    const effectiveMult = stateMult * levelMult;
+    const perilMult   = (currentMusicState === 'freeze' || currentMusicState === 'boss') ? 1.0 : _perilTempoMult;
+    const effectiveMult = stateMult * levelMult * perilMult;
 
     // Fade each layer to its target gain
     for (const layer of ['melody', 'bass', 'harmony', 'boss', 'run']) {
@@ -336,6 +338,22 @@ const Audio = (() => {
     _runModeActive = bool;
     if (layerGains.run) {
       fadeLayerTo(layerGains.run, bool ? 1 : 0, 0.5);
+    }
+  }
+
+  // Ante peril: 'none' = normal, 'behind' = slight tempo boost, 'danger' = bigger boost
+  function notifyAntePeril(peril) {
+    const prev = _perilTempoMult;
+    if (peril === 'danger')       _perilTempoMult = 1.12;
+    else if (peril === 'behind')  _perilTempoMult = 1.05;
+    else                          _perilTempoMult = 1.0;
+    if (_perilTempoMult !== prev && masterGain) {
+      // Detune the master slightly in danger for an unsettling feel
+      if (peril === 'danger' && masterGain.gain) {
+        masterGain.gain.setValueAtTime(Math.min(1.15, masterGain.gain.value * 1.05), getCtx().currentTime);
+      } else if (peril === 'none' && masterGain.gain) {
+        masterGain.gain.setValueAtTime(1.0, getCtx().currentTime);
+      }
     }
   }
 
@@ -583,5 +601,5 @@ const Audio = (() => {
   }
 
   return { playMusic, stopMusic, play, setTheme, setMuted, getCtx,
-           setMusicState, notifyStreak, notifyLevel, setRunMode };
+           setMusicState, notifyStreak, notifyLevel, setRunMode, notifyAntePeril };
 })();

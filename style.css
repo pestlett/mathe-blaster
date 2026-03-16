@@ -946,6 +946,82 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .run-ante-chip.hidden { display: none; }
 
+/* Run-mode ante progress bar in HUD */
+#hud-ante-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+#hud-ante-progress.hidden { display: none; }
+
+#hud-ante-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  min-width: 0;
+}
+
+#hud-ante-bar-wrap {
+  width: 72px;
+  height: 7px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#hud-ante-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: #a29bfe;
+  transition: width 0.35s ease-out, background 0.4s;
+  width: 0%;
+}
+
+/* Peril states — colour escalation */
+#hud-ante-progress.ante-safe #hud-ante-bar   { background: #2ed573; }
+#hud-ante-progress.ante-safe #hud-ante-label  { color: #2ed573; }
+
+#hud-ante-progress.ante-behind #hud-ante-bar   { background: #ffa502; }
+#hud-ante-progress.ante-behind #hud-ante-label  { color: #ffa502; }
+
+#hud-ante-progress.ante-danger #hud-ante-bar {
+  background: #ff4757;
+  animation: anteBarPulse 0.8s ease-in-out infinite alternate;
+}
+#hud-ante-progress.ante-danger #hud-ante-label {
+  color: #ff4757;
+  animation: anteLabelPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes anteBarPulse {
+  from { opacity: 1; box-shadow: 0 0 4px rgba(255,71,87,0.4); }
+  to   { opacity: 0.6; box-shadow: 0 0 10px rgba(255,71,87,0.8); }
+}
+@keyframes anteLabelPulse {
+  from { opacity: 1; }
+  to   { opacity: 0.65; }
+}
+
+/* Ante advance flash animation */
+@keyframes anteAdvanceFlash {
+  0%   { transform: scale(1); filter: brightness(1); }
+  15%  { transform: scale(1.35); filter: brightness(2.5); text-shadow: 0 0 12px #a29bfe, 0 0 24px rgba(162,155,254,0.5); }
+  40%  { transform: scale(0.9); filter: brightness(1.3); }
+  60%  { transform: scale(1.1); filter: brightness(1.6); text-shadow: 0 0 8px rgba(162,155,254,0.4); }
+  100% { transform: scale(1); filter: brightness(1); text-shadow: none; }
+}
+
+#hud-ante-progress.ante-advance #hud-ante-label {
+  animation: anteAdvanceFlash 0.7s ease-out forwards;
+  color: #a29bfe;
+}
+#hud-ante-progress.ante-advance #hud-ante-bar-wrap {
+  animation: anteAdvanceFlash 0.7s ease-out forwards;
+}
+
 /* Active upgrades bar — bottom-left of game screen, horizontal row */
 #active-upgrades-bar {
   position: absolute;
@@ -2876,6 +2952,10 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
     text-overflow: ellipsis;
   }
   #hud-lives { font-size: 1.1rem; gap: 3px; }
+
+  #hud-ante-progress { gap: 4px; margin-top: 0; }
+  #hud-ante-label { font-size: 0.65rem; }
+  #hud-ante-bar-wrap { width: 52px; height: 5px; }
 
   /* Bonus pills: smaller on mobile */
   .hud-bonus-pill  { font-size: 0.8rem; padding: 1px 6px 1px 4px; }

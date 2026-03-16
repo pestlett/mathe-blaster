@@ -958,6 +958,27 @@ const UI = (() => {
     }
     renderLives(state.lives, state.maxLives, state.theme);
 
+    // Ante progress bar (run mode)
+    const anteEl = document.getElementById('hud-ante-progress');
+    if (anteEl) {
+      if (state.runMode && state.anteTarget > 0) {
+        anteEl.classList.remove('hidden');
+        const gained = state.score - (state.anteStartScore || 0);
+        const pct = Math.min(100, Math.round((gained / state.anteTarget) * 100));
+        document.getElementById('hud-ante-bar').style.width = pct + '%';
+        document.getElementById('hud-ante-label').textContent =
+          `Ante ${state.currentAnte}: ${gained} / ${state.anteTarget}`;
+
+        anteEl.classList.remove('ante-safe', 'ante-behind', 'ante-danger');
+        const peril = state.antePeril || 'none';
+        if (peril === 'danger')      anteEl.classList.add('ante-danger');
+        else if (peril === 'behind') anteEl.classList.add('ante-behind');
+        else if (pct >= 100)         anteEl.classList.add('ante-safe');
+      } else {
+        anteEl.classList.add('hidden');
+      }
+    }
+
     // Active bonus indicators below score
     const bonusEl = document.getElementById('hud-bonuses');
     if (bonusEl) {
@@ -2181,6 +2202,16 @@ const UI = (() => {
     pip.classList.add('hud-upgrade-flash');
   }
 
+  // ---- Ante advance flash ----
+  function flashAnteAdvance() {
+    const el = document.getElementById('hud-ante-progress');
+    if (!el) return;
+    el.classList.remove('ante-advance', 'ante-safe', 'ante-behind', 'ante-danger');
+    void el.offsetWidth;
+    el.classList.add('ante-advance');
+    setTimeout(() => el.classList.remove('ante-advance'), 750);
+  }
+
   // ---- Boss Victory ----
   function showBossVictory(stars, score, name, age, onContinue, onFinish) {
     const overlay = document.getElementById('boss-victory-overlay');
@@ -2195,5 +2226,5 @@ const UI = (() => {
   }
 
   return { showScreen, initOnboarding, refreshTutorialEntryPoints, showTutorialOverlay, hideTutorialOverlay, updateHUD, showCombo, showTryAgain,
-    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade, triggerScoreEffect };
+    shakeInput, showLevelUp, showMissFlash, showGameOver, showLeaderboard, showAchievements, showDashboard, showUpgradePicker, showShop, showTableClearedBanner, showSaved, showFirstTime, updateHelpBtn, showBossVictory, flashUpgrade, triggerScoreEffect, flashAnteAdvance };
 })();

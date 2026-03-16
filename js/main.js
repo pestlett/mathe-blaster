@@ -112,9 +112,48 @@ function syncMusicIntensity() {
   if (state.practiceMode) return;
   const hasBoss = state.objects.some(o => o.isBoss && !o.dead && !o.dying && !o.destroyed);
   if (hasBoss) { Audio.setMusicState('boss'); return; }
-  if (state.lives <= 1)                Audio.setMusicState('urgent');
-  else if (state.lives < state.maxLives) Audio.setMusicState('tense');
-  else                                   Audio.setMusicState('calm');
+
+  // Base intensity from lives
+  let intensity = 'calm';
+  if (state.lives <= 1)                intensity = 'urgent';
+  else if (state.lives < state.maxLives) intensity = 'tense';
+
+  // In run mode, ante peril can escalate intensity
+  if (state.runMode && state.antePeril === 'danger' && intensity !== 'urgent') {
+    intensity = 'urgent';
+  } else if (state.runMode && state.antePeril === 'behind' && intensity === 'calm') {
+    intensity = 'tense';
+  }
+
+  Audio.setMusicState(intensity);
+}
+
+// ---- Ante peril tracking ----
+let _prevAntePeril = 'none';
+function updateAntePeril() {
+  if (!state.runMode) { state.antePeril = 'none'; return; }
+  const target = state.anteTarget;
+  if (!target || target <= 0) { state.antePeril = 'none'; return; }
+  const gained = state.score - (state.anteStartScore || 0);
+  const progress = gained / target;
+  const levelInAnte = (state.level - 1) % 3;
+  if (levelInAnte === 0) {
+    state.antePeril = 'none';
+  } else if (levelInAnte === 1) {
+    if (progress < 0.10)      state.antePeril = 'danger';
+    else if (progress < 0.30) state.antePeril = 'behind';
+    else                       state.antePeril = 'none';
+  } else {
+    if (progress < 0.40)      state.antePeril = 'danger';
+    else if (progress < 0.70) state.antePeril = 'behind';
+    else                       state.antePeril = 'none';
+  }
+  // Notify audio only when peril state changes
+  if (state.antePeril !== _prevAntePeril) {
+    _prevAntePeril = state.antePeril;
+    Audio.notifyAntePeril(state.antePeril);
+    syncMusicIntensity();
+  }
 }
 
 // ---- Haptic feedback ----
@@ -1806,6 +1845,8 @@ function startGame(settings) {
   // Run mode state
   state.currentAnte = 1;
   state.anteStartScore = 0;
+  state.anteTarget = settings.runMode ? anteTarget(1) : 0;
+  state.antePeril = 'none';
   state.activeUpgrades = [];
   state.activeUpgradeIds = [];
   // Upgrade flags (all off by default)
@@ -1861,6 +1902,7 @@ function startGame(settings) {
   state.helpCooldownMax = 30;  // cooldown duration in seconds
 
   state.phase = 'PLAYING';
+  _prevAntePeril = 'none';
 
   Targeting.reset();
   cancelAutoSubmit();
@@ -2270,6 +2312,7 @@ function update(dt) {
     }
   }
 
+  updateAntePeril();
   UI.updateHUD(state);
   refreshHelpBtn();
 
@@ -3033,6 +3076,10 @@ function submitAnswer() {
           // Advance ante — award coins, open shop
           state.currentAnte++;
           state.anteStartScore = state.score;
+          state.anteTarget = anteTarget(state.currentAnte);
+          state.antePeril = 'none';
+          UI.flashAnteAdvance();
+          syncMusicIntensity();
           const anteCoins = 5 + (state.bonusCoinPerAnte || 0);
           state.runCoins = (state.runCoins || 0) + anteCoins;
           // Adjacency: adj_multStack → +1 coin when both multipliers adjacent
