@@ -11,26 +11,7 @@ permissions:
 
 jobs:
   # ── Phase 1: runs on every push EXCEPT chore:release ─────────────────────
-  test:
-    if: "!startsWith(github.event.head_commit.message, 'chore: release')"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
-
   bump-version:
-    needs: test
     if: "!startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     # Unique group per run — never cancelled by the chore:release push it creates.
@@ -67,9 +48,58 @@ jobs:
           git commit -m "chore: release v${VERSION}"
           git push
 
-  # ── Phase 2: runs only on chore:release commits (independent of phase 1) ─
+  # ── Phase 2: runs only on chore:release commits ───────────────────────────
+  unit:
+    if: "startsWith(github.event.head_commit.message, 'chore: release')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  e2e:
+    if: "startsWith(github.event.head_commit.message, 'chore: release')"
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
   deploy:
     if: "startsWith(github.event.head_commit.message, 'chore: release')"
+    needs: [unit, e2e]
     runs-on: ubuntu-latest
     # Cancel any queued deploy if a newer chore:release commit arrives.
     concurrency:
