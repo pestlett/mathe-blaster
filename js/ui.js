@@ -1937,6 +1937,17 @@ const UI = (() => {
       return `${upgradeNameForTheme(upg, theme)} — ${upgradeDescForTheme(upg, theme)}`;
     }
 
+    function getSectionId(upg) {
+      if (upg?.noSlot) return 'bays';
+      return getKind(upg) === 'action' ? 'actions' : 'effects';
+    }
+
+    function getSectionTitle(sectionId) {
+      if (sectionId === 'actions') return t('shopSectionActions');
+      if (sectionId === 'bays') return t('shopSectionBays');
+      return t('shopSectionEffects');
+    }
+
     function getSlotsUsed() {
       return orderArr.filter(u => !u.noSlot).length;
     }
@@ -2019,6 +2030,229 @@ const UI = (() => {
       return notes;
     }
 
+    function appendGroupedSection(container, sectionId, entries, renderCard) {
+      if (entries.length === 0) return;
+      const section = document.createElement('section');
+      section.className = `shop-group shop-group-${sectionId}`;
+
+      const sectionHead = document.createElement('div');
+      sectionHead.className = 'shop-group-head';
+      sectionHead.innerHTML = `
+        <div class="shop-group-title">${getSectionTitle(sectionId)}</div>
+        <div class="shop-group-count">${entries.length}</div>
+      `;
+      section.appendChild(sectionHead);
+
+      const sectionGrid = document.createElement('div');
+      sectionGrid.className = `shop-group-grid shop-group-grid-${sectionId}`;
+      entries.forEach(entry => sectionGrid.appendChild(renderCard(entry.upg, entry.idx)));
+      section.appendChild(sectionGrid);
+      container.appendChild(section);
+    }
+
+    function renderOfferCard(upg, idx) {
+      void idx;
+      const name = upgradeNameForTheme(upg, theme);
+      const desc = upgradeDescForTheme(upg, theme);
+      const hints = getSynergyHintsForUpgrade(upg.id, orderArr.map(u => u.id), theme);
+      const kind = getKind(upg);
+      const isFreeCard = isFreeStarter && !freeUsed;
+      const state = getOfferButtonState(upg, isFreeCard);
+
+      const offerCard = document.createElement('article');
+      offerCard.className = 'shop-card' +
+        (upg.rarity === 'rare' ? ' shop-card-rare' : upg.rarity === 'uncommon' ? ' shop-card-uncommon' : '') +
+        (kind === 'action' ? ' shop-card-action' : ' shop-card-effect') +
+        (hints.some(h => h.type === 'positive') ? ' upgrade-option-synergy' : '') +
+        (hints.some(h => h.type === 'negative') ? ' upgrade-option-conflict' : '') +
+        (state.disabled ? ' shop-card-unaffordable' : '');
+      offerCard.title = makeTooltip(upg);
+      offerCard.tabIndex = 0;
+
+      const header = document.createElement('div');
+      header.className = 'shop-card-head';
+      const badges = document.createElement('div');
+      badges.className = 'shop-card-badges';
+
+      appendBadge(
+        badges,
+        kind === 'action' ? t('shopTypeAction') : t('shopTypeEffect'),
+        `shop-kind-badge shop-kind-badge-${kind}`
+      );
+      if (upg.operations && !upg.operations.includes('all')) {
+        appendBadge(
+          badges,
+          upg.operations.map(op => opSymbols[op] || op).join(' / '),
+          'shop-op-badge'
+        );
+      }
+      if (upg.noSlot) {
+        appendBadge(badges, t('shopNoSlot'), 'shop-noslot-badge');
+      }
+      if (upg.maxStacks != null) {
+        appendBadge(
+          badges,
+          `${state.ownedCount}/${upg.maxStacks}`,
+          'shop-stacks-badge',
+          t('shopStackLimitHint')
+        );
+      }
+      if (upg.rarity === 'uncommon') {
+        appendBadge(badges, t('shopRarityUncommon'), 'shop-rarity-badge shop-rarity-uncommon');
+      } else if (upg.rarity === 'rare') {
+        appendBadge(badges, t('shopRarityRare'), 'shop-rarity-badge shop-rarity-rare');
+      }
+      header.appendChild(badges);
+      offerCard.appendChild(header);
+
+      const title = document.createElement('div');
+      title.className = 'shop-card-name';
+      title.innerHTML = `<span class="shop-card-icon">${upg.icon || '✨'}</span><span>${name}</span>`;
+      offerCard.appendChild(title);
+
+      const descEl = document.createElement('div');
+      descEl.className = 'shop-card-desc';
+      descEl.textContent = desc;
+      offerCard.appendChild(descEl);
+
+      if (hints.length > 0) {
+        const hintList = document.createElement('div');
+        hintList.className = 'shop-note-list';
+        hints.forEach(hint => {
+          const note = document.createElement('div');
+          note.className = hint.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
+          note.textContent = `${hint.type === 'positive' ? '⚡' : '⚠'} ${hint.partnerName}: ${hint.effect}`;
+          hintList.appendChild(note);
+        });
+        offerCard.appendChild(hintList);
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'shop-card-footer';
+
+      const price = document.createElement('div');
+      price.className = 'shop-price-pill';
+      price.textContent = isFreeCard ? t('shopBuyFree') : `🪙 ${upg.price || 0}`;
+      footer.appendChild(price);
+
+      const buyBtn = document.createElement('button');
+      buyBtn.className = 'shop-buy-btn';
+      buyBtn.textContent = state.label;
+      buyBtn.disabled = state.disabled;
+      buyBtn.addEventListener('click', () => {
+        if (state.disabled) return;
+        armedSellToken = null;
+        if (!isFreeCard) currentCoins -= upg.price || 0;
+        freeUsed = true;
+        boughtList.push(upg);
+        orderArr.push(upg);
+        if (upg.apply) {
+          const tempState = { maxUpgradeSlots: maxSlots };
+          upg.apply(tempState);
+          maxSlots = tempState.maxUpgradeSlots;
+        }
+        const optionIdx = options.indexOf(upg);
+        if (optionIdx >= 0) options.splice(optionIdx, 1);
+        _showUpgradeAcquired(upg, theme, () => {
+          renderShop();
+        });
+      });
+      footer.appendChild(buyBtn);
+      offerCard.appendChild(footer);
+      return offerCard;
+    }
+
+    function renderOwnedCard(upg, idx) {
+      const kind = getKind(upg);
+      const notes = getOwnedNotes(upg, idx);
+      const ownedCount = orderArr.filter(u => u.id === upg.id).length;
+      const sellVal = upg.sellValue || Math.floor((upg.price || 0) * 0.55);
+      const sellToken = `${idx}:${upg.id}`;
+      const armed = armedSellToken === sellToken;
+
+      const ownedCard = document.createElement('article');
+      ownedCard.className = `shop-owned-card shop-owned-card-${kind}${armed ? ' shop-owned-card-armed' : ''}`;
+      ownedCard.title = makeTooltip(upg);
+      ownedCard.tabIndex = 0;
+
+      const head = document.createElement('div');
+      head.className = 'shop-owned-head';
+
+      const badgeRow = document.createElement('div');
+      badgeRow.className = 'shop-card-badges';
+      appendBadge(badgeRow, `#${idx + 1}`, 'shop-order-badge', t('shopOwnedOrderHint'));
+      appendBadge(
+        badgeRow,
+        kind === 'action' ? t('shopTypeAction') : t('shopTypeEffect'),
+        `shop-kind-badge shop-kind-badge-${kind}`
+      );
+      if (upg.operations && !upg.operations.includes('all')) {
+        appendBadge(
+          badgeRow,
+          upg.operations.map(op => opSymbols[op] || op).join(' / '),
+          'shop-op-badge'
+        );
+      }
+      if (upg.noSlot) {
+        appendBadge(badgeRow, t('shopNoSlot'), 'shop-noslot-badge');
+      }
+      if (upg.maxStacks != null && ownedCount > 1) {
+        appendBadge(badgeRow, `x${ownedCount}`, 'shop-stacks-badge', t('shopOwnedStackHint'));
+      }
+      head.appendChild(badgeRow);
+      ownedCard.appendChild(head);
+
+      const title = document.createElement('div');
+      title.className = 'shop-card-name';
+      title.innerHTML = `<span class="shop-card-icon">${upg.icon || '✨'}</span><span>${upgradeNameForTheme(upg, theme)}</span>`;
+      ownedCard.appendChild(title);
+
+      const descEl = document.createElement('div');
+      descEl.className = 'shop-card-desc';
+      descEl.textContent = upgradeDescForTheme(upg, theme);
+      ownedCard.appendChild(descEl);
+
+      if (notes.length > 0) {
+        const noteRow = document.createElement('div');
+        noteRow.className = 'shop-note-list shop-note-list-owned';
+        notes.forEach(noteData => {
+          appendBadge(noteRow, noteData.label, noteData.className, noteData.detail);
+        });
+        ownedCard.appendChild(noteRow);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'shop-owned-actions';
+      if (canSell(upg)) {
+        const sellBtn = document.createElement('button');
+        sellBtn.className = `shop-sell-btn${armed ? ' shop-sell-btn-armed' : ''}`;
+        sellBtn.textContent = armed
+          ? t('shopSellConfirm')
+          : t('shopSell', { coins: sellVal });
+        sellBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (armedSellToken !== sellToken) {
+            armedSellToken = sellToken;
+            renderShop();
+            return;
+          }
+          currentCoins += sellVal;
+          soldList.push(upg);
+          orderArr = orderArr.filter((_, orderIdx) => orderIdx !== idx);
+          armedSellToken = null;
+          renderShop();
+        });
+        actions.appendChild(sellBtn);
+      } else {
+        const lockedNote = document.createElement('div');
+        lockedNote.className = 'shop-sell-note';
+        lockedNote.textContent = t('shopSellLockedDesc');
+        actions.appendChild(lockedNote);
+      }
+      ownedCard.appendChild(actions);
+      return ownedCard;
+    }
+
     function renderShop() {
       card.innerHTML = `
         <div class="shop-shell">
@@ -2045,7 +2279,9 @@ const UI = (() => {
                 <div class="shop-panel-title">${t('shopOffersTitle')}</div>
                 <div class="shop-panel-note">${t('shopOffersHint')}</div>
               </div>
-              <div class="shop-cards"></div>
+              <div class="shop-panel-scroll shop-panel-scroll-offers">
+                <div class="shop-cards"></div>
+              </div>
               <button class="shop-reroll-btn"></button>
             </section>
             <section class="shop-panel shop-loadout-panel">
@@ -2053,7 +2289,9 @@ const UI = (() => {
                 <div class="shop-panel-title">${t('shopOwnedTitle')}</div>
                 <div class="shop-panel-note">${t('shopOwnedHint')}</div>
               </div>
-              <div class="shop-owned-grid"></div>
+              <div class="shop-panel-scroll shop-panel-scroll-loadout">
+                <div class="shop-owned-grid"></div>
+              </div>
             </section>
           </div>
           <div class="shop-footer">
@@ -2067,116 +2305,13 @@ const UI = (() => {
       const rerollBtn = card.querySelector('.shop-reroll-btn');
       const doneBtn = card.querySelector('.shop-done-btn');
 
-      options.forEach(upg => {
-        const name = upgradeNameForTheme(upg, theme);
-        const desc = upgradeDescForTheme(upg, theme);
-        const hints = getSynergyHintsForUpgrade(upg.id, orderArr.map(u => u.id), theme);
-        const kind = getKind(upg);
-        const isFreeCard = isFreeStarter && !freeUsed;
-        const state = getOfferButtonState(upg, isFreeCard);
-
-        const offerCard = document.createElement('article');
-        offerCard.className = 'shop-card' +
-          (upg.rarity === 'rare' ? ' shop-card-rare' : upg.rarity === 'uncommon' ? ' shop-card-uncommon' : '') +
-          (kind === 'action' ? ' shop-card-action' : ' shop-card-effect') +
-          (hints.some(h => h.type === 'positive') ? ' upgrade-option-synergy' : '') +
-          (hints.some(h => h.type === 'negative') ? ' upgrade-option-conflict' : '') +
-          (state.disabled ? ' shop-card-unaffordable' : '');
-        offerCard.title = makeTooltip(upg);
-        offerCard.tabIndex = 0;
-
-        const header = document.createElement('div');
-        header.className = 'shop-card-head';
-        const badges = document.createElement('div');
-        badges.className = 'shop-card-badges';
-
-        appendBadge(
-          badges,
-          kind === 'action' ? t('shopTypeAction') : t('shopTypeEffect'),
-          `shop-kind-badge shop-kind-badge-${kind}`
-        );
-        if (upg.operations && !upg.operations.includes('all')) {
-          appendBadge(
-            badges,
-            upg.operations.map(op => opSymbols[op] || op).join(' / '),
-            'shop-op-badge'
-          );
-        }
-        if (upg.noSlot) {
-          appendBadge(badges, t('shopNoSlot'), 'shop-noslot-badge');
-        }
-        if (upg.maxStacks != null) {
-          appendBadge(
-            badges,
-            `${state.ownedCount}/${upg.maxStacks}`,
-            'shop-stacks-badge',
-            t('shopStackLimitHint')
-          );
-        }
-        if (upg.rarity === 'uncommon') {
-          appendBadge(badges, t('shopRarityUncommon'), 'shop-rarity-badge shop-rarity-uncommon');
-        } else if (upg.rarity === 'rare') {
-          appendBadge(badges, t('shopRarityRare'), 'shop-rarity-badge shop-rarity-rare');
-        }
-        header.appendChild(badges);
-        offerCard.appendChild(header);
-
-        const title = document.createElement('div');
-        title.className = 'shop-card-name';
-        title.innerHTML = `<span class="shop-card-icon">${upg.icon || '✨'}</span><span>${name}</span>`;
-        offerCard.appendChild(title);
-
-        const descEl = document.createElement('div');
-        descEl.className = 'shop-card-desc';
-        descEl.textContent = desc;
-        offerCard.appendChild(descEl);
-
-        if (hints.length > 0) {
-          const hintList = document.createElement('div');
-          hintList.className = 'shop-note-list';
-          hints.forEach(hint => {
-            const note = document.createElement('div');
-            note.className = hint.type === 'positive' ? 'syn-hint-positive' : 'syn-hint-negative';
-            note.textContent = `${hint.type === 'positive' ? '⚡' : '⚠'} ${hint.partnerName}: ${hint.effect}`;
-            hintList.appendChild(note);
-          });
-          offerCard.appendChild(hintList);
-        }
-
-        const footer = document.createElement('div');
-        footer.className = 'shop-card-footer';
-
-        const price = document.createElement('div');
-        price.className = 'shop-price-pill';
-        price.textContent = isFreeCard ? t('shopBuyFree') : `🪙 ${upg.price || 0}`;
-        footer.appendChild(price);
-
-        const buyBtn = document.createElement('button');
-        buyBtn.className = 'shop-buy-btn';
-        buyBtn.textContent = state.label;
-        buyBtn.disabled = state.disabled;
-        buyBtn.addEventListener('click', () => {
-          if (state.disabled) return;
-          armedSellToken = null;
-          if (!isFreeCard) currentCoins -= upg.price || 0;
-          freeUsed = true;
-          boughtList.push(upg);
-          orderArr.push(upg);
-          if (upg.apply) {
-            const tempState = { maxUpgradeSlots: maxSlots };
-            upg.apply(tempState);
-            maxSlots = tempState.maxUpgradeSlots;
-          }
-          const idx = options.indexOf(upg);
-          if (idx >= 0) options.splice(idx, 1);
-          _showUpgradeAcquired(upg, theme, () => {
-            renderShop();
-          });
-        });
-        footer.appendChild(buyBtn);
-        offerCard.appendChild(footer);
-        cardsRow.appendChild(offerCard);
+      const groupedOfferEntries = { actions: [], effects: [], bays: [] };
+      options.forEach((upg, idx) => {
+        groupedOfferEntries[getSectionId(upg)].push({ upg, idx });
       });
+      appendGroupedSection(cardsRow, 'actions', groupedOfferEntries.actions, renderOfferCard);
+      appendGroupedSection(cardsRow, 'effects', groupedOfferEntries.effects, renderOfferCard);
+      appendGroupedSection(cardsRow, 'bays', groupedOfferEntries.bays, renderOfferCard);
 
       if (options.length === 0) {
         const emptyState = document.createElement('div');
@@ -2207,96 +2342,13 @@ const UI = (() => {
         emptyOwned.textContent = t('shopOwnedEmpty');
         ownedGrid.appendChild(emptyOwned);
       } else {
+        const groupedOwnedEntries = { actions: [], effects: [], bays: [] };
         orderArr.forEach((upg, idx) => {
-          const kind = getKind(upg);
-          const notes = getOwnedNotes(upg, idx);
-          const ownedCount = orderArr.filter(u => u.id === upg.id).length;
-          const sellVal = upg.sellValue || Math.floor((upg.price || 0) * 0.55);
-          const sellToken = `${idx}:${upg.id}`;
-          const armed = armedSellToken === sellToken;
-
-          const ownedCard = document.createElement('article');
-          ownedCard.className = `shop-owned-card shop-owned-card-${kind}${armed ? ' shop-owned-card-armed' : ''}`;
-          ownedCard.title = makeTooltip(upg);
-          ownedCard.tabIndex = 0;
-
-          const head = document.createElement('div');
-          head.className = 'shop-owned-head';
-
-          const badgeRow = document.createElement('div');
-          badgeRow.className = 'shop-card-badges';
-          appendBadge(badgeRow, `#${idx + 1}`, 'shop-order-badge', t('shopOwnedOrderHint'));
-          appendBadge(
-            badgeRow,
-            kind === 'action' ? t('shopTypeAction') : t('shopTypeEffect'),
-            `shop-kind-badge shop-kind-badge-${kind}`
-          );
-          if (upg.operations && !upg.operations.includes('all')) {
-            appendBadge(
-              badgeRow,
-              upg.operations.map(op => opSymbols[op] || op).join(' / '),
-              'shop-op-badge'
-            );
-          }
-          if (upg.noSlot) {
-            appendBadge(badgeRow, t('shopNoSlot'), 'shop-noslot-badge');
-          }
-          if (upg.maxStacks != null && ownedCount > 1) {
-            appendBadge(badgeRow, `x${ownedCount}`, 'shop-stacks-badge', t('shopOwnedStackHint'));
-          }
-          head.appendChild(badgeRow);
-          ownedCard.appendChild(head);
-
-          const title = document.createElement('div');
-          title.className = 'shop-card-name';
-          title.innerHTML = `<span class="shop-card-icon">${upg.icon || '✨'}</span><span>${upgradeNameForTheme(upg, theme)}</span>`;
-          ownedCard.appendChild(title);
-
-          const descEl = document.createElement('div');
-          descEl.className = 'shop-card-desc';
-          descEl.textContent = upgradeDescForTheme(upg, theme);
-          ownedCard.appendChild(descEl);
-
-          if (notes.length > 0) {
-            const noteRow = document.createElement('div');
-            noteRow.className = 'shop-note-list shop-note-list-owned';
-            notes.forEach(noteData => {
-              appendBadge(noteRow, noteData.label, noteData.className, noteData.detail);
-            });
-            ownedCard.appendChild(noteRow);
-          }
-
-          const actions = document.createElement('div');
-          actions.className = 'shop-owned-actions';
-          if (canSell(upg)) {
-            const sellBtn = document.createElement('button');
-            sellBtn.className = `shop-sell-btn${armed ? ' shop-sell-btn-armed' : ''}`;
-            sellBtn.textContent = armed
-              ? t('shopSellConfirm')
-              : t('shopSell', { coins: sellVal });
-            sellBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              if (armedSellToken !== sellToken) {
-                armedSellToken = sellToken;
-                renderShop();
-                return;
-              }
-              currentCoins += sellVal;
-              soldList.push(upg);
-              orderArr = orderArr.filter((_, orderIdx) => orderIdx !== idx);
-              armedSellToken = null;
-              renderShop();
-            });
-            actions.appendChild(sellBtn);
-          } else {
-            const lockedNote = document.createElement('div');
-            lockedNote.className = 'shop-sell-note';
-            lockedNote.textContent = t('shopSellLockedDesc');
-            actions.appendChild(lockedNote);
-          }
-          ownedCard.appendChild(actions);
-          ownedGrid.appendChild(ownedCard);
+          groupedOwnedEntries[getSectionId(upg)].push({ upg, idx });
         });
+        appendGroupedSection(ownedGrid, 'actions', groupedOwnedEntries.actions, renderOwnedCard);
+        appendGroupedSection(ownedGrid, 'effects', groupedOwnedEntries.effects, renderOwnedCard);
+        appendGroupedSection(ownedGrid, 'bays', groupedOwnedEntries.bays, renderOwnedCard);
       }
 
       // Done button

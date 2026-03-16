@@ -2639,6 +2639,7 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   --shop-danger: #ff7aa8;
   width: min(1040px, 96vw);
   max-width: 1040px;
+  height: min(90vh, 920px);
   max-height: min(90vh, 920px);
   padding: 20px;
   text-align: left;
@@ -2650,6 +2651,7 @@ tr.ach-locked td strong { color: rgba(255,255,255,0.4); }
   box-shadow: 0 24px 72px rgba(0,0,0,0.48), 0 0 36px var(--shop-glow);
   backdrop-filter: blur(18px);
   overflow: hidden;
+  display: flex;
 }
 
 body[data-theme="space"] .upgrade-picker-card.shop-picker-card {
@@ -2683,6 +2685,7 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
   gap: 16px;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .shop-header {
@@ -2769,6 +2772,7 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
   gap: 16px;
   min-height: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .shop-panel {
@@ -2781,6 +2785,7 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
   background: var(--shop-panel);
   border: 1px solid rgba(255,255,255,0.08);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  overflow: hidden;
 }
 
 .shop-panel-head {
@@ -2801,23 +2806,66 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
   line-height: 1.45;
 }
 
-.shop-cards,
-.shop-owned-grid {
+.shop-panel-scroll {
   min-height: 0;
+  flex: 1;
   overflow: auto;
   padding-right: 4px;
 }
 
-.shop-cards {
+.shop-cards,
+.shop-owned-grid {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shop-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shop-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.shop-group-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.76);
+}
+
+.shop-group-count {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.72);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.shop-group-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 12px;
 }
 
-.shop-owned-grid {
-  display: grid;
+.shop-group-grid-bays {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 12px;
 }
 
 .shop-card,
@@ -3227,12 +3275,24 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
 @media (max-width: 860px) {
   .upgrade-picker-card.shop-picker-card {
     width: min(96vw, 760px);
+    height: min(92vh, 960px);
     max-height: min(92vh, 960px);
     padding: 16px;
   }
 
   .shop-body {
     grid-template-columns: 1fr;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .shop-panel {
+    overflow: visible;
+  }
+
+  .shop-panel-scroll {
+    overflow: visible;
+    padding-right: 0;
   }
 }
 
@@ -3257,6 +3317,10 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
 
   .shop-cards,
   .shop-owned-grid {
+    gap: 12px;
+  }
+
+  .shop-group-grid {
     grid-template-columns: 1fr;
   }
 

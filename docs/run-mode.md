@@ -51,6 +51,7 @@ Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zo
 - **Slot limit**: active upgrades capped at `state.maxUpgradeSlots` (default 4); buy `slotExpander` to increase
 - **Free pick**: the very first ante (ante 1→2) grants one free pick
 - **Current loadout**: the shop shows owned upgrades with full name + effect text; cards are visually tagged as **action items** (for charge-based tools like `shield` / `bomb`) or **passive effects**
+- **Grouped layout**: offers and owned items are split into **action items**, **passive effects**, and **expansion bays** so support slots stay visually separate
 - **Inspect**: hovering or tapping owned upgrades reveals the same name/effect text via the card tooltip for quick scanning
 - **Sell**: most owned upgrades can be sold for `sellValue`, but selling is a **two-step confirm** to prevent mistakes
 - **Non-sellable support items**: `slotExpander` / Extension Bay stays installed for the whole run and cannot be sold
