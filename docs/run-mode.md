@@ -63,6 +63,22 @@ Ante 5+: 1050 + (ante-4) × 450 pts
 
 Score is measured from the start of each ante (delta score, not total).
 
+## Ante Feedback
+
+- The HUD shows a dedicated ante card with the **current ante score** versus the
+  **target score** (for example `84 / 350`).
+- The ante card fills as score is earned and changes colour when the run is
+  comfortably on pace, slipping behind, or close to failing.
+- When a new ante begins, the card animates so the new target is easy to spot
+  before the shop opens.
+- Run-mode music now uses the same ante pacing signal:
+  - **calm** when the player is on pace
+  - **tense** when they are falling behind
+  - **urgent** when the current ante is close to failing
+
+Lives, bosses, freeze, and hopeful pickups still override this when they are
+more important than ante pressure.
+
 ## Upgrades
 
 32 upgrades total: 8 available from the start, 4 unlocked via milestones, 20 shop-tier.

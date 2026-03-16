@@ -195,6 +195,8 @@ A new run-mode upgrade requires changes in:
 2. **`js/ui.js` + `index.html` + `style.css`**
    - Add onboarding and replay entry points
    - Add any overlay / coach-mark UI needed for narration and objectives
+   - For run-mode-only HUD/audio cues, update the run-mode demo narration so the
+     player is told what the new signal means
 
 3. **`js/progress.js`**
    - If completion should persist, store a lightweight lifetime flag/timestamp

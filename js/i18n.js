@@ -71,7 +71,7 @@ const I18n = (() => {
       runDemoOverlayTitle: '⚔ Run Mode Demo',
       runDemoPreparing:    'Preparing Run Mode demo...',
       runDemoIntro:        'This is Run Mode! Survive 3 levels per round, earn coins, and visit the Power Shop to build an upgrade stack. Watch what happens when you combine the right upgrades...',
-      runDemoAnte1:        'Each group of 3 levels is one Ante. Answer fast and accurately in the hot zone to earn coins for the shop. Here we go!',
+      runDemoAnte1:        'Each group of 3 levels is one Ante. Watch the ante target in the HUD, then answer fast and accurately in the hot zone to earn coins for the shop. Here we go!',
       runDemoShop1:        'Welcome to the Power Shop! Your first pick is FREE — grab Lucky Bonus. Every 5th correct answer triggers a random ×2–×5 bonus. This is how coins and score start stacking!',
       runDemoAfterShop1:   'Watch for the 🍀 lucky flash! Each lucky bonus adds big points AND coins. Now — what if every lucky bonus also permanently grew your score multiplier?',
       runDemoShop2:        'Stack time! Cascade Multiplier means every lucky bonus permanently adds +×0.3 to your score multiplier. It never resets — your lucky bonuses now snowball the entire run!',
