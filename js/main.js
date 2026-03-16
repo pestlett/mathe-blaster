@@ -1221,8 +1221,12 @@ const RunDemoRun = {
     if (!clicked) {
       const anyBtn = document.querySelector('.shop-buy-btn:not([disabled])');
       if (anyBtn) anyBtn.click();
-      else document.querySelector('.shop-done-btn')?.click();
     }
+
+    // Pause so the player can see the purchase, then close the shop
+    await this.wait(1800);
+    if (!runDemoActive()) return;
+    document.querySelector('.shop-done-btn')?.click();
   },
 
   async run() {
