@@ -285,6 +285,7 @@ const I18n = (() => {
       // Subtraction achievements
       ach_sub_first_correct: ['First Difference', 'Answer your first subtraction question correctly'],
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Mastered all ×-tables (2–10), all ÷-tables (2–10), and practised addition & subtraction'],
+      ach_shop_spree:     ['Big Spender',          'Buy 3 upgrades from the shop in a single run'],
 
       settingsTitle:   'Settings',
       settingsProfile:      'Profile',
@@ -582,6 +583,7 @@ const I18n = (() => {
       // Subtraction achievements
       ach_sub_first_correct: ['Erste Differenz',   'Erste Subtraktionsaufgabe richtig beantwortet'],
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Alle ×-Tabellen (2–10), alle ÷-Tabellen (2–10) gemeistert und Addition & Subtraktion geübt'],
+      ach_shop_spree:     ['Großeinkäufer',        'Kaufe 3 Upgrades in einem Durchgang im Shop'],
 
       settingsTitle:        'Einstellungen',
       settingsProfile:      'Profil',
@@ -879,6 +881,7 @@ const I18n = (() => {
       // Subtraction achievements
       ach_sub_first_correct: ['Primera Resta',     'Responde tu primera pregunta de resta correctamente'],
       ach_klasse3_komplett: ['¡Klasse 3 Komplett! 🎓', 'Has dominado todas las tablas ×2–×10, ÷2–÷10 y practicado suma y resta'],
+      ach_shop_spree:     ['Gran Comprador',       'Compra 3 mejoras en la tienda en una sola partida'],
 
       settingsTitle:        'Configuración',
       settingsProfile:      'Perfil',
