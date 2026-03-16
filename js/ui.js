@@ -2145,7 +2145,7 @@ const UI = (() => {
   let _scoreHitCount = 0;
   let _scoreHitResetTimer = null;
 
-  function triggerScoreEffect() {
+  function triggerScoreEffect(scoreTier = 0) {
     _scoreHitCount++;
     if (_scoreHitResetTimer) clearTimeout(_scoreHitResetTimer);
     _scoreHitResetTimer = setTimeout(() => { _scoreHitCount = 0; }, 500);
@@ -2154,12 +2154,20 @@ const UI = (() => {
     if (!el) return;
 
     const n = _scoreHitCount;
-    // Speed: 360ms → 80ms as hits pile up
-    const dur = Math.max(80, 360 - (n - 1) * 65) + 'ms';
-    // Scale peak + glow colour escalate through 3 tiers
-    const peak     = n === 1 ? 1.65  : n <= 3 ? 1.95  : 2.3;
-    const glowNear = n === 1 ? '#ffd700' : n <= 3 ? '#ff8c00' : '#ff2200';
-    const glowFar  = n === 1 ? 'rgba(255,215,0,0.25)' : n <= 3 ? 'rgba(255,140,0,0.3)' : 'rgba(255,34,0,0.35)';
+    // Speed: 360ms → 60ms as hits pile up; higher score tier tightens it further
+    const dur = Math.max(60, 360 - (n - 1) * 65 - scoreTier * 20) + 'ms';
+    // Scale peak escalates with consecutive hits AND score tier
+    const basePeak = n === 1 ? 1.65 : n <= 3 ? 1.95 : 2.3;
+    const peak     = basePeak + scoreTier * 0.14;
+    // Glow colour: base tracks hit count, but score tier shifts it hotter
+    const glowNear = scoreTier >= 3 ? '#ff0088'
+      : scoreTier >= 2              ? '#ff3300'
+      : n === 1                     ? '#ffd700'
+      : n <= 3                      ? '#ff8c00'
+      :                               '#ff2200';
+    const glowFar  = scoreTier >= 2
+      ? `rgba(255,${Math.max(0, 50 - scoreTier * 15)},0,${0.3 + scoreTier * 0.05})`
+      : n === 1 ? 'rgba(255,215,0,0.25)' : n <= 3 ? 'rgba(255,140,0,0.3)' : 'rgba(255,34,0,0.35)';
 
     el.style.setProperty('--score-anim-dur',  dur);
     el.style.setProperty('--score-peak',      peak);
