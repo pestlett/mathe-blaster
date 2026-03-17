@@ -1242,9 +1242,13 @@ const UI = (() => {
             return u ? upgradeNameForTheme(u, runData.theme) : id;
           }).join(', ')}</div>`
         : '';
+      const anteFailHtml = runData.anteFailed
+        ? `<div class="run-ante-miss">${runData.anteFailed.scored.toLocaleString()} pts — needed ${runData.anteFailed.needed.toLocaleString()} pts</div>`
+        : '';
       runEl.innerHTML = `
         <div class="run-summary">
           <div class="run-ante">Run ended at Ante ${runData.ante}${newBest}</div>
+          ${anteFailHtml}
           ${badgeHtml ? `<div class="run-upgrades-row">${badgeHtml}</div>` : ''}
           ${newUnlocksHtml}
         </div>`;

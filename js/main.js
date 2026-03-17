@@ -3131,6 +3131,7 @@ function submitAnswer() {
         const scoreGained = state.score - state.anteStartScore;
         if (scoreGained < anteTargetScore && !state.runDemoMode) {
           // Missed ante — run ends
+          state.anteFailed = { scored: scoreGained, needed: anteTargetScore };
           state.phase = 'ENDING';
           setTimeout(() => endGame(), 1400);
         } else {
@@ -3272,6 +3273,7 @@ function endGame() {
       activeUpgrades: state.activeUpgrades,
       newUnlocks,
       theme: state.theme,
+      anteFailed: state.anteFailed || null,
     };
   }
 

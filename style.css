@@ -3047,6 +3047,7 @@ body[data-theme="cats"]  .shop-group-count { background: rgba(247,201,72,0.18); 
   margin-bottom: 8px;
 }
 .run-new-best { color: #f7c948; margin-left: 6px; }
+.run-ante-miss { font-size: 0.9rem; color: #ff6b6b; margin-bottom: 8px; }
 .run-upgrades-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .run-upgrade-badge {
   background: rgba(162,155,254,0.18);
