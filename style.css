@@ -2762,6 +2762,11 @@ body[data-theme="ocean"] .shop-group-count { background: rgba(94,234,212,0.18); 
 body[data-theme="sky"]   .shop-group-count { background: rgba(125,211,252,0.18); color: #7dd3fc; }
 body[data-theme="cats"]  .shop-group-count { background: rgba(247,201,72,0.18);  color: #f7c948; }
 
+/* Actions section gets a fixed cyan accent regardless of theme */
+.shop-group-actions .shop-group-title { color: #00cec9; }
+.shop-group-actions .shop-group-count { background: rgba(0,206,201,0.18); color: #00cec9; }
+.shop-group-actions .shop-group-head  { border-bottom-color: rgba(0,206,201,0.22); }
+
 .shop-group-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2852,6 +2857,17 @@ body[data-theme="cats"]  .shop-group-count { background: rgba(247,201,72,0.18); 
 }
 .shop-sell-btn:hover {
   background: rgba(253,121,168,0.12);
+}
+.shop-sell-btn-armed {
+  background: rgba(253,121,168,0.22);
+  border-color: #fd79a8;
+  color: #fff;
+  font-weight: 800;
+  animation: sell-arm-pulse 0.6s ease-out;
+}
+@keyframes sell-arm-pulse {
+  0%   { transform: scale(1.18); }
+  100% { transform: scale(1); }
 }
 .shop-pill-synergy {
   border-color: rgba(247,201,72,0.55) !important;

@@ -1909,26 +1909,31 @@ const UI = (() => {
     const REROLL_COST_STEP = 2;
     let rerollCount = 0;
     let activeTab = 'shop'; // mobile tab state
+    let armedSellToken = null; // two-tap sell: the currently armed upgrade
 
     function getThemeShopTitle() {
       const key = { space: 'shopTitleSpace', ocean: 'shopTitleOcean', sky: 'shopTitleSky', cats: 'shopTitleCats' }[theme];
       return I18n.t(key || 'shopTitle');
     }
 
-    // Group items into sections by type
+    // Classify an upgrade into a display section
     function getSectionId(upg) {
-      return upg && upg.noSlot ? 'bays' : 'effects';
+      if (upg && upg.noSlot) return 'bays';
+      if (upg && upg.shopKind === 'action') return 'actions';
+      return 'effects';
     }
     function getSectionTitle(id) {
-      return I18n.t({ effects: 'shopSectionEffects', bays: 'shopSectionBays' }[id] || 'shopSectionEffects');
+      return I18n.t({ actions: 'shopSectionActions', effects: 'shopSectionEffects', bays: 'shopSectionBays' }[id] || 'shopSectionEffects');
     }
+
+    // Render items into labelled group sections inside container
     function appendGroupedSection(container, items, renderFn) {
       const groups = {};
       items.forEach(item => {
         const id = getSectionId(item);
         (groups[id] = groups[id] || []).push(item);
       });
-      ['effects', 'bays'].forEach(id => {
+      ['actions', 'effects', 'bays'].forEach(id => {
         if (!groups[id] || !groups[id].length) return;
         const sec = document.createElement('section');
         sec.className = `shop-group shop-group-${id}`;
@@ -2017,48 +2022,100 @@ const UI = (() => {
         }
         const idx = options.indexOf(upg);
         if (idx >= 0) options.splice(idx, 1);
+        armedSellToken = null;
         _showUpgradeAcquired(upg, theme, () => { renderShop(); });
       });
 
       return card2;
     }
 
-    function makeLoadoutPill(upg, idx) {
+    // Build a loadout section — pills with adjacency connectors, grouped by type
+    function appendLoadoutSection(container, upgrades) {
+      if (!upgrades.length) return;
       const { positive, negative } = getActiveSynergySets(orderArr.map(u => u.id));
-      const pill = document.createElement('div');
-      const isPos = positive.has(upg.id);
-      const isNeg = negative.has(upg.id);
-      pill.className = 'reorder-pill' +
-        (isPos ? ' shop-pill-synergy' : '') +
-        (isNeg ? ' shop-pill-conflict' : '');
 
-      const adjBefore = idx > 0 ? getAdjacencyForPair(orderArr[idx - 1].id, upg.id) : null;
-      if (adjBefore) {
-        const connector = document.createElement('span');
-        connector.className = 'reorder-connector reorder-connector-bonus';
-        connector.textContent = '✦';
-        connector.title = adjBefore.effect;
-        pill.before(connector); // will be inserted by caller
-      }
-
-      pill.innerHTML = `<span class="reorder-icon">${upg.icon || '?'}</span>`;
-      const sellVal = upg.sellValue || Math.floor((upg.price || 0) * 0.55);
-      const sellBtn = document.createElement('button');
-      sellBtn.className = 'shop-sell-btn';
-      sellBtn.textContent = `Sell 🪙${sellVal}`;
-      sellBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        currentCoins += sellVal;
-        soldList.push(upg);
-        orderArr = orderArr.filter(u => u !== upg);
-        renderShop();
+      // Group by section while preserving within-group order from orderArr
+      const groups = {};
+      upgrades.forEach((upg, i) => {
+        const id = getSectionId(upg);
+        (groups[id] = groups[id] || []).push({ upg, orderIdx: i });
       });
-      pill.appendChild(sellBtn);
-      return { pill, adjBefore };
+
+      ['actions', 'effects', 'bays'].forEach(sectionId => {
+        const entries = groups[sectionId];
+        if (!entries || !entries.length) return;
+
+        const sec = document.createElement('section');
+        sec.className = `shop-group shop-group-${sectionId}`;
+        sec.innerHTML = `
+          <div class="shop-group-head">
+            <span class="shop-group-title">${getSectionTitle(sectionId)}</span>
+            <span class="shop-group-count">${entries.length}</span>
+          </div>`;
+        container.appendChild(sec);
+
+        const row = document.createElement('div');
+        row.className = 'shop-owned-row';
+        entries.forEach(({ upg, orderIdx }, i) => {
+          // Adjacency connector between consecutive items within this section
+          if (i > 0) {
+            const prevUpg = entries[i - 1].upg;
+            const adj = getAdjacencyForPair(prevUpg.id, upg.id);
+            const connector = document.createElement('span');
+            connector.className = 'reorder-connector' + (adj ? ' reorder-connector-bonus' : '');
+            connector.textContent = adj ? '✦' : '·';
+            if (adj) connector.title = adj.effect;
+            row.appendChild(connector);
+          }
+
+          const pill = document.createElement('div');
+          const isPos = positive.has(upg.id);
+          const isNeg = negative.has(upg.id);
+          pill.className = 'reorder-pill' +
+            (isPos ? ' shop-pill-synergy' : '') +
+            (isNeg ? ' shop-pill-conflict' : '');
+          pill.innerHTML = `<span class="reorder-icon">${upg.icon || '?'}</span>`;
+
+          const sellVal = upg.sellValue || Math.floor((upg.price || 0) * 0.55);
+          const isArmed = armedSellToken === upg;
+          const sellBtn = document.createElement('button');
+          sellBtn.className = 'shop-sell-btn' + (isArmed ? ' shop-sell-btn-armed' : '');
+          sellBtn.textContent = isArmed ? `Sell? 🪙${sellVal}` : `Sell 🪙${sellVal}`;
+
+          sellBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (armedSellToken === upg) {
+              // Second tap — confirm sell
+              armedSellToken = null;
+              currentCoins += sellVal;
+              soldList.push(upg);
+              orderArr = orderArr.filter(u => u !== upg);
+              renderShop();
+            } else {
+              // First tap — arm this button, disarm previous
+              const prevArmed = card.querySelector('.shop-sell-btn-armed');
+              if (prevArmed) {
+                prevArmed.classList.remove('shop-sell-btn-armed');
+                const prevVal = prevArmed.dataset.sellVal;
+                prevArmed.textContent = `Sell 🪙${prevVal}`;
+              }
+              armedSellToken = upg;
+              sellBtn.classList.add('shop-sell-btn-armed');
+              sellBtn.dataset.sellVal = sellVal;
+              sellBtn.textContent = `Sell? 🪙${sellVal}`;
+            }
+          });
+          sellBtn.dataset.sellVal = sellVal;
+          pill.appendChild(sellBtn);
+          row.appendChild(pill);
+        });
+        sec.appendChild(row);
+      });
     }
 
     function renderShop() {
       card.innerHTML = '';
+      armedSellToken = null;
 
       const slotsUsed = orderArr.filter(u => !u.noSlot).length;
       const slotsTotal = maxSlots;
@@ -2120,7 +2177,6 @@ const UI = (() => {
       rerollBtn.addEventListener('click', () => {
         const cost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
         if (currentCoins < cost) return;
-        armedSellToken = null;
         currentCoins -= cost;
         rerollCount++;
         const rp = typeof Progress !== 'undefined' ? Progress.getRunProgress() : { unlockedUpgrades: [] };
@@ -2141,26 +2197,7 @@ const UI = (() => {
       body.appendChild(loadoutPanel);
 
       if (orderArr.length > 0) {
-        const sub = document.createElement('div');
-        sub.className = 'upgrade-picker-subtitle';
-        sub.textContent = 'Your Upgrades';
-        loadoutScroll.appendChild(sub);
-
-        const ownedRow = document.createElement('div');
-        ownedRow.className = 'shop-owned-row';
-        orderArr.forEach((upg, idx) => {
-          if (idx > 0) {
-            const adjBefore = getAdjacencyForPair(orderArr[idx - 1].id, upg.id);
-            const connector = document.createElement('span');
-            connector.className = 'reorder-connector' + (adjBefore ? ' reorder-connector-bonus' : '');
-            connector.textContent = adjBefore ? '✦' : '·';
-            if (adjBefore) connector.title = adjBefore.effect;
-            ownedRow.appendChild(connector);
-          }
-          const { pill } = makeLoadoutPill(upg, idx);
-          ownedRow.appendChild(pill);
-        });
-        loadoutScroll.appendChild(ownedRow);
+        appendLoadoutSection(loadoutScroll, orderArr);
       }
 
       // Footer with Done button
@@ -2179,7 +2216,6 @@ const UI = (() => {
       // Tab switching
       tabs.querySelectorAll('.shop-tab').forEach(btn => {
         btn.addEventListener('click', () => {
-          armedSellToken = null;
           activeTab = btn.dataset.tab;
           renderShop();
         });

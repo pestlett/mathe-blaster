@@ -316,6 +316,7 @@ const I18n = (() => {
       shopReroll:         '🔄 Reroll',
       shopTabOffers:      'Shop ({n})',
       shopTabLoadout:     'Loadout ({n})',
+      shopSectionActions: 'Action items',
       shopSectionEffects: 'Passive effects',
       shopSectionBays:    'Expansion bays',
 
@@ -646,6 +647,7 @@ const I18n = (() => {
       shopReroll:         '🔄 Neu würfeln',
       shopTabOffers:      'Shop ({n})',
       shopTabLoadout:     'Ausrüstung ({n})',
+      shopSectionActions: 'Aktionen',
       shopSectionEffects: 'Passive Effekte',
       shopSectionBays:    'Erweiterungsslots',
 
@@ -976,6 +978,7 @@ const I18n = (() => {
       shopReroll:         '🔄 Renovar',
       shopTabOffers:      'Tienda ({n})',
       shopTabLoadout:     'Equipamiento ({n})',
+      shopSectionActions: 'Acciones',
       shopSectionEffects: 'Efectos pasivos',
       shopSectionBays:    'Ranuras extra',
 
