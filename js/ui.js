@@ -2168,14 +2168,18 @@ const UI = (() => {
       }
 
       // Reroll button — bottom of offers panel
-      const rerollCost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
+      const rerollFree = isFreeStarter && !freeUsed;
+      const rerollCost = rerollFree ? 0 : REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
       const rerollBtn = document.createElement('button');
       rerollBtn.className = 'shop-reroll-btn';
-      rerollBtn.textContent = `${I18n.t('shopReroll')} (🪙${rerollCost})`;
-      rerollBtn.disabled = currentCoins < rerollCost;
+      rerollBtn.textContent = rerollFree
+        ? `${I18n.t('shopReroll')} (Free)`
+        : `${I18n.t('shopReroll')} (🪙${rerollCost})`;
+      rerollBtn.disabled = !rerollFree && currentCoins < rerollCost;
       rerollBtn.addEventListener('click', () => {
-        const cost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
-        if (currentCoins < cost) return;
+        const free = isFreeStarter && !freeUsed;
+        const cost = free ? 0 : REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
+        if (!free && currentCoins < cost) return;
         currentCoins -= cost;
         rerollCount++;
         const rp = typeof Progress !== 'undefined' ? Progress.getRunProgress() : { unlockedUpgrades: [] };
