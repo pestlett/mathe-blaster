@@ -1912,7 +1912,7 @@ const UI = (() => {
 
     function getThemeShopTitle() {
       const key = { space: 'shopTitleSpace', ocean: 'shopTitleOcean', sky: 'shopTitleSky', cats: 'shopTitleCats' }[theme];
-      return t(key || 'shopTitle');
+      return I18n.t(key || 'shopTitle');
     }
 
     // Group items into sections by type
@@ -1920,7 +1920,7 @@ const UI = (() => {
       return upg && upg.noSlot ? 'bays' : 'effects';
     }
     function getSectionTitle(id) {
-      return t({ effects: 'shopSectionEffects', bays: 'shopSectionBays' }[id] || 'shopSectionEffects');
+      return I18n.t({ effects: 'shopSectionEffects', bays: 'shopSectionBays' }[id] || 'shopSectionEffects');
     }
     function appendGroupedSection(container, items, renderFn) {
       const groups = {};
@@ -2072,7 +2072,7 @@ const UI = (() => {
       const header = document.createElement('div');
       header.className = 'upgrade-picker-title shop-header';
       header.innerHTML = `
-        <span class="shop-kicker">${t('shopKicker')}</span>
+        <span class="shop-kicker">${I18n.t('shopKicker')}</span>
         <span class="shop-title-name">${getThemeShopTitle()}</span>
         <span class="shop-coin-display">🪙 ${currentCoins}</span>
         <span class="shop-slot-display">${slotsUsed}/${slotsTotal} slots</span>
@@ -2085,10 +2085,10 @@ const UI = (() => {
       tabs.setAttribute('role', 'tablist');
       tabs.innerHTML = `
         <button class="shop-tab${activeTab === 'shop' ? ' shop-tab-active' : ''}" data-tab="shop">
-          ${t('shopTabOffers').replace('{n}', options.length)}
+          ${I18n.t('shopTabOffers').replace('{n}', options.length)}
         </button>
         <button class="shop-tab${activeTab === 'loadout' ? ' shop-tab-active' : ''}" data-tab="loadout">
-          ${t('shopTabLoadout').replace('{n}', orderArr.length)}
+          ${I18n.t('shopTabLoadout').replace('{n}', orderArr.length)}
         </button>
       `;
       shell.appendChild(tabs);
@@ -2115,7 +2115,7 @@ const UI = (() => {
       const rerollCost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
       const rerollBtn = document.createElement('button');
       rerollBtn.className = 'shop-reroll-btn';
-      rerollBtn.textContent = `${t('shopReroll')} (🪙${rerollCost})`;
+      rerollBtn.textContent = `${I18n.t('shopReroll')} (🪙${rerollCost})`;
       rerollBtn.disabled = currentCoins < rerollCost;
       rerollBtn.addEventListener('click', () => {
         const cost = REROLL_BASE_COST + rerollCount * REROLL_COST_STEP;
