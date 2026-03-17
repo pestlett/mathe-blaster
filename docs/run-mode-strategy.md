@@ -223,14 +223,23 @@ Default 4 slots fills up fast. Buy `slotExpander` (25 coins) when you have 3–4
 
 ## Ante Target Reference
 
-| Ante | Delta score needed |
-|------|--------------------|
-| 1    | 150 pts            |
-| 2    | 350 pts            |
-| 3    | 650 pts            |
-| 4    | 1 050 pts          |
-| 5    | 1 500 pts          |
-| 6    | 1 950 pts          |
-| 7+   | 1 050 + (ante−4) × 450 pts |
+Current targets (see `docs/ante-calibration.md` for full calibration analysis):
 
-Antes 5+ require late-game scaling. Build 1 (Compound Avalanche) and Build 2 (Lucky Cascade) are the only builds reliably capable of clearing Ante 7+.
+| Ante | Current target | Notes |
+|------|---------------|-------|
+| 1 | 150 pts | |
+| 2 | 350 pts | |
+| 3 | 650 pts | |
+| 4 | 50 000 pts | Requires `compoundGrowth` |
+| 5 | 500 000 pts | |
+| 6 | 5 000 000 pts | |
+| 7 | 50 000 000 pts | |
+| 8+ | 50 000 × 10^(ante−4) pts | Exponential scaling |
+
+> **Note:** Monte Carlo simulation (March 2025) found antes 1–3 trivially easy for all
+> builds and the ante 4 jump too steep for any non-compound path. A proposed balanced
+> target curve is documented in `docs/ante-calibration.md`. The targets above reflect
+> the current live game; the analysis doc tracks the rationale for any future changes.
+
+`compoundGrowth` (×1.5 per answer) is the only viable path to Ante 4+.
+Build 1 (Compound Avalanche) and Build 2 (Lucky Cascade) are the primary late-game builds.
