@@ -2418,7 +2418,7 @@ function render(ctx, w, h, t) {
   }
 
   const tx = target ? target.x + target.wobbleX : w / 2;
-  const ty = target ? target.y : h / 2;
+  const ty = target ? target.y + 20 : h / 2;
   Themes.drawWeapon(ctx, w, h, state.theme, tx, ty);
 
   if (state.freezeActive > 0) {
