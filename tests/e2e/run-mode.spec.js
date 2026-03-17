@@ -27,7 +27,7 @@ async function triggerShop(page) {
     s.level = 3;  // prevLevel=3, 3%3===0 → shop triggers on next level-up
     s.correctThisLevel = 9;
     s.attemptsThisLevel = 9;
-    s.score = 155;  // > anteTarget(1)=150
+    s.score = 750;  // > anteTarget(1)=700
     s.anteStartScore = 0;
     s._bossSpawnedThisLevel = false;
   });
