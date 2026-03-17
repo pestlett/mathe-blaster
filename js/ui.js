@@ -945,11 +945,13 @@ const UI = (() => {
         runAnteEl.dataset.peril = perilState;
         runAnteEl.classList.remove('hidden');
         runAnteEl.innerHTML = `
-          <div class="run-ante-kicker">Ante ${anteProgress.ante}</div>
-          <div class="run-ante-main">
-            <span class="run-ante-progress">${anteProgress.scoreGained}</span>
-            <span class="run-ante-sep">/</span>
-            <span class="run-ante-target">${anteProgress.targetScore}</span>
+          <div class="run-ante-header">
+            <span class="run-ante-kicker">Ante ${anteProgress.ante}</span>
+            <div class="run-ante-main">
+              <span class="run-ante-progress">${anteProgress.scoreGained}</span>
+              <span class="run-ante-sep">/</span>
+              <span class="run-ante-target">${anteProgress.targetScore}</span>
+            </div>
           </div>
           <div class="run-ante-bar" aria-hidden="true">
             <span class="run-ante-bar-fill" style="width:${anteProgress.progressPercent}%"></span>

@@ -933,98 +933,105 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* Run-mode ante target card */
+/* Ante widget — sits directly under the score in hud-left, no box */
 #hud-run-ante {
-  --ante-glow: rgba(74, 214, 255, 0.45);
-  --ante-border: rgba(74, 214, 255, 0.5);
-  --ante-fill: linear-gradient(90deg, #57e3ff, #87f7c1);
+  --ante-color: rgba(87, 227, 255, 0.9);
+  --ante-glow:  rgba(74, 214, 255, 0.5);
+  --ante-fill:  linear-gradient(90deg, #57e3ff, #87f7c1);
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 136px;
-  padding: 7px 10px 8px;
-  border-radius: 14px;
-  color: #fff;
-  background: rgba(4, 10, 24, 0.56);
-  border: 1px solid var(--ante-border);
-  box-shadow: 0 0 18px var(--ante-glow), inset 0 0 12px rgba(255,255,255,0.04);
+  width: 100%;
   pointer-events: none;
+  margin-top: -2px; /* tuck up close to the score line */
 }
 #hud-run-ante.hidden { display: none; }
 #hud-run-ante[data-peril="tense"] {
-  --ante-glow: rgba(255, 166, 0, 0.48);
-  --ante-border: rgba(255, 166, 0, 0.55);
-  --ante-fill: linear-gradient(90deg, #ffd166, #ff9f43);
+  --ante-color: rgba(255, 209, 102, 0.95);
+  --ante-glow:  rgba(255, 166, 0, 0.55);
+  --ante-fill:  linear-gradient(90deg, #ffd166, #ff9f43);
 }
 #hud-run-ante[data-peril="urgent"] {
-  --ante-glow: rgba(255, 71, 87, 0.5);
-  --ante-border: rgba(255, 107, 129, 0.68);
-  --ante-fill: linear-gradient(90deg, #ff6b81, #ff3b3b);
+  --ante-color: rgba(255, 107, 129, 1);
+  --ante-glow:  rgba(255, 71, 87, 0.6);
+  --ante-fill:  linear-gradient(90deg, #ff6b81, #ff3b3b);
 }
 #hud-run-ante[data-peril="cleared"] {
-  --ante-glow: rgba(46, 213, 115, 0.45);
-  --ante-border: rgba(46, 213, 115, 0.58);
-  --ante-fill: linear-gradient(90deg, #2ed573, #7bed9f);
+  --ante-color: rgba(126, 237, 159, 0.95);
+  --ante-glow:  rgba(46, 213, 115, 0.5);
+  --ante-fill:  linear-gradient(90deg, #2ed573, #7bed9f);
+}
+/* Single row: "ANTE 4" left · "1,234 / 5,000" right */
+.run-ante-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
 }
 .run-ante-kicker {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.75);
+  color: var(--ante-color);
+  text-shadow: 0 0 8px var(--ante-glow);
+  white-space: nowrap;
 }
 .run-ante-main {
   display: flex;
   align-items: baseline;
-  gap: 5px;
+  gap: 3px;
   line-height: 1;
 }
 .run-ante-progress,
 .run-ante-target {
-  font-weight: 900;
-  text-shadow: 0 0 12px var(--ante-glow);
+  font-weight: 800;
+  text-shadow: 0 0 10px var(--ante-glow);
 }
 .run-ante-progress {
-  font-size: 1.05rem;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
 }
 .run-ante-target {
-  font-size: 1.25rem;
+  font-size: 0.95rem;
+  color: var(--ante-color);
 }
 .run-ante-sep {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.6);
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
 }
+/* Full-width bar beneath the score */
 .run-ante-bar {
   width: 100%;
-  height: 6px;
+  height: 5px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.14);
 }
 .run-ante-bar-fill {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: var(--ante-fill);
-  box-shadow: 0 0 12px var(--ante-glow);
+  box-shadow: 0 0 8px var(--ante-glow);
   transition: width 180ms ease-out;
 }
 @keyframes hudRunAntePop {
-  0%   { transform: scale(0.88) translateY(-10px); opacity: 0.55; }
-  35%  { transform: scale(1.08) translateY(0); opacity: 1; }
-  65%  { transform: scale(0.98); }
-  100% { transform: scale(1); opacity: 1; }
+  0%   { opacity: 0.5; transform: translateY(-4px); }
+  40%  { opacity: 1;   transform: translateY(0); }
+  100% { opacity: 1;   transform: translateY(0); }
 }
 @keyframes hudRunAnteTargetPulse {
   0%   { transform: scale(0.9); filter: brightness(1); }
-  22%  { transform: scale(1.25); filter: brightness(1.9); }
-  48%  { transform: scale(0.92); filter: brightness(1.2); }
+  22%  { transform: scale(1.2); filter: brightness(1.9); }
+  48%  { transform: scale(0.95); filter: brightness(1.2); }
   100% { transform: scale(1); filter: brightness(1); }
 }
 #hud-run-ante.hud-run-ante-pop {
-  animation: hudRunAntePop 720ms cubic-bezier(.18,.89,.32,1.18);
+  animation: hudRunAntePop 400ms ease-out;
 }
 #hud-run-ante.hud-run-ante-pop .run-ante-target {
-  animation: hudRunAnteTargetPulse 720ms ease-out;
+  animation: hudRunAnteTargetPulse 600ms ease-out;
 }
 
 /* Active upgrades bar — bottom-left of game screen, horizontal row */
@@ -3402,14 +3409,9 @@ body[data-theme="cats"] .upgrade-picker-card.shop-picker-card {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  #hud-run-ante {
-    min-width: 116px;
-    padding: 5px 8px 6px;
-    gap: 3px;
-  }
-  .run-ante-kicker { font-size: 0.6rem; }
-  .run-ante-progress { font-size: 0.92rem; }
-  .run-ante-target { font-size: 1.05rem; }
+  .run-ante-kicker { font-size: 0.58rem; }
+  .run-ante-progress { font-size: 0.78rem; }
+  .run-ante-target { font-size: 0.88rem; }
   #hud-lives { font-size: 1.1rem; gap: 3px; }
 
   /* Bonus pills: smaller on mobile */
