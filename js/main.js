@@ -3169,10 +3169,12 @@ function submitAnswer() {
             // Recompute adjacency bonuses with updated order
             state.adjacencyBonuses = getAdjacencyBonuses(state.activeUpgrades);
             refreshRunFeedback();
-            Engine.resume();
-            state.unpauseFreezeTimer = 1.0;
-            if (!_typingMode && !state.runDemoMode) Voice.start();
-            focusAnswerInput();
+            setTimeout(() => {
+              Engine.resume();
+              state.unpauseFreezeTimer = 1.0;
+              if (!_typingMode && !state.runDemoMode) Voice.start();
+              focusAnswerInput();
+            }, 2000);
           };
           if (state.runDemoMode) {
             RunDemoRun.onShopOpened(shopDoneCb);
