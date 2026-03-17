@@ -1897,7 +1897,7 @@ const UI = (() => {
 
   // ---- Shop (run mode) ----
   // onDone({ bought, boughtList, sold: [], newCoins, newOrder })
-  function showShop(options, coins, theme, activeUpgrades, isFreeStarter, maxSlots, onDone) {
+  function showShop(options, coins, theme, activeUpgrades, isFreeStarter, maxSlots, onDone, currentAnte = 1) {
     const el = document.getElementById('upgrade-picker');
     const card = el.querySelector('.upgrade-picker-card');
     card.innerHTML = '';
@@ -1909,7 +1909,7 @@ const UI = (() => {
     let orderArr = [...activeUpgrades];
     maxSlots = maxSlots || 4;
     const REROLL_BASE_COST = 4;
-    const REROLL_COST_STEP = 2;
+    const REROLL_COST_STEP = 0;
     let rerollCount = 0;
     let activeTab = 'shop'; // mobile tab state
     let armedSellToken = null; // two-tap sell: the currently armed upgrade
@@ -2188,7 +2188,7 @@ const UI = (() => {
         rerollCount++;
         const rp = typeof Progress !== 'undefined' ? Progress.getRunProgress() : { unlockedUpgrades: [] };
         const activeIds = orderArr.map(u => u.id);
-        const newOpts = drawShopOptions(3, rp.unlockedUpgrades || [], activeIds);
+        const newOpts = drawShopOptions(3, rp.unlockedUpgrades || [], activeIds, currentAnte);
         options.length = 0;
         newOpts.forEach(o => options.push(o));
         renderShop();

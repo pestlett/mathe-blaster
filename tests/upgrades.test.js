@@ -56,8 +56,8 @@ function findUpgrade(id) {
 }
 
 describe('UPGRADES definitions', () => {
-  test('all 36 upgrades are defined (12 original + 12 shop + 8 new shop + 1 surge + 3 coin)', () => {
-    expect(UPGRADES).toHaveLength(36);
+  test('all 39 upgrades are defined (36 original + 3 new: overdrive, anteRush, crescendo)', () => {
+    expect(UPGRADES).toHaveLength(39);
   });
 
   test('every upgrade has required fields', () => {
@@ -119,8 +119,8 @@ describe('UPGRADES definitions', () => {
     expect(UNLOCK_UPGRADE_IDS).toHaveLength(4);
   });
 
-  test('shop pool has 24 upgrades', () => {
-    expect(SHOP_UPGRADE_IDS).toHaveLength(24);
+  test('shop pool has 27 upgrades', () => {
+    expect(SHOP_UPGRADE_IDS).toHaveLength(27);
   });
 });
 
@@ -1091,6 +1091,22 @@ describe('drawShopOptions', () => {
     for (const shopId of SHOP_UPGRADE_IDS) {
       expect(ids).not.toContain(shopId);
     }
+  });
+
+  test('compoundGrowth (minAnte:4) does not appear when currentAnte=3', () => {
+    // Draw a large pool to ensure we'd hit compoundGrowth if it were allowed
+    const drawn = drawShopOptions(40, [], [], 3);
+    const ids = drawn.map(u => u.id);
+    expect(ids).not.toContain('compoundGrowth');
+  });
+
+  test('compoundGrowth (minAnte:4) appears when currentAnte=4', () => {
+    let found = false;
+    for (let i = 0; i < 200; i++) {
+      const drawn = drawShopOptions(40, [], [], 4);
+      if (drawn.find(u => u.id === 'compoundGrowth')) { found = true; break; }
+    }
+    expect(found).toBe(true);
   });
 });
 

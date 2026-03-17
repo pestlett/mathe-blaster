@@ -9,11 +9,11 @@ const {
 
 describe('run mode ante helpers', () => {
   test('anteTarget scales with higher antes', () => {
-    expect(anteTarget(1)).toBe(150);
-    expect(anteTarget(2)).toBe(350);
-    expect(anteTarget(4)).toBe(50000);
-    expect(anteTarget(5)).toBe(500000);
-    expect(anteTarget(7)).toBe(50000000);
+    expect(anteTarget(1)).toBe(700);
+    expect(anteTarget(2)).toBe(1500);
+    expect(anteTarget(4)).toBe(5e6);
+    expect(anteTarget(5)).toBe(8e9);
+    expect(anteTarget(7)).toBe(7e14);
   });
 
   test('getAnteProgressSnapshot measures score gained within the current ante', () => {
@@ -25,25 +25,28 @@ describe('run mode ante helpers', () => {
     });
 
     expect(snapshot.ante).toBe(2);
-    expect(snapshot.targetScore).toBe(350);
+    expect(snapshot.targetScore).toBe(1500);
     expect(snapshot.scoreGained).toBe(210);
-    expect(snapshot.remainingScore).toBe(140);
+    expect(snapshot.remainingScore).toBe(1290);
     expect(snapshot.levelsCompleted).toBe(1);
     expect(snapshot.levelsRemaining).toBe(2);
-    expect(snapshot.progressPercent).toBe(60);
+    expect(snapshot.progressPercent).toBe(14);
   });
 
   test('marks early-ante pace trouble as tense or urgent', () => {
+    // ante 2 (target=1500), level 5 (levelsCompleted=1)
+    // tense: 0.18 <= ratio < 0.30 → scoreGained 270..449
     const tense = getAnteProgressSnapshot({
       currentAnte: 2,
       level: 5,
-      score: 490,
+      score: 800,
       anteStartScore: 400,
     });
+    // urgent: ratio < 0.18 → scoreGained < 270
     const urgent = getAnteProgressSnapshot({
       currentAnte: 2,
       level: 5,
-      score: 450,
+      score: 640,
       anteStartScore: 400,
     });
 
@@ -52,22 +55,26 @@ describe('run mode ante helpers', () => {
   });
 
   test('tightens peril thresholds on the final ante level', () => {
+    // ante 3 (target=3500), level 6 (levelsCompleted=2)
+    // calm: ratio >= 0.82 → scoreGained >= 2870
     const calm = getAnteProgressSnapshot({
       currentAnte: 3,
       level: 6,
-      score: 1085,
+      score: 3370,
       anteStartScore: 500,
     });
+    // tense: 0.55 <= ratio < 0.82 → scoreGained 1925..2869
     const tense = getAnteProgressSnapshot({
       currentAnte: 3,
       level: 6,
-      score: 970,
+      score: 2500,
       anteStartScore: 500,
     });
+    // urgent: ratio < 0.55 → scoreGained < 1925
     const urgent = getAnteProgressSnapshot({
       currentAnte: 3,
       level: 6,
-      score: 820,
+      score: 1800,
       anteStartScore: 500,
     });
 
@@ -80,7 +87,7 @@ describe('run mode ante helpers', () => {
     const cleared = getAnteProgressSnapshot({
       currentAnte: 4,
       level: 12,
-      score: 60000,
+      score: 6000000,
       anteStartScore: 0,
     });
 

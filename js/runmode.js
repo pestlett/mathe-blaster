@@ -2,9 +2,12 @@
 
 (function(global) {
   function anteTarget(ante) {
-    const base = [0, 150, 350, 650, 50000];
-    if (ante <= 4) return base[ante] || 0;
-    return 50000 * Math.pow(10, ante - 4);
+    const targets = [0, 700, 1500, 3500, 5e6, 8e9, 2.5e12, 7e14, 2e18, 5e21, 1.5e25];
+    if (ante <= 10) return targets[ante] || 0;
+    // Beyond ante 10: multiply by 1.3^30 ≈ 2620 per ante
+    let t = targets[10];
+    for (let i = 10; i < ante; i++) t *= 2620;
+    return t;
   }
 
   function clamp01(value) {

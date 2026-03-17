@@ -290,6 +290,67 @@ same file and can be tuned to model new upgrade mechanics.
 
 ---
 
+---
+
+## Rebalanced Targets (×1.3 era)
+
+**Implemented:** 2026-03 — committed alongside `feat/balance-overhaul`.
+
+### Rationale
+
+The ×1.5 compound rate dominated every other mechanic: ×1.5^30 ≈ 191,751× per ante.
+No fixed target table can stay relevant across more than ~2 antes of ×1.5 compound play,
+and compound-fast (buying after ante 2) achieved 100% pass rate through ante 10 on all
+tested target curves.
+
+The nerf to **×1.3/answer** reduces the carry-over to ×1.3^30 ≈ 190× per ante — still
+exponential and powerful, but targets can now grow at roughly the same rate (×2,620 per ante
+≈ 190 × 13.8 to account for answers ≠ 1 per ante in median score).
+
+### Changes shipped
+
+| Change | Before | After |
+|--------|--------|-------|
+| `compoundGrowth` rate | ×1.5/answer | ×1.3/answer |
+| `adj_compoundReplay` bonus rate | ×1.6/answer | ×1.4/answer |
+| `compoundGrowth + scoreMultPerfect` synergy | ×2.25/answer | ×1.69/answer |
+| `compoundGrowth` shop availability | ante 1+ | ante 4+ (minAnte: 4) |
+| Ante targets (1–10) | 150 / 350 / 650 / 50k / … (old ×10 curve) | 700 / 1.5k / 3.5k / 5M / 8G / 2.5T / 7P / 2E / 5Z / 1.5Y |
+| Ante targets (11+) | ×10/ante | ×2,620/ante |
+| Reroll cost | 4 + 2×rerolls (escalating) | flat 4 |
+| Boss defeat | no coin reward | +3 coins |
+| 10-streak milestone | same as 5-streak (+2 coins) | +5 coins (special) |
+| Ante interest | none | +15% on unspent coins |
+| New upgrades | — | Overdrive, Ante Rush, Crescendo |
+
+### New ante target table
+
+| Ante | Target | Notes |
+|------|--------|-------|
+| 1 | 700 | Achievable no-upgrades (median ~1.3k) |
+| 2 | 1,500 | Streak alone passes comfortably |
+| 3 | 3,500 | Streak+quick combo needed; ~10% fail rate on streak-only |
+| 4 | 5,000,000 | Compound gate — all linear builds eliminated |
+| 5 | 8,000,000,000 | |
+| 6 | 2.5 × 10¹² | |
+| 7 | 7 × 10¹⁴ | |
+| 8 | 2 × 10¹⁸ | |
+| 9 | 5 × 10²¹ | |
+| 10 | 1.5 × 10²⁵ | |
+| 11+ | × 2,620/ante | Matches ×1.3^30 compound carry-over |
+
+### NaN / Infinity boundary (×1.3 era)
+
+With ×1.3/answer:
+```
+scoreMultiplier hits MAX_VALUE when 30N × log₁₀(1.3) ≥ 308
+N ≥ 308 / (30 × 0.114) ≈ 90 antes of compound growth
+```
+
+Approximately **ante 94** (compound since ante 4) — unchanged risk, safely above normal play.
+
+---
+
 ## Decisions Still Open
 
 | Question | Notes |

@@ -501,13 +501,14 @@ const UPGRADES = [
     id: 'compoundGrowth',
     icon: '🌱',
     tier: 'shop', rarity: 'rare',
+    minAnte: 4,
     operations: ['all'],
     price: 35, sellValue: 17,
     names: { space: 'Compound Engine', ocean: 'Growth Reef', sky: 'Compound Thermals' },
     desc: {
-      space: 'Score multiplier grows ×1.5 after each correct answer — explodes to billions within one ante.',
-      ocean: 'Growth reef: every correct answer multiplies your score by ×1.5.',
-      sky:   'Compound thermals: each answer multiplies your score multiplier by ×1.5.',
+      space: 'Score multiplier grows ×1.3 after each correct answer — available from ante 4.',
+      ocean: 'Growth reef: every correct answer multiplies your score by ×1.3 (ante 4+).',
+      sky:   'Compound thermals: each answer multiplies your score multiplier by ×1.3 (ante 4+).',
     },
     apply(state) { state.compoundGrowth = true; },
   },
@@ -524,6 +525,56 @@ const UPGRADES = [
       sky:   'Lucky draft whirls faster — trigger every 3 instead of 5.',
     },
     apply(state) { state.luckyFrequency = true; },
+  },
+
+  // ---- New upgrades: Overdrive, Ante Rush, Crescendo ----
+  {
+    id: 'overdrive',
+    icon: '⚡',
+    tier: 'shop', rarity: 'uncommon',
+    operations: ['all'],
+    price: 24, sellValue: 12,
+    maxStack: 2,
+    names: { space: 'Overdrive', ocean: 'Overdrive', sky: 'Overdrive' },
+    desc: {
+      space: 'Consecutive hot-zone answers stack a +6% score bonus (max ×2.2, resets on miss)',
+      ocean: 'Consecutive hot-zone answers stack a +6% score bonus (max ×2.2, resets on miss)',
+      sky:   'Consecutive hot-zone answers stack a +6% score bonus (max ×2.2, resets on miss)',
+    },
+    apply(state) {
+      state.overdriveStacks = (state.overdriveStacks || 0);
+      state.overdriveMaxStacks = (state.overdriveMaxStacks || 0) + 20;
+    },
+  },
+  {
+    id: 'anteRush',
+    icon: '🚀',
+    tier: 'shop', rarity: 'common',
+    operations: ['all'],
+    price: 20, sellValue: 10,
+    maxStack: 1,
+    names: { space: 'Ante Rush', ocean: 'Ante Rush', sky: 'Ante Rush' },
+    desc: {
+      space: 'Score ×1.08 per ante cleared this run (stacks multiplicatively)',
+      ocean: 'Score ×1.08 per ante cleared this run (stacks multiplicatively)',
+      sky:   'Score ×1.08 per ante cleared this run (stacks multiplicatively)',
+    },
+    apply(state) { state.anteRushActive = true; },
+  },
+  {
+    id: 'crescendo',
+    icon: '📈',
+    tier: 'shop', rarity: 'uncommon',
+    operations: ['all'],
+    price: 22, sellValue: 11,
+    maxStack: 1,
+    names: { space: 'Crescendo', ocean: 'Crescendo', sky: 'Crescendo' },
+    desc: {
+      space: 'Base score grows +1 pt per correct answer this ante (resets each ante)',
+      ocean: 'Base score grows +1 pt per correct answer this ante (resets each ante)',
+      sky:   'Base score grows +1 pt per correct answer this ante (resets each ante)',
+    },
+    apply(state) { state.crescendoCount = 0; state.crescendoActive = true; },
   },
 
   // ---- Rare burst upgrade ----
@@ -554,6 +605,7 @@ const SHOP_UPGRADE_IDS = [
   'replayScore','replayLucky','replayChain','replayHotZone','replayStreak',
   'slotExpander','multiBooster','divideBooster','addBooster','subtractBooster',
   'cascadeMult','compoundGrowth','luckyFrequency','surge',
+  'overdrive','anteRush','crescendo',
 ];
 
 // ---- Synergies & conflicts ----
@@ -811,9 +863,10 @@ function drawUpgrades(n, unlockedIds, activeIds) {
 
 // Draw N upgrades for the shop using rarity-weighted sampling without replacement.
 // Rare upgrades appear ~6× less often than common ones (weights: common=6, uncommon=3, rare=1).
-function drawShopOptions(n, unlockedIds, activeIds) {
+function drawShopOptions(n, unlockedIds, activeIds, currentAnte = 1) {
   const pool = UPGRADES.filter(u => {
     if (!u.stackable && activeIds.includes(u.id)) return false;
+    if (u.minAnte && u.minAnte > currentAnte) return false;
     if (u.tier === 'shop') return true;
     if (u.tier === 'start') return true;
     return unlockedIds.includes(u.id);
@@ -873,6 +926,12 @@ function unapplyUpgrade(upgrade, state) {
     case 'compoundGrowth':   state.compoundGrowth = false; break;
     case 'luckyFrequency':   state.luckyFrequency = false; break;
     case 'surge':            state.scoreMultiplier = Math.max(1, (state.scoreMultiplier || 1) / 3); break;
+    case 'overdrive':
+      state.overdriveMaxStacks = Math.max(0, (state.overdriveMaxStacks || 0) - 20);
+      if ((state.overdriveMaxStacks || 0) === 0) state.overdriveStacks = 0;
+      break;
+    case 'anteRush':         state.anteRushActive = false; break;
+    case 'crescendo':        state.crescendoActive = false; state.crescendoCount = 0; break;
   }
 }
 

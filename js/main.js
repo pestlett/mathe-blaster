@@ -2495,6 +2495,7 @@ function submitAnswer() {
         Objects.triggerDestruction(target, particleColor, 40); // big explosion
         state.score += 30; // kill bonus
         state.bossesDefeated++;
+        if (state.runMode) state.runCoins = (state.runCoins || 0) + 3; // boss defeat coin bonus
 
         // Chain kill: destroy all nearby objects within 160px
         const killRadius = 160;
@@ -2876,9 +2877,27 @@ function submitAnswer() {
       state.scoreStarActive = false;
       UI.showLevelUp('🌟 ×3!', null);
     }
+    // Crescendo: add accumulated bonus to base pts before multiplying
+    if (state.crescendoActive) pts += (state.crescendoCount || 0);
     // Apply global score multiplier, then add to score
-    const finalPts = Math.round(pts * (state.scoreMultiplier || 1));
+    let finalPts = Math.round(pts * (state.scoreMultiplier || 1));
+    // Overdrive: consecutive hot-zone answers stack a +6% bonus
+    if (state.overdriveMaxStacks > 0) {
+      if (inHotZone) {
+        state.overdriveStacks = Math.min((state.overdriveStacks || 0) + 1, state.overdriveMaxStacks || 0);
+      } else {
+        state.overdriveStacks = 0;
+      }
+      const overdriveMult = 1 + (state.overdriveStacks || 0) * 0.06;
+      finalPts = Math.round(finalPts * overdriveMult);
+    }
+    // Ante Rush: score ×1.08 per ante cleared
+    if (state.anteRushActive && state.currentAnte > 1) {
+      finalPts = Math.round(finalPts * Math.pow(1.08, state.currentAnte - 1));
+    }
     state.score += finalPts;
+    // Crescendo: increment counter after scoring
+    if (state.crescendoActive) state.crescendoCount = (state.crescendoCount || 0) + 1;
     const _scoreTier = getScoreTier(state.score);
     spawnFloatingText(target.x, target.y - 20, '+' + finalPts, _scoreTier);
     UI.triggerScoreEffect(_scoreTier);
@@ -2918,15 +2937,15 @@ function submitAnswer() {
       }
     }
 
-    // Compound Growth: score multiplier ramps ×1.5 each answer
+    // Compound Growth: score multiplier ramps ×1.3 each answer
     if (state.compoundGrowth) {
       const growthRate = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_compoundReplay'))
-        ? 1.6 : 1.5;
-      // SYNERGY: compoundGrowth + scoreMultPerfect → ×2.25
+        ? 1.4 : 1.3;
+      // SYNERGY: compoundGrowth + scoreMultPerfect → ×1.69
       const hasSynCompound = state.activeUpgradeIds &&
         state.activeUpgradeIds.includes('compoundGrowth') &&
         state.activeUpgradeIds.includes('scoreMultPerfect');
-      const finalGrowthRate = hasSynCompound ? 2.25 : growthRate;
+      const finalGrowthRate = hasSynCompound ? 1.69 : growthRate;
       state.scoreMultiplier = (state.scoreMultiplier || 1) * finalGrowthRate;
       UI.flashUpgrade && UI.flashUpgrade('compoundGrowth');
     }
@@ -2946,7 +2965,11 @@ function submitAnswer() {
     if (state.runMode) {
       let coinsEarned = 0;
       if (inHotZone) coinsEarned += 1 + (state.coinOnPerfect ? 1 : 0);  // hot zone precision
-      if (state.streak > 0 && state.streak % 5 === 0) coinsEarned += 2 + (state.coinOnStreak ? 1 : 0);  // streak milestones
+      if (state.streak > 0 && state.streak % 10 === 0) {
+        coinsEarned += 5; // streak-10 milestone (replaces streak-5 award for this tick)
+      } else if (state.streak > 0 && state.streak % 5 === 0) {
+        coinsEarned += 2 + (state.coinOnStreak ? 1 : 0);  // streak milestones
+      }
       if (coinsEarned > 0) state.runCoins = (state.runCoins || 0) + coinsEarned;
     }
 
@@ -3140,6 +3163,11 @@ function submitAnswer() {
           state.anteStartScore = state.score;
           const anteCoins = 5 + (state.bonusCoinPerAnte || 0);
           state.runCoins = (state.runCoins || 0) + anteCoins;
+          // Interest: 15% on unspent coins
+          const interest = Math.floor((state.runCoins || 0) * 0.15);
+          if (interest > 0) state.runCoins += interest;
+          // Crescendo resets each ante
+          if (state.crescendoActive) state.crescendoCount = 0;
           // Adjacency: adj_multStack → +1 coin when both multipliers adjacent
           if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_multStack')) {
             state.runCoins += 1;
@@ -3182,9 +3210,9 @@ function submitAnswer() {
           } else {
             const rp = Progress.getRunProgress();
             const unlockedIds = rp.unlockedUpgrades || [];
-            const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds);
+            const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds, state.currentAnte);
             const isFreeStarter = (state.currentAnte === 2); // free pick on first ante
-            UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, shopDoneCb);
+            UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, shopDoneCb, state.currentAnte);
           }
         }
       }

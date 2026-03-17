@@ -31,18 +31,21 @@ Coins are earned for **skilled play** — not every answer. This keeps the econo
 | Source | Coins |
 |--------|-------|
 | Hot-zone correct answer | +1 |
-| 5-streak milestone | +2 |
+| 5-streak milestone | +2 (+1 extra with `coinOnStreak`) |
+| 10-streak milestone | +5 (replaces the 5-streak award for that tick) |
+| Boss defeated | +3 |
 | Ante cleared | +5 |
+| Interest on unspent coins | +15% (rounded down) applied on ante clear |
 | Level 2★ | +1 |
 | Level 3★ | +2 |
 | `starterBoost` upgrade (per stack) | +3 extra per ante |
 | `coinOnPerfect` upgrade | +1 extra per hot-zone answer |
-| `coinOnStreak` upgrade | +1 extra per streak milestone |
+| `coinOnStreak` upgrade | +1 extra per 5-streak milestone |
 | `coinOnStar` upgrade | double star coins (2★ → +2, 3★ → +4) |
 | `adj_multStack` adjacency bonus | +1 extra per ante |
 | `adj_cascadeLucky` adjacency bonus | +1 per 3rd lucky trigger |
 
-Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zone hits, 1–2 streak milestones).
+Typical per-ante earnings: **14–22 coins** (3 levels, ~30 answers, ~30% hot zone hits, 1–2 streak milestones, boss +3, 15% interest).
 
 ### Shop Mechanics
 
@@ -51,7 +54,7 @@ Typical per-ante earnings: **12–18 coins** (3 levels, ~30 answers, ~30% hot zo
 - **Slot limit**: active upgrades capped at `state.maxUpgradeSlots` (default 4); buy `slotExpander` to increase
 - **Free pick**: the very first ante (ante 1→2) grants one free pick
 - **Sell**: any owned upgrade can be sold for its `sellValue` (coins returned immediately)
-- **Reroll**: costs 8 coins, draws 3 fresh cards; flat cost (doesn't increase)
+- **Reroll**: costs 4 coins; flat cost (does not increase with subsequent rerolls)
 - **Done**: close shop without buying (sells still apply)
 
 ### Rarity System
@@ -69,14 +72,27 @@ Weighted sampling is done without replacement within a single shop draw, so thre
 ## Ante Score Targets
 
 ```
-Ante 1:    150 pts
-Ante 2:    350 pts
-Ante 3:    650 pts
-Ante 4:  50,000 pts
-Ante 5+: 50,000 × 10^(ante-4) pts
+Ante 1:         700 pts
+Ante 2:       1,500 pts
+Ante 3:       3,500 pts
+Ante 4:   5,000,000 pts    (compound gate — linear builds eliminated here)
+Ante 5:   8,000,000,000 pts
+Ante 6:   2.5 × 10¹²
+Ante 7:   7 × 10¹⁴
+Ante 8:   2 × 10¹⁸
+Ante 9:   5 × 10²¹
+Ante 10:  1.5 × 10²⁵
+Ante 11+: × 2,620 per ante (= 1.3^30, matching compound carry-over)
 ```
 
 Score is measured from the start of each ante (delta score, not total).
+
+### compoundGrowth gate
+
+`compoundGrowth` has `minAnte: 4` — it does **not** appear in the shop until the
+ante 3→4 shop (i.e. after clearing ante 3). This ensures players cannot buy it
+too early and trivialise antes 1–3, while still having it available at the exact
+ante where targets require it.
 
 ## Ante Feedback
 
@@ -96,7 +112,7 @@ more important than ante pressure.
 
 ## Upgrades
 
-36 upgrades total: 8 available from the start, 4 unlocked via milestones, 24 shop-tier.
+39 upgrades total: 8 available from the start, 4 unlocked via milestones, 27 shop-tier.
 
 ### Starting Upgrades (tier: 'start')
 
@@ -170,9 +186,12 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `addBooster` | 14 | 7 | — | + only |
 | `subtractBooster` | 14 | 7 | — | − only |
 | `cascadeMult` | 30 | 15 | ✓ | all |
-| `compoundGrowth` | 35 | 17 | — | all |
+| `compoundGrowth` ⭐ (ante 4+) | 35 | 17 | — | all |
 | `luckyFrequency` | 26 | 13 | — | all |
 | `surge` ⭐ rare | 50 | 25 | — | all |
+| `overdrive` | 24 | 12 | ✓ (max 2) | all |
+| `anteRush` | 20 | 10 | — | all |
+| `crescendo` | 22 | 11 | — | all |
 
 ### Shop Upgrade Effects
 
@@ -198,9 +217,12 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | ID | Effect |
 |----|--------|
 | `cascadeMult` | Each Lucky Bonus permanently raises `scoreMultiplier` by +0.3 per stack. With synergy (adj): +0.6 |
-| `compoundGrowth` | `scoreMultiplier` grows ×1.5 after every correct answer. With synergy: ×2.25 |
+| `compoundGrowth` ⭐ (ante 4+) | `scoreMultiplier` grows ×1.3 after every correct answer. With synergy (`scoreMultPerfect`): ×1.69. With adjacency (`adj_compoundReplay`): ×1.4. Not available in shop before ante 4. |
 | `luckyFrequency` | Lucky Bonus threshold reduced from every 5 answers to every 3 |
 | `surge` ⭐ **rare** | One-time activation: immediately multiplies `scoreMultiplier` by ×3. Most powerful single purchase in the shop — buy it whenever it appears |
+| `overdrive` | Consecutive hot-zone answers stack a +6% score bonus per stack (max ×2.2 at 20 stacks). Resets on any non-hot-zone answer. Stackable: each stack adds 20 more rungs |
+| `anteRush` | Score multiplied by ×1.08 per ante already cleared (stacks multiplicatively per answer) |
+| `crescendo` | Base pts grow +1 per correct answer within the current ante (resets on each ante clear) |
 
 **Slot Expander:**
 
