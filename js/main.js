@@ -3152,7 +3152,6 @@ function submitAnswer() {
             state.activeUpgradeIds = state.activeUpgrades.map(u => u.id);
             // Reverse effects of sold upgrades
             for (const sold of (result.sold || [])) {
-              if (typeof isUpgradeSellable === 'function' && !isUpgradeSellable(sold)) continue;
               unapplyUpgrade(sold, state);
             }
             // Apply effects of newly bought upgrades

@@ -5,7 +5,7 @@ const {
   UPGRADES, SYNERGIES, ADJACENCY,
   STARTING_UPGRADE_IDS, UNLOCK_UPGRADE_IDS, SHOP_UPGRADE_IDS,
   upgradeNameForTheme, upgradeDescForTheme,
-  drawUpgrades, drawShopOptions, getUpgradeById, getUpgradeShopKind, isUpgradeSellable, unapplyUpgrade,
+  drawUpgrades, drawShopOptions, getUpgradeById, unapplyUpgrade,
   getSynergyHintsForUpgrade, getActiveSynergySets,
   getAdjacencyBonuses, getAdjacencyForPair,
 } = require('../js/upgrades.js');
@@ -109,18 +109,6 @@ describe('UPGRADES definitions', () => {
       expect(u.sellValue).toBeGreaterThan(0);
       expect(u.sellValue).toBeLessThan(u.price);
     }
-  });
-
-  test('shop metadata distinguishes action items from passive effects', () => {
-    expect(getUpgradeShopKind(findUpgrade('shield'))).toBe('action');
-    expect(getUpgradeShopKind(findUpgrade('bomb'))).toBe('action');
-    expect(getUpgradeShopKind(findUpgrade('chain'))).toBe('effect');
-    expect(getUpgradeShopKind(findUpgrade('slotExpander'))).toBe('effect');
-  });
-
-  test('slotExpander is non-sellable while standard upgrades remain sellable', () => {
-    expect(isUpgradeSellable(findUpgrade('slotExpander'))).toBe(false);
-    expect(isUpgradeSellable(findUpgrade('chain'))).toBe(true);
   });
 
   test('starting pool has 8 upgrades', () => {

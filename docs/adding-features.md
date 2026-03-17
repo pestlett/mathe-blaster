@@ -97,8 +97,6 @@ A new run-mode upgrade requires changes in:
 1. **`js/upgrades.js`**
    - Add an entry to `UPGRADES` array with: `id`, `icon`, `tier`, `names`
      (for all themes), `desc` (for all themes), `apply(state)` function
-   - Add shop metadata such as `shopKind` or `sellable` when the upgrade needs
-     custom shop presentation or sell rules
    - If `tier: 'start'`, add ID to `STARTING_UPGRADE_IDS`
    - If `tier: 'unlock'`, add ID to `UNLOCK_UPGRADE_IDS`
    - Add any synergies to `SYNERGIES`
