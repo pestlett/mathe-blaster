@@ -115,6 +115,46 @@ describe('Progress.saveSession and achievements', () => {
     expect(unlocked.map(a => a.id)).toContain('score_500');
   });
 
+  test('unlocks score_10k when score >= 10000', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 10_000 });
+    expect(unlocked.map(a => a.id)).toContain('score_10k');
+  });
+
+  test('unlocks score_100k when score >= 100000', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 100_000 });
+    expect(unlocked.map(a => a.id)).toContain('score_100k');
+  });
+
+  test('unlocks score_1m when score >= 1000000', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 1_000_000 });
+    expect(unlocked.map(a => a.id)).toContain('score_1m');
+  });
+
+  test('unlocks score_100m when score >= 100000000', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 100_000_000 });
+    expect(unlocked.map(a => a.id)).toContain('score_100m');
+  });
+
+  test('unlocks score_1b when score >= 1000000000', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 1_000_000_000 });
+    expect(unlocked.map(a => a.id)).toContain('score_1b');
+  });
+
+  test('unlocks score_100b when score >= 1e11', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 1e11 });
+    expect(unlocked.map(a => a.id)).toContain('score_100b');
+  });
+
+  test('unlocks score_1q when score >= 1e15', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 1e15 });
+    expect(unlocked.map(a => a.id)).toContain('score_1q');
+  });
+
+  test('unlocks score_1sx when score >= 1e21', () => {
+    const unlocked = ctx.Progress.saveSession({ ...baseSession, score: 1e21 });
+    expect(unlocked.map(a => a.id)).toContain('score_1sx');
+  });
+
   test('unlocks sessions_5 after 5 sessions', () => {
     let unlocked = [];
     for (let i = 0; i < 5; i++) {

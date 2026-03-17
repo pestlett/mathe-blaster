@@ -133,7 +133,15 @@ requires all 10 facts in a table to have `cleanCorrect >= 1`.
 | `boss_slay` | Defeat the first boss round |
 | `accuracy_90` | Session accuracy ≥ 90% |
 | `score_500` | Score ≥ 500 |
-| `score_1000` | Score ≥ 1000 |
+| `score_1000` | Score ≥ 1,000 |
+| `score_10k` | Score ≥ 10,000 |
+| `score_100k` | Score ≥ 100,000 |
+| `score_1m` | Score ≥ 1,000,000 |
+| `score_100m` | Score ≥ 100,000,000 |
+| `score_1b` | Score ≥ 1,000,000,000 |
+| `score_100b` | Score ≥ 100,000,000,000 (1e11) — requires heavy run-mode upgrade stacking |
+| `score_1q` | Score ≥ 1e15 (one quadrillion) — extreme run-mode play |
+| `score_1sx` | Score ≥ 1e21 (one sextillion) — legendary |
 | `no_miss` | Finish a game with 0 misses |
 | `sessions_5` | Play 5 sessions |
 | `add_first_correct` | First correct addition |
