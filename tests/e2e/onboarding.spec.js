@@ -57,10 +57,10 @@ test.describe('Onboarding screen', () => {
     await expect(page.locator('#screen-game')).toHaveClass(/active/);
   });
 
-  test('HUD shows player name after game starts', async ({ page }) => {
+  test('game screen is shown after game starts', async ({ page }) => {
     await page.click('#btn-start');
     await page.waitForSelector('#screen-game.active', { timeout: 5000 });
-    await expect(page.locator('#hud-name')).toContainText('TestPlayer');
+    await expect(page.locator('#screen-game')).toBeVisible();
   });
 
   test('settings modal opens and closes', async ({ page }) => {

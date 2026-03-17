@@ -920,7 +920,6 @@ const UI = (() => {
   }
 
   function updateHUD(state) {
-    document.getElementById('hud-name').textContent = I18n.t('hiPlayer', { name: state.name });
     document.getElementById('score-val').textContent = state.score;
     document.getElementById('level-val').textContent = state.level;
     const op = state.operation || 'multiply';
