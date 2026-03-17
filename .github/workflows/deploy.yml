@@ -19,8 +19,55 @@ permissions:
   contents: read
 
 jobs:
-  # ── Phase 1: runs on every push EXCEPT chore:release ─────────────────────
+  # ── Tests: run on every push (both feature and chore:release commits) ────────
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+  # ── Phase 1: bump version only after tests pass, skip on chore:release ───────
   bump-version:
+    needs: [test-unit, test-e2e]
     if: "!startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     # Cancel any in-flight bump when a newer push arrives — the winning bump
@@ -64,8 +111,9 @@ jobs:
           git commit -m "chore: release v${VERSION}"
           git push
 
-  # ── Phase 2: deploy runs on chore:release — never blocked by tests ────────
+  # ── Phase 2: deploy only after tests pass, only on chore:release ─────────────
   deploy:
+    needs: [test-unit, test-e2e]
     if: "startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     # Cancel any queued deploy if a newer chore:release commit arrives.
