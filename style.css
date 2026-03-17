@@ -3058,6 +3058,19 @@ body[data-theme="cats"]  .shop-group-count { background: rgba(247,201,72,0.18); 
   color: #c8c5ff;
 }
 .run-new-unlocks { font-size: 0.85rem; color: #2ed573; font-weight: 600; }
+.run-stats-grid { margin-bottom: 10px; }
+.run-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+  font-size: 0.88rem;
+  border-bottom: 1px solid rgba(162,155,254,0.1);
+}
+.run-stat-row:last-child { border-bottom: none; }
+.run-stat-label { color: #a29bfe; }
+.run-stat-value { color: #e0deff; font-weight: 600; }
+.run-stat-value em { font-style: normal; color: #f7c948; }
 .daily-complete-badge {
   background: rgba(247,201,72,0.15);
   border: 1px solid rgba(247,201,72,0.4);

@@ -1856,6 +1856,7 @@ function startGame(settings) {
   state.streak = 0;
   state.maxStreak = 0;
   state.bossesDefeated = 0;
+  state.runBestScore = null;
   state.objects = [];
   state.missedList = [];
   state.wrongQueue = [];
@@ -2901,6 +2902,10 @@ function submitAnswer() {
       finalPts = Math.round(finalPts * Math.pow(1.08, state.currentAnte - 1));
     }
     state.score += finalPts;
+    // Track best single-answer score for run-mode end screen
+    if (state.runMode && finalPts > ((state.runBestScore && state.runBestScore.pts) || 0)) {
+      state.runBestScore = { pts: finalPts, question: target.question, answer: target.answer };
+    }
     // Crescendo: increment counter after scoring
     if (state.crescendoActive) state.crescendoCount = (state.crescendoCount || 0) + 1;
     const _scoreTier = getScoreTier(state.score);
@@ -3313,6 +3318,11 @@ function endGame() {
       newUnlocks,
       theme: state.theme,
       anteFailed: state.anteFailed || null,
+      bestScore: state.runBestScore || null,
+      coinsEarned: state.runCoins || 0,
+      bossesDefeated: state.bossesDefeated || 0,
+      totalCorrect: state.totalCorrect || 0,
+      maxStreak: state.maxStreak || 0,
     };
   }
 

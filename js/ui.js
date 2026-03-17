@@ -1245,10 +1245,22 @@ const UI = (() => {
       const anteFailHtml = runData.anteFailed
         ? `<div class="run-ante-miss">${runData.anteFailed.scored.toLocaleString()} pts — needed ${runData.anteFailed.needed.toLocaleString()} pts</div>`
         : '';
+      const bestScoreHtml = runData.bestScore
+        ? `<div class="run-stat-row"><span class="run-stat-label">Best answer</span><span class="run-stat-value">${runData.bestScore.question} = ${runData.bestScore.answer} <em>+${runData.bestScore.pts.toLocaleString()} pts</em></span></div>`
+        : '';
+      const statsHtml = `
+        <div class="run-stats-grid">
+          ${bestScoreHtml}
+          <div class="run-stat-row"><span class="run-stat-label">Correct</span><span class="run-stat-value">${runData.totalCorrect}</span></div>
+          <div class="run-stat-row"><span class="run-stat-label">Best streak</span><span class="run-stat-value">${runData.maxStreak}×</span></div>
+          <div class="run-stat-row"><span class="run-stat-label">Bosses</span><span class="run-stat-value">${runData.bossesDefeated}</span></div>
+          <div class="run-stat-row"><span class="run-stat-label">Coins earned</span><span class="run-stat-value">${runData.coinsEarned} 🪙</span></div>
+        </div>`;
       runEl.innerHTML = `
         <div class="run-summary">
           <div class="run-ante">Run ended at Ante ${runData.ante}${newBest}</div>
           ${anteFailHtml}
+          ${statsHtml}
           ${badgeHtml ? `<div class="run-upgrades-row">${badgeHtml}</div>` : ''}
           ${newUnlocksHtml}
         </div>`;
