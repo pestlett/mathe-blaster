@@ -306,6 +306,19 @@ const I18n = (() => {
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Mastered all ×-tables (2–10), all ÷-tables (2–10), and practised addition & subtraction'],
       ach_shop_spree:     ['Big Spender',          'Buy 3 upgrades from the shop in a single run'],
 
+      // Shop UI
+      shopTitle:          'Power Shop',
+      shopKicker:         'Run the Shop',
+      shopTitleSpace:     'Starport Armory',
+      shopTitleOcean:     'Reef Market',
+      shopTitleSky:       'Cloud Bazaar',
+      shopTitleCats:      'Paw Shop',
+      shopReroll:         '🔄 Reroll',
+      shopTabOffers:      'Shop ({n})',
+      shopTabLoadout:     'Loadout ({n})',
+      shopSectionEffects: 'Passive effects',
+      shopSectionBays:    'Expansion bays',
+
       settingsTitle:   'Settings',
       settingsProfile:      'Profile',
       settingsGame:         'Game',
@@ -623,6 +636,19 @@ const I18n = (() => {
       ach_klasse3_komplett: ['Klasse 3 Komplett! 🎓', 'Alle ×-Tabellen (2–10), alle ÷-Tabellen (2–10) gemeistert und Addition & Subtraktion geübt'],
       ach_shop_spree:     ['Großeinkäufer',        'Kaufe 3 Upgrades in einem Durchgang im Shop'],
 
+      // Shop UI
+      shopTitle:          'Machtladen',
+      shopKicker:         'Ab in den Laden!',
+      shopTitleSpace:     'Raumhafen-Arsenal',
+      shopTitleOcean:     'Riffmarkt',
+      shopTitleSky:       'Wolkenbazar',
+      shopTitleCats:      'Pfotenladen',
+      shopReroll:         '🔄 Neu würfeln',
+      shopTabOffers:      'Shop ({n})',
+      shopTabLoadout:     'Ausrüstung ({n})',
+      shopSectionEffects: 'Passive Effekte',
+      shopSectionBays:    'Erweiterungsslots',
+
       settingsTitle:        'Einstellungen',
       settingsProfile:      'Profil',
       settingsGame:         'Spiel',
@@ -939,6 +965,19 @@ const I18n = (() => {
       ach_sub_first_correct: ['Primera Resta',     'Responde tu primera pregunta de resta correctamente'],
       ach_klasse3_komplett: ['¡Klasse 3 Komplett! 🎓', 'Has dominado todas las tablas ×2–×10, ÷2–÷10 y practicado suma y resta'],
       ach_shop_spree:     ['Gran Comprador',       'Compra 3 mejoras en la tienda en una sola partida'],
+
+      // Shop UI
+      shopTitle:          'Tienda de Poderes',
+      shopKicker:         '¡A la Tienda!',
+      shopTitleSpace:     'Arsenal Estelar',
+      shopTitleOcean:     'Mercado del Arrecife',
+      shopTitleSky:       'Bazar de las Nubes',
+      shopTitleCats:      'Tienda de Patitas',
+      shopReroll:         '🔄 Renovar',
+      shopTabOffers:      'Tienda ({n})',
+      shopTabLoadout:     'Equipamiento ({n})',
+      shopSectionEffects: 'Efectos pasivos',
+      shopSectionBays:    'Ranuras extra',
 
       settingsTitle:        'Configuración',
       settingsProfile:      'Perfil',
