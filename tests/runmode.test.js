@@ -11,9 +11,9 @@ describe('run mode ante helpers', () => {
   test('anteTarget scales with higher antes', () => {
     expect(anteTarget(1)).toBe(150);
     expect(anteTarget(2)).toBe(350);
-    expect(anteTarget(4)).toBe(1050);
-    expect(anteTarget(5)).toBe(1500);
-    expect(anteTarget(7)).toBe(2400);
+    expect(anteTarget(4)).toBe(50000);
+    expect(anteTarget(5)).toBe(500000);
+    expect(anteTarget(7)).toBe(50000000);
   });
 
   test('getAnteProgressSnapshot measures score gained within the current ante', () => {
@@ -80,8 +80,8 @@ describe('run mode ante helpers', () => {
     const cleared = getAnteProgressSnapshot({
       currentAnte: 4,
       level: 12,
-      score: 2800,
-      anteStartScore: 1600,
+      score: 60000,
+      anteStartScore: 0,
     });
 
     expect(getAntePerilState(cleared)).toBe('cleared');

@@ -505,9 +505,9 @@ const UPGRADES = [
     price: 35, sellValue: 17,
     names: { space: 'Compound Engine', ocean: 'Growth Reef', sky: 'Compound Thermals' },
     desc: {
-      space: 'Score multiplier grows ×1.02 after each correct answer — compounds to millions.',
-      ocean: 'Growth reef: every correct answer nudges your multiplier up ×1.02.',
-      sky:   'Compound thermals: each answer adds ×1.02 to your score multiplier.',
+      space: 'Score multiplier grows ×1.5 after each correct answer — explodes to billions within one ante.',
+      ocean: 'Growth reef: every correct answer multiplies your score by ×1.5.',
+      sky:   'Compound thermals: each answer multiplies your score multiplier by ×1.5.',
     },
     apply(state) { state.compoundGrowth = true; },
   },
@@ -640,7 +640,7 @@ const SYNERGIES = [
   {
     ids: ['compoundGrowth', 'scoreMultPerfect'],
     type: 'positive',
-    effect: 'Compound growth rate doubles — ×1.04 per answer instead of ×1.02.',
+    effect: 'Compound growth rate doubles — ×2.25 per answer instead of ×1.5.',
   },
   {
     ids: ['luckyFrequency', 'replayLucky'],

@@ -2,9 +2,9 @@
 
 (function(global) {
   function anteTarget(ante) {
-    const base = [0, 150, 350, 650, 1050];
+    const base = [0, 150, 350, 650, 50000];
     if (ante <= 4) return base[ante] || 0;
-    return 1050 + (ante - 4) * 450;
+    return 50000 * Math.pow(10, ante - 4);
   }
 
   function clamp01(value) {

@@ -278,9 +278,9 @@ const HOT_ZONE_BOTTOM_WIDE = 0.725;
 // anteTarget(ante) → minimum score to advance from that ante's 3 levels
 function anteTarget(ante) {
   if (window.RunMode?.anteTarget) return window.RunMode.anteTarget(ante);
-  const base = [0, 150, 350, 650, 1050];
+  const base = [0, 150, 350, 650, 50000];
   if (ante <= 4) return base[ante] || 0;
-  return 1050 + (ante - 4) * 450;
+  return 50000 * Math.pow(10, ante - 4);
 }
 
 function drawHotZone(ctx, w, h, t, hzTop = HOT_ZONE_TOP, hzBottom = HOT_ZONE_BOTTOM) {
@@ -1118,7 +1118,7 @@ const DEMO_SHOP_SCRIPT = [
   { options: ['luckyBonus', 'streakBoost', 'hotZoneBoost'],  pick: 'luckyBonus',    narrateKey: 'runDemoShop1' },
   // Shop 1 (ante 2→3): cascadeMult — every lucky now grows the multiplier permanently
   { options: ['cascadeMult', 'compoundGrowth', 'scoreMultSmall'], pick: 'cascadeMult',    narrateKey: 'runDemoShop2' },
-  // Shop 2 (ante 3→4): compoundGrowth — every answer nudges the multiplier ×1.02
+  // Shop 2 (ante 3→4): compoundGrowth — every answer nudges the multiplier ×1.5
   { options: ['compoundGrowth', 'scoreMultLarge', 'echoLucky'],   pick: 'compoundGrowth', narrateKey: 'runDemoShop3' },
   // Shop 3 (ante 4→5): slotExpander — make room so we can hold more upgrades
   { options: ['slotExpander', 'scoreMultLarge', 'luckyFrequency'], pick: 'slotExpander',  narrateKey: 'runDemoShop4' },
@@ -2918,15 +2918,15 @@ function submitAnswer() {
       }
     }
 
-    // Compound Growth: score multiplier ramps ×1.02 each answer
+    // Compound Growth: score multiplier ramps ×1.5 each answer
     if (state.compoundGrowth) {
       const growthRate = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_compoundReplay'))
-        ? 1.03 : 1.02;
-      // SYNERGY: compoundGrowth + scoreMultPerfect → ×1.04
+        ? 1.6 : 1.5;
+      // SYNERGY: compoundGrowth + scoreMultPerfect → ×2.25
       const hasSynCompound = state.activeUpgradeIds &&
         state.activeUpgradeIds.includes('compoundGrowth') &&
         state.activeUpgradeIds.includes('scoreMultPerfect');
-      const finalGrowthRate = hasSynCompound ? 1.04 : growthRate;
+      const finalGrowthRate = hasSynCompound ? 2.25 : growthRate;
       state.scoreMultiplier = (state.scoreMultiplier || 1) * finalGrowthRate;
       UI.flashUpgrade && UI.flashUpgrade('compoundGrowth');
     }
