@@ -961,13 +961,6 @@ input[type="number"]::-webkit-outer-spin-button {
   --ante-glow:  rgba(46, 213, 115, 0.5);
   --ante-fill:  linear-gradient(90deg, #2ed573, #7bed9f);
 }
-/* Single row: "ANTE 4" left · "1,234 / 5,000" right */
-.run-ante-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 6px;
-}
 .run-ante-kicker {
   font-size: 0.65rem;
   font-weight: 700;
@@ -975,32 +968,8 @@ input[type="number"]::-webkit-outer-spin-button {
   text-transform: uppercase;
   color: var(--ante-color);
   text-shadow: 0 0 8px var(--ante-glow);
-  white-space: nowrap;
 }
-.run-ante-main {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-  line-height: 1;
-}
-.run-ante-progress,
-.run-ante-target {
-  font-weight: 800;
-  text-shadow: 0 0 10px var(--ante-glow);
-}
-.run-ante-progress {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.75);
-}
-.run-ante-target {
-  font-size: 0.95rem;
-  color: var(--ante-color);
-}
-.run-ante-sep {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
-}
-/* Full-width bar beneath the score */
+/* Full-width bar beneath the ante label */
 .run-ante-bar {
   width: 100%;
   height: 5px;
@@ -1029,9 +998,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 #hud-run-ante.hud-run-ante-pop {
   animation: hudRunAntePop 400ms ease-out;
-}
-#hud-run-ante.hud-run-ante-pop .run-ante-target {
-  animation: hudRunAnteTargetPulse 600ms ease-out;
 }
 
 /* Active upgrades bar — bottom-left of game screen, horizontal row */
@@ -3175,8 +3141,6 @@ body[data-theme="cats"]  .shop-group-count { background: rgba(247,201,72,0.18); 
     text-overflow: ellipsis;
   }
   .run-ante-kicker { font-size: 0.58rem; }
-  .run-ante-progress { font-size: 0.78rem; }
-  .run-ante-target { font-size: 0.88rem; }
   #hud-lives { font-size: 1.1rem; gap: 3px; }
 
   /* Bonus pills: smaller on mobile */
