@@ -1137,6 +1137,10 @@ const RunDemoRun = {
     this._shopResolver = null;
     this._pendingShopCb = null;
     runDemoState = { active: true, turboMode: false };
+    // Pause the engine immediately so the canvas is blank while the
+    // intro narration plays. resumeDemo() unpauses when it's time to play.
+    Engine.pause();
+    this.clearScene();
     document.getElementById('btn-tutorial-exit').hidden = false;
     document.getElementById('btn-pause-tutorial-exit').hidden = false;
     UI.showTutorialOverlay(I18n.t('runDemoPreparing'), I18n.t('runDemoOverlayTitle'));
