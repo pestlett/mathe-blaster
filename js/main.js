@@ -2847,6 +2847,11 @@ function submitAnswer() {
           }
           UI.flashUpgrade && UI.flashUpgrade('cascadeMult');
         }
+        // SYNERGY: compoundGrowth + luckyBonus → lucky also grows scoreMultiplier ×1.3
+        if (state.compoundGrowth) {
+          state.scoreMultiplier = (state.scoreMultiplier || 1) * 1.3;
+          UI.flashUpgrade && UI.flashUpgrade('compoundGrowth');
+        }
         // Echo Lucky: fires a second time (synergy with luckyBonus uncaps range)
         if (state.echoLucky) {
           const hasEchoFull = state.activeUpgradeIds && state.activeUpgradeIds.includes('luckyBonus');
@@ -2939,13 +2944,15 @@ function submitAnswer() {
 
     // Compound Growth: score multiplier ramps ×1.3 each answer
     if (state.compoundGrowth) {
-      const growthRate = (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_compoundReplay'))
-        ? 1.4 : 1.3;
-      // SYNERGY: compoundGrowth + scoreMultPerfect → ×1.69
-      const hasSynCompound = state.activeUpgradeIds &&
-        state.activeUpgradeIds.includes('compoundGrowth') &&
-        state.activeUpgradeIds.includes('scoreMultPerfect');
-      const finalGrowthRate = hasSynCompound ? 1.69 : growthRate;
+      const hasAdjReplay = state.adjacencyBonuses && state.adjacencyBonuses.has('adj_compoundReplay');
+      const hasSynPerfect = state.activeUpgradeIds && state.activeUpgradeIds.includes('scoreMultPerfect');
+      // SYNERGY: compoundGrowth + hotZoneBoost → HZ answers grow ×1.5 instead of ×1.3
+      const hasSynHZ = !hasSynPerfect && state.activeUpgradeIds && state.activeUpgradeIds.includes('hotZoneBoost');
+      let finalGrowthRate;
+      if (hasSynPerfect)               finalGrowthRate = 1.69; // SYNERGY: compoundGrowth + scoreMultPerfect
+      else if (hasSynHZ && inHotZone)  finalGrowthRate = 1.5;  // SYNERGY: compoundGrowth + hotZoneBoost
+      else if (hasAdjReplay)           finalGrowthRate = 1.4;
+      else                             finalGrowthRate = 1.3;
       state.scoreMultiplier = (state.scoreMultiplier || 1) * finalGrowthRate;
       UI.flashUpgrade && UI.flashUpgrade('compoundGrowth');
     }
@@ -3168,6 +3175,10 @@ function submitAnswer() {
           if (interest > 0) state.runCoins += interest;
           // Crescendo resets each ante
           if (state.crescendoActive) state.crescendoCount = 0;
+          // SYNERGY: compoundGrowth + anteRush → carried scoreMultiplier also ×1.08 per ante
+          if (state.compoundGrowth && state.anteRushActive) {
+            state.scoreMultiplier = (state.scoreMultiplier || 1) * 1.08;
+          }
           // Adjacency: adj_multStack → +1 coin when both multipliers adjacent
           if (state.adjacencyBonuses && state.adjacencyBonuses.has('adj_multStack')) {
             state.runCoins += 1;

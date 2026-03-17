@@ -273,9 +273,12 @@ When both upgrades in a pair are active, additional effects apply:
 | `replayChain` + `chain` | positive | Replay chain kills also advance the lucky counter |
 | `multiBooster` + `scoreMultSmall` | positive | × questions get ×1.5 extra on top of the ×2 booster |
 | `cascadeMult` + `luckyBonus` | positive | Lucky cascade adds ×0.6 instead of ×0.3 per stack |
-| `compoundGrowth` + `scoreMultPerfect` | positive | Compound growth rate doubles (×2.25 per answer) |
+| `compoundGrowth` + `scoreMultPerfect` | positive | Compound growth rate squeezes higher — ×1.69 per answer instead of ×1.3 |
 | `luckyFrequency` + `replayLucky` | positive | More frequent lucky rolls create more replay opportunities |
 | `addBooster` + `subtractBooster` | positive | Arithmetic mastery: +10 flat pts on every +/− answer |
+| `compoundGrowth` + `hotZoneBoost` | positive | Hot-zone answers grow scoreMultiplier ×1.5 instead of ×1.3 |
+| `compoundGrowth` + `luckyBonus` | positive | Lucky triggers also multiply scoreMultiplier by ×1.3 — compound ignition |
+| `compoundGrowth` + `anteRush` | positive | Ante Rush bonus also applied to the carried scoreMultiplier at each ante start |
 
 ## Adjacency Bonuses
 
