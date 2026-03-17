@@ -692,7 +692,7 @@ const SYNERGIES = [
   {
     ids: ['compoundGrowth', 'scoreMultPerfect'],
     type: 'positive',
-    effect: 'Compound growth rate doubles — ×2.25 per answer instead of ×1.5.',
+    effect: 'Compound growth rate squeezes higher — ×1.69 per answer instead of ×1.3.',
   },
   {
     ids: ['luckyFrequency', 'replayLucky'],
@@ -703,6 +703,21 @@ const SYNERGIES = [
     ids: ['addBooster', 'subtractBooster'],
     type: 'positive',
     effect: 'Arithmetic mastery: +10 flat pts on every add/subtract answer.',
+  },
+  {
+    ids: ['compoundGrowth', 'hotZoneBoost'],
+    type: 'positive',
+    effect: 'Hot-zone answers grow scoreMultiplier ×1.5 instead of ×1.3. Seek the zone.',
+  },
+  {
+    ids: ['compoundGrowth', 'luckyBonus'],
+    type: 'positive',
+    effect: 'Lucky triggers also multiply scoreMultiplier by ×1.3 — compound ignition.',
+  },
+  {
+    ids: ['compoundGrowth', 'anteRush'],
+    type: 'positive',
+    effect: 'Ante Rush bonus also applied to the carried scoreMultiplier at each ante start.',
   },
 ];
 

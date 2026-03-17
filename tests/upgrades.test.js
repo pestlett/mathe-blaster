@@ -365,8 +365,8 @@ describe('commutative pair mechanic', () => {
 
 // ---- SYNERGIES definitions ----
 describe('SYNERGIES definitions', () => {
-  test('18 synergies defined (5 original + 8 existing + 5 new)', () => {
-    expect(SYNERGIES).toHaveLength(18);
+  test('21 synergies defined (18 existing + 3 new compound synergies)', () => {
+    expect(SYNERGIES).toHaveLength(21);
   });
 
   test('each synergy has ids (2), type, and effect', () => {

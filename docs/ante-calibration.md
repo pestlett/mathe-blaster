@@ -315,13 +315,14 @@ exponential and powerful, but targets can now grow at roughly the same rate (×2
 | `adj_compoundReplay` bonus rate | ×1.6/answer | ×1.4/answer |
 | `compoundGrowth + scoreMultPerfect` synergy | ×2.25/answer | ×1.69/answer |
 | `compoundGrowth` shop availability | ante 1+ | ante 4+ (minAnte: 4) |
-| Ante targets (1–10) | 150 / 350 / 650 / 50k / … (old ×10 curve) | 700 / 1.5k / 3.5k / 5M / 8G / 2.5T / 7P / 2E / 5Z / 1.5Y |
+| Ante targets (1–10) | 150 / 350 / 650 / 50k / … (old ×10 curve) | 700 / 1.5k / 3.5k / 1M / 2.5G / 6.5T / 1.7P / 4.5E / 1.2Z / 3.1Y |
 | Ante targets (11+) | ×10/ante | ×2,620/ante |
 | Reroll cost | 4 + 2×rerolls (escalating) | flat 4 |
 | Boss defeat | no coin reward | +3 coins |
 | 10-streak milestone | same as 5-streak (+2 coins) | +5 coins (special) |
 | Ante interest | none | +15% on unspent coins |
 | New upgrades | — | Overdrive, Ante Rush, Crescendo |
+| New compound synergies | — | `compoundGrowth+hotZoneBoost` (HZ ×1.5), `compoundGrowth+luckyBonus` (lucky fires mult), `compoundGrowth+anteRush` (mult boost on ante clear) |
 
 ### New ante target table
 
@@ -330,13 +331,13 @@ exponential and powerful, but targets can now grow at roughly the same rate (×2
 | 1 | 700 | Achievable no-upgrades (median ~1.3k) |
 | 2 | 1,500 | Streak alone passes comfortably |
 | 3 | 3,500 | Streak+quick combo needed; ~10% fail rate on streak-only |
-| 4 | 5,000,000 | Compound gate — all linear builds eliminated |
-| 5 | 8,000,000,000 | |
-| 6 | 2.5 × 10¹² | |
-| 7 | 7 × 10¹⁴ | |
-| 8 | 2 × 10¹⁸ | |
-| 9 | 5 × 10²¹ | |
-| 10 | 1.5 × 10²⁵ | |
+| 4 | 1,000,000 | Compound gate — linear builds eliminated; compound-slow ~82% pass rate |
+| 5 | 2.5 × 10⁹ | |
+| 6 | 6.5 × 10¹² | |
+| 7 | 1.7 × 10¹⁶ | |
+| 8 | 4.5 × 10¹⁹ | |
+| 9 | 1.2 × 10²³ | |
+| 10 | 3.1 × 10²⁶ | |
 | 11+ | × 2,620/ante | Matches ×1.3^30 compound carry-over |
 
 ### NaN / Infinity boundary (×1.3 era)
@@ -356,7 +357,7 @@ Approximately **ante 94** (compound since ante 4) — unchanged risk, safely abo
 | Question | Notes |
 |----------|-------|
 | Should the ante 2 target kill no-upgrades? | Currently 1% survive to ante 2 under balanced curve. May be too harsh for first-time players who haven't touched the shop yet. Alternative: keep ante 2 target at 350 (current) and only raise ante 3+. |
-| Should mult-stack have a longer runway? | Currently eliminated at ante 4. Would require reducing ante 4 target significantly (to ~5k) OR making linear multipliers cheaper/stronger. |
+| Should mult-stack have a longer runway? | Currently eliminated at ante 4 (target 1M, best linear median ~6.6k). Would require reducing ante 4 target to ~5k OR making linear multipliers cheaper/stronger. |
 | Should compound-fast be challenged at ante 8+? | Currently 100% pass rate through ante 10. To add challenge, ante 8+ targets would need to be ~192,000× higher than current balanced targets (since compound-fast is always 192,000× ahead of compound-slow). |
 | Ante 3 target: 3 500 vs lower | With streakBoost+quickBonus the median score is ~4.1k and p10 is ~3.5k. A 3 500 target creates ~10% fail rate. If this is too punishing for a child-facing game, consider 2 800–3 000. |
 | How to display astronomical targets in the HUD? | Targets beyond 10⁹ (1B) need abbreviated display. Current fmtN() in the simulation shows Z/Y/etc. The game's HUD may need similar notation. |
