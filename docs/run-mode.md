@@ -69,11 +69,11 @@ Weighted sampling is done without replacement within a single shop draw, so thre
 ## Ante Score Targets
 
 ```
-Ante 1:  150 pts
-Ante 2:  350 pts
-Ante 3:  650 pts
-Ante 4: 1050 pts
-Ante 5+: 1050 + (ante-4) × 450 pts
+Ante 1:    150 pts
+Ante 2:    350 pts
+Ante 3:    650 pts
+Ante 4:  50,000 pts
+Ante 5+: 50,000 × 10^(ante-4) pts
 ```
 
 Score is measured from the start of each ante (delta score, not total).
@@ -198,7 +198,7 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | ID | Effect |
 |----|--------|
 | `cascadeMult` | Each Lucky Bonus permanently raises `scoreMultiplier` by +0.3 per stack. With synergy (adj): +0.6 |
-| `compoundGrowth` | `scoreMultiplier` grows ×1.02 after every correct answer. With synergy: ×1.04 |
+| `compoundGrowth` | `scoreMultiplier` grows ×1.5 after every correct answer. With synergy: ×2.25 |
 | `luckyFrequency` | Lucky Bonus threshold reduced from every 5 answers to every 3 |
 | `surge` ⭐ **rare** | One-time activation: immediately multiplies `scoreMultiplier` by ×3. Most powerful single purchase in the shop — buy it whenever it appears |
 
@@ -251,7 +251,7 @@ When both upgrades in a pair are active, additional effects apply:
 | `replayChain` + `chain` | positive | Replay chain kills also advance the lucky counter |
 | `multiBooster` + `scoreMultSmall` | positive | × questions get ×1.5 extra on top of the ×2 booster |
 | `cascadeMult` + `luckyBonus` | positive | Lucky cascade adds ×0.6 instead of ×0.3 per stack |
-| `compoundGrowth` + `scoreMultPerfect` | positive | Compound growth rate doubles (×1.04 per answer) |
+| `compoundGrowth` + `scoreMultPerfect` | positive | Compound growth rate doubles (×2.25 per answer) |
 | `luckyFrequency` + `replayLucky` | positive | More frequent lucky rolls create more replay opportunities |
 | `addBooster` + `subtractBooster` | positive | Arithmetic mastery: +10 flat pts on every +/− answer |
 
@@ -272,7 +272,7 @@ can reorder upgrades between rounds to activate/deactivate these.
 | `echoChain` + `chain` | `adj_echoChain` | Echo chain mirror kill counts as a full lucky tick |
 | `echoStreak` + `quickBonus` | `adj_echoQuick` | Echo streak fires on any quick-bonus answer too |
 | `cascadeMult` + `luckyBonus` | `adj_cascadeLucky` | Every 3rd lucky trigger awards +1 coin |
-| `compoundGrowth` + `replayScore` | `adj_compoundReplay` | Each replay also adds ×1.01 compound growth |
+| `compoundGrowth` + `replayScore` | `adj_compoundReplay` | Each replay also adds ×1.1 compound growth |
 | `multiBooster` + `divideBooster` | `adj_opMasters` | × and ÷ answers also fire a lucky tick |
 
 Adjacency is computed by `getAdjacencyBonuses(upgrades)` in `upgrades.js` and
@@ -328,7 +328,7 @@ state.addBooster         // boolean
 state.subtractBooster    // boolean
 // Exponential mechanics
 state.cascadeMultCount   // number (stacks of cascadeMult owned)
-state.compoundGrowth     // boolean (grows scoreMultiplier ×1.02 each correct answer)
+state.compoundGrowth     // boolean (grows scoreMultiplier ×1.5 each correct answer)
 state.luckyFrequency     // boolean (lucky threshold 5 → 3)
 ```
 
