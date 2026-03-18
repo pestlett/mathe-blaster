@@ -48,6 +48,7 @@ function makeState() {
     cascadeMultCount: 0,
     compoundGrowth: false,
     luckyFrequency: false,
+    breakthroughActive: false,
   };
 }
 
@@ -56,8 +57,8 @@ function findUpgrade(id) {
 }
 
 describe('UPGRADES definitions', () => {
-  test('all 39 upgrades are defined (36 original + 3 new: overdrive, anteRush, crescendo)', () => {
-    expect(UPGRADES).toHaveLength(39);
+  test('all 40 upgrades are defined (36 original + 4 new: overdrive, anteRush, crescendo, breakthrough)', () => {
+    expect(UPGRADES).toHaveLength(40);
   });
 
   test('every upgrade has required fields', () => {
@@ -119,8 +120,8 @@ describe('UPGRADES definitions', () => {
     expect(UNLOCK_UPGRADE_IDS).toHaveLength(4);
   });
 
-  test('shop pool has 27 upgrades', () => {
-    expect(SHOP_UPGRADE_IDS).toHaveLength(27);
+  test('shop pool has 28 upgrades', () => {
+    expect(SHOP_UPGRADE_IDS).toHaveLength(28);
   });
 });
 

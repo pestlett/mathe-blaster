@@ -2,11 +2,11 @@
 
 (function(global) {
   function anteTarget(ante) {
-    const targets = [0, 700, 1500, 3500, 1e6, 2.5e9, 6.5e12, 1.7e16, 4.5e19, 1.2e23, 3.1e26];
+    const targets = [0, 700, 1500, 3500, 3e4, 2.5e9, 8.75e12, 3.0625e16, 1.072e20, 3.75e23, 1.313e27];
     if (ante <= 10) return targets[ante] || 0;
-    // Beyond ante 10: multiply by 1.3^30 ≈ 2620 per ante
+    // Beyond ante 10: multiply by ~3500 per ante (matches late-game compound carry-over)
     let t = targets[10];
-    for (let i = 10; i < ante; i++) t *= 2620;
+    for (let i = 10; i < ante; i++) t *= 3500;
     return t;
   }
 
