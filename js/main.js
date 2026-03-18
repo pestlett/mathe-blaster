@@ -1287,7 +1287,7 @@ const RunDemoRun = {
 
     // Show the real shop so the player can read the options
     UI.showShop(forceOptions, state.runCoins, state.theme, state.activeUpgrades, isFree,
-      state.maxUpgradeSlots || 4, result => doneCb(result));
+      state.maxUpgradeSlots || 4, result => doneCb(result), state.currentAnte, (newCoins) => { state.runCoins = newCoins; refreshRunFeedback(); });
 
     // Narrate while the shop is open (before buying), explaining what to pick and why
     await this.narrate(I18n.t(script.narrateKey), { title: I18n.t('runDemoOverlayTitle') });
@@ -3234,7 +3234,7 @@ function submitAnswer() {
             const unlockedIds = rp.unlockedUpgrades || [];
             const shopOptions = drawShopOptions(3, unlockedIds, state.activeUpgradeIds, state.currentAnte);
             const isFreeStarter = (state.currentAnte === 2); // free pick on first ante
-            UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, shopDoneCb, state.currentAnte);
+            UI.showShop(shopOptions, state.runCoins, state.theme, state.activeUpgrades, isFreeStarter, state.maxUpgradeSlots || 4, shopDoneCb, state.currentAnte, (newCoins) => { state.runCoins = newCoins; refreshRunFeedback(); });
           }
         }
       }
