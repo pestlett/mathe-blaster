@@ -2147,6 +2147,7 @@ function update(dt) {
             refreshRunFeedback();
             if (state.lives <= 0 && state.phase === 'PLAYING') {
               state.phase = 'ENDING';
+              if (state.runMode) { Audio.stopMusic(); Audio.play('runLose'); }
               setTimeout(() => endGame(), 1400);
             }
           }
@@ -3168,6 +3169,7 @@ function submitAnswer() {
           // Missed ante — run ends
           state.anteFailed = { scored: scoreGained, needed: anteTargetScore };
           state.phase = 'ENDING';
+          Audio.stopMusic(); Audio.play('runLose');
           setTimeout(() => endGame(), 1400);
         } else {
           // Advance ante — award coins, open shop
