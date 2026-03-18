@@ -72,17 +72,17 @@ Weighted sampling is done without replacement within a single shop draw, so thre
 ## Ante Score Targets
 
 ```
-Ante 1:         700 pts
-Ante 2:       1,500 pts
-Ante 3:       3,500 pts
-Ante 4:   5,000,000 pts    (compound gate — linear builds eliminated here)
-Ante 5:   8,000,000,000 pts
-Ante 6:   2.5 × 10¹²
-Ante 7:   7 × 10¹⁴
-Ante 8:   2 × 10¹⁸
-Ante 9:   5 × 10²¹
-Ante 10:  1.5 × 10²⁵
-Ante 11+: × 2,620 per ante (= 1.3^30, matching compound carry-over)
+Ante 1:          700 pts
+Ante 2:        1,500 pts
+Ante 3:        3,500 pts
+Ante 4:       30,000 pts   (Breakthrough viable; compound builds far exceed this)
+Ante 5:    2,500,000,000 pts
+Ante 6:    8.75 × 10¹²
+Ante 7:    3.06 × 10¹⁶
+Ante 8:    1.07 × 10²⁰
+Ante 9:    3.75 × 10²³
+Ante 10:   1.31 × 10²⁷
+Ante 11+:  × 3,500 per ante (late-game attrition — compound-slow degrades ~10–20%/ante)
 ```
 
 Score is measured from the start of each ante (delta score, not total).
@@ -192,6 +192,7 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `overdrive` | 24 | 12 | ✓ (max 2) | all |
 | `anteRush` | 20 | 10 | — | all |
 | `crescendo` | 22 | 11 | — | all |
+| `breakthrough` | 24 | 12 | — | all |
 
 ### Shop Upgrade Effects
 
@@ -223,6 +224,7 @@ Prices are set high enough that a 10–15 level run funds 2–4 carefully chosen
 | `overdrive` | Consecutive hot-zone answers stack a +6% score bonus per stack (max ×2.2 at 20 stacks). Resets on any non-hot-zone answer. Stackable: each stack adds 20 more rungs |
 | `anteRush` | Score multiplied by ×1.08 per ante already cleared (stacks multiplicatively per answer) |
 | `crescendo` | Base pts grow +1 per correct answer within the current ante (resets on each ante clear) |
+| `breakthrough` | Each ante you clear doubles your `scoreMultiplier` at the start of the next ante. Designed for linear builds — gives one extra ante of viability before compound is required |
 
 **Slot Expander:**
 

@@ -577,6 +577,22 @@ const UPGRADES = [
     apply(state) { state.crescendoCount = 0; state.crescendoActive = true; },
   },
 
+  {
+    id: 'breakthrough',
+    icon: '🔓',
+    tier: 'shop', rarity: 'uncommon',
+    operations: ['all'],
+    price: 24, sellValue: 12,
+    maxStack: 1,
+    names: { space: 'Breakthrough', ocean: 'Breakthrough', sky: 'Breakthrough' },
+    desc: {
+      space: 'Each ante you clear doubles your score multiplier at the start of the next ante.',
+      ocean: 'Each ante you clear doubles your score multiplier at the start of the next ante.',
+      sky:   'Each ante you clear doubles your score multiplier at the start of the next ante.',
+    },
+    apply(state) { state.breakthroughActive = true; },
+  },
+
   // ---- Rare burst upgrade ----
   {
     id: 'surge',
@@ -605,7 +621,7 @@ const SHOP_UPGRADE_IDS = [
   'replayScore','replayLucky','replayChain','replayHotZone','replayStreak',
   'slotExpander','multiBooster','divideBooster','addBooster','subtractBooster',
   'cascadeMult','compoundGrowth','luckyFrequency','surge',
-  'overdrive','anteRush','crescendo',
+  'overdrive','anteRush','crescendo','breakthrough',
 ];
 
 // ---- Synergies & conflicts ----
@@ -947,6 +963,7 @@ function unapplyUpgrade(upgrade, state) {
       break;
     case 'anteRush':         state.anteRushActive = false; break;
     case 'crescendo':        state.crescendoActive = false; state.crescendoCount = 0; break;
+    case 'breakthrough':     state.breakthroughActive = false; break;
   }
 }
 

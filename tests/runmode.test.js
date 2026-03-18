@@ -11,9 +11,9 @@ describe('run mode ante helpers', () => {
   test('anteTarget scales with higher antes', () => {
     expect(anteTarget(1)).toBe(700);
     expect(anteTarget(2)).toBe(1500);
-    expect(anteTarget(4)).toBe(1e6);
+    expect(anteTarget(4)).toBe(3e4);
     expect(anteTarget(5)).toBe(2.5e9);
-    expect(anteTarget(7)).toBe(1.7e16);
+    expect(anteTarget(7)).toBe(3.0625e16);
   });
 
   test('getAnteProgressSnapshot measures score gained within the current ante', () => {

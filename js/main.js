@@ -3182,6 +3182,10 @@ function submitAnswer() {
           if (interest > 0) state.runCoins += interest;
           // Crescendo resets each ante
           if (state.crescendoActive) state.crescendoCount = 0;
+          // Breakthrough: double scoreMultiplier on each ante clear
+          if (state.breakthroughActive) {
+            state.scoreMultiplier = (state.scoreMultiplier || 1) * 2;
+          }
           // SYNERGY: compoundGrowth + anteRush → carried scoreMultiplier also ×1.08 per ante
           if (state.compoundGrowth && state.anteRushActive) {
             state.scoreMultiplier = (state.scoreMultiplier || 1) * 1.08;
