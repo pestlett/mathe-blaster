@@ -404,6 +404,22 @@ const Audio = (() => {
           env.gain.setValueAtTime(0.1, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
           osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
         });
+      },
+      runLose() {
+        // Wah-wah-wah-waaaaah (sad trombone, sawtooth for that brass buzz)
+        const c = getCtx(); const t = c.currentTime;
+        [466, 415, 370].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(f, t + i * 0.32);
+          osc.frequency.linearRampToValueAtTime(f * 0.88, t + i * 0.32 + 0.26);
+          env.gain.setValueAtTime(0.18, t + i * 0.32); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.32 + 0.28);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.32); osc.stop(t + i * 0.32 + 0.33);
+        });
+        const osc4 = c.createOscillator(); const env4 = c.createGain();
+        osc4.type = 'sawtooth'; osc4.frequency.setValueAtTime(311, t + 0.96);
+        osc4.frequency.exponentialRampToValueAtTime(88, t + 0.96 + 1.0);
+        env4.gain.setValueAtTime(0.18, t + 0.96); env4.gain.exponentialRampToValueAtTime(0.001, t + 0.96 + 1.1);
+        osc4.connect(env4); env4.connect(c.destination); osc4.start(t + 0.96); osc4.stop(t + 0.96 + 1.2);
       }
     },
     ocean: {
@@ -460,6 +476,22 @@ const Audio = (() => {
           env.gain.setValueAtTime(0.1, t + i * 0.07); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.1);
           osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.07); osc.stop(t + i * 0.07 + 0.15);
         });
+      },
+      runLose() {
+        // Wah-wah-wah-waaaaah (smooth foghorn descend, sine for the ocean)
+        const c = getCtx(); const t = c.currentTime;
+        [466, 415, 370].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(f, t + i * 0.34);
+          osc.frequency.linearRampToValueAtTime(f * 0.88, t + i * 0.34 + 0.28);
+          env.gain.setValueAtTime(0.2, t + i * 0.34); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.34 + 0.30);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.34); osc.stop(t + i * 0.34 + 0.35);
+        });
+        const osc4 = c.createOscillator(); const env4 = c.createGain();
+        osc4.type = 'sine'; osc4.frequency.setValueAtTime(311, t + 1.02);
+        osc4.frequency.exponentialRampToValueAtTime(88, t + 1.02 + 1.1);
+        env4.gain.setValueAtTime(0.2, t + 1.02); env4.gain.exponentialRampToValueAtTime(0.001, t + 1.02 + 1.2);
+        osc4.connect(env4); env4.connect(c.destination); osc4.start(t + 1.02); osc4.stop(t + 1.02 + 1.3);
       }
     },
     sky: {
@@ -513,6 +545,22 @@ const Audio = (() => {
           env.gain.setValueAtTime(0.1, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
           osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
         });
+      },
+      runLose() {
+        // Wah-wah-wah-waaaaah (airy flute descend, triangle)
+        const c = getCtx(); const t = c.currentTime;
+        [466, 415, 370].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.32);
+          osc.frequency.linearRampToValueAtTime(f * 0.88, t + i * 0.32 + 0.26);
+          env.gain.setValueAtTime(0.16, t + i * 0.32); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.32 + 0.28);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.32); osc.stop(t + i * 0.32 + 0.33);
+        });
+        const osc4 = c.createOscillator(); const env4 = c.createGain();
+        osc4.type = 'triangle'; osc4.frequency.setValueAtTime(311, t + 0.96);
+        osc4.frequency.exponentialRampToValueAtTime(88, t + 0.96 + 1.0);
+        env4.gain.setValueAtTime(0.16, t + 0.96); env4.gain.exponentialRampToValueAtTime(0.001, t + 0.96 + 1.1);
+        osc4.connect(env4); env4.connect(c.destination); osc4.start(t + 0.96); osc4.stop(t + 0.96 + 1.2);
       }
     },
     cats: {
@@ -573,6 +621,22 @@ const Audio = (() => {
           env.gain.setValueAtTime(0.09, t + i * 0.06); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
           osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.15);
         });
+      },
+      runLose() {
+        // Three sad meows sliding down, then a long sorry meow
+        const c = getCtx(); const t = c.currentTime;
+        [600, 500, 420].forEach((f, i) => {
+          const osc = c.createOscillator(); const env = c.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(f, t + i * 0.34);
+          osc.frequency.exponentialRampToValueAtTime(f * 0.75, t + i * 0.34 + 0.28);
+          env.gain.setValueAtTime(0.15, t + i * 0.34); env.gain.exponentialRampToValueAtTime(0.001, t + i * 0.34 + 0.32);
+          osc.connect(env); env.connect(c.destination); osc.start(t + i * 0.34); osc.stop(t + i * 0.34 + 0.37);
+        });
+        const osc4 = c.createOscillator(); const env4 = c.createGain();
+        osc4.type = 'triangle'; osc4.frequency.setValueAtTime(380, t + 1.02);
+        osc4.frequency.exponentialRampToValueAtTime(110, t + 1.02 + 1.0);
+        env4.gain.setValueAtTime(0.15, t + 1.02); env4.gain.exponentialRampToValueAtTime(0.001, t + 1.02 + 1.1);
+        osc4.connect(env4); env4.connect(c.destination); osc4.start(t + 1.02); osc4.stop(t + 1.02 + 1.2);
       }
     }
   };
