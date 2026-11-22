@@ -462,13 +462,16 @@ const NumberLine = (() => {
       showTargetArcs = false,
       clickedGaps = new Set(),
       interactive = true,
+      compact = false,
     } = opts;
 
     const c = calc(q);
-    const x0 = 56;
-    const x1 = 724;
+    const vbW = compact ? 460 : 780;
+    const x0 = compact ? 42 : 56;
+    const x1 = compact ? 418 : 724;
     const stepX = (x1 - x0) / (q.ticks - 1);
-    const y = 92;
+    const y = compact ? 98 : 92;
+    const arcLift = compact ? 40 : 44;
     const know = new Map(q.known.map(p => [p.i, p.v]));
 
     // 1. Optional dashed hint arcs between the two labelled numbers (Step 1 hint)
@@ -481,8 +484,8 @@ const NumberLine = (() => {
         const gx1 = x0 + (i + 1) * stepX;
         const mid = (gx0 + gx1) / 2;
         parts.push(
-          `<path d="M ${gx0 + 2} ${y - 14} Q ${mid} ${y - 44} ${gx1 - 2} ${y - 14}" fill="none" stroke="#f7c948" stroke-width="2.5" stroke-dasharray="5 4" opacity="0.9"/>` +
-          `<text x="${mid}" y="${y - 34}" text-anchor="middle" font-size="13" font-weight="900" fill="#f7c948">${num}</text>`
+          `<path d="M ${gx0 + 2} ${y - 14} Q ${mid} ${y - arcLift} ${gx1 - 2} ${y - 14}" fill="none" stroke="#f7c948" stroke-width="2.5" stroke-dasharray="5 4" opacity="0.9"/>` +
+          `<text x="${mid}" y="${y - (compact ? 31 : 34)}" text-anchor="middle" font-size="${compact ? 14 : 13}" font-weight="900" fill="#f7c948">${num}</text>`
         );
         num++;
       }
@@ -497,6 +500,7 @@ const NumberLine = (() => {
       const to = q.a;
       const dir = to >= from ? 1 : -1;
       const count = Math.abs(to - from);
+      const showStepOnArc = !compact || stepX >= 68;
       const parts = [];
       for (let s = 0; s < count; s++) {
         const i0 = from + s * dir;
@@ -504,9 +508,10 @@ const NumberLine = (() => {
         const gx0 = x0 + i0 * stepX;
         const gx1 = x0 + i1 * stepX;
         const mid = (gx0 + gx1) / 2;
+        const arcLabel = showStepOnArc ? `${dir > 0 ? '+' : '−'}${fmt(c.step)}` : `${s + 1}`;
         parts.push(
-          `<path d="M ${gx0} ${y - 14} Q ${mid} ${y - 46} ${gx1} ${y - 14}" fill="none" stroke="#2ed573" stroke-width="2.8" stroke-linecap="round"/>` +
-          `<text x="${mid}" y="${y - 36}" text-anchor="middle" font-size="12" font-weight="900" fill="#2ed573">${dir > 0 ? '+' : '−'}${fmt(c.step)}</text>`
+          `<path d="M ${gx0} ${y - 14} Q ${mid} ${y - (compact ? 42 : 46)} ${gx1} ${y - 14}" fill="none" stroke="#2ed573" stroke-width="2.8" stroke-linecap="round"/>` +
+          `<text x="${mid}" y="${y - (compact ? 33 : 36)}" text-anchor="middle" font-size="${compact ? 13 : 12}" font-weight="900" fill="#2ed573">${arcLabel}</text>`
         );
       }
       targetArcsSvg = `<g class="nl-solution-arcs">${parts.join('')}</g>`;
@@ -517,6 +522,7 @@ const NumberLine = (() => {
     if (interactive && !showAll) {
       const sorted = Array.from(clickedGaps).sort((a, b) => a - b);
       const orderMap = new Map(sorted.map((gapIdx, pos) => [gapIdx, pos + 1]));
+      const badgeR = compact ? 12 : 11;
       const parts = [];
       for (let i = 0; i < q.ticks - 1; i++) {
         const gx0 = x0 + i * stepX;
@@ -524,13 +530,13 @@ const NumberLine = (() => {
         const mid = (gx0 + gx1) / 2;
         const isActive = orderMap.has(i);
         const arc = isActive
-          ? `<path class="nl-user-arc" d="M ${gx0 + 3} ${y - 13} Q ${mid} ${y - 44} ${gx1 - 3} ${y - 13}" fill="none" stroke="#38ef7d" stroke-width="3" stroke-linecap="round"/>` +
-            `<circle cx="${mid}" cy="${y - 34}" r="11" fill="#183a2c" stroke="#38ef7d" stroke-width="2"/>` +
-            `<text x="${mid}" y="${y - 30}" text-anchor="middle" font-size="12" font-weight="900" fill="#38ef7d">${orderMap.get(i)}</text>`
-          : `<path class="nl-gap-hover" d="M ${gx0 + 4} ${y - 13} Q ${mid} ${y - 36} ${gx1 - 4} ${y - 13}" fill="none" stroke="rgba(162,155,254,0.35)" stroke-width="2" stroke-dasharray="4 4"/>`;
+          ? `<path class="nl-user-arc" d="M ${gx0 + 2} ${y - 13} Q ${mid} ${y - arcLift} ${gx1 - 2} ${y - 13}" fill="none" stroke="#38ef7d" stroke-width="3" stroke-linecap="round"/>` +
+            `<circle cx="${mid}" cy="${y - (compact ? 32 : 34)}" r="${badgeR}" fill="#183a2c" stroke="#38ef7d" stroke-width="2"/>` +
+            `<text x="${mid}" y="${y - (compact ? 27.5 : 30)}" text-anchor="middle" font-size="${compact ? 13 : 12}" font-weight="900" fill="#38ef7d">${orderMap.get(i)}</text>`
+          : `<path class="nl-gap-hover" d="M ${gx0 + 3} ${y - 13} Q ${mid} ${y - 34} ${gx1 - 3} ${y - 13}" fill="none" stroke="rgba(162,155,254,0.35)" stroke-width="2" stroke-dasharray="4 4"/>`;
         parts.push(
           `<g class="nl-gap-hit${isActive ? ' active' : ''}" data-gap="${i}" role="button" tabindex="0" aria-label="${_t('nlGapAria', { n: i + 1 })}">` +
-          `<rect x="${gx0 + 2}" y="${y - 48}" width="${Math.max(10, stepX - 4)}" height="68" fill="transparent"/>` +
+          `<rect x="${gx0 + 1}" y="${y - 52}" width="${Math.max(12, stepX - 2)}" height="${compact ? 84 : 68}" fill="transparent"/>` +
           `${arc}</g>`
         );
       }
@@ -543,23 +549,40 @@ const NumberLine = (() => {
       const isKnown = know.has(i);
       const isA = i === q.a;
       let label = '';
+
+      // Prevent edge labels from clipping on compact mobile viewBox
+      let anchor = 'middle';
+      let labelX = x;
+      if (compact) {
+        if (i === 0) { anchor = 'start'; labelX = Math.max(8, x - 28); }
+        else if (i === q.ticks - 1) { anchor = 'end'; labelX = Math.min(vbW - 8, x + 28); }
+      }
+
       if (isKnown) {
-        label = `<text x="${x}" y="142" text-anchor="middle" font-size="18" fill="#f0f0ff" font-weight="900">${fmt(know.get(i))}</text>`;
+        label = `<text x="${labelX}" y="${compact ? 144 : 142}" text-anchor="${anchor}" font-size="${compact ? 18.5 : 18}" fill="#f0f0ff" font-weight="900">${fmt(know.get(i))}</text>`;
       } else if (showAll && !isA) {
         const val = c.left.v + (i - c.left.i) * c.step;
-        label = `<text x="${x}" y="142" text-anchor="middle" font-size="13.5" fill="#a8b4d4" font-weight="700">${fmt(val)}</text>`;
+        const labelY = compact ? (i % 2 === 0 ? 142 : 162) : 142;
+        label = `<text x="${labelX}" y="${labelY}" text-anchor="${anchor}" font-size="${compact ? 12 : 13.5}" fill="#a8b4d4" font-weight="700">${fmt(val)}</text>`;
       }
       if (showAll && isA) {
-        label = `<text x="${x}" y="142" text-anchor="middle" font-size="18" fill="#f7c948" font-weight="900">${fmt(c.target)}</text>`;
+        const aLabelY = compact ? 166 : 142;
+        label = `<text x="${labelX}" y="${aLabelY}" text-anchor="${anchor}" font-size="${compact ? 17.5 : 18}" fill="#f7c948" font-weight="900">${fmt(c.target)}</text>`;
       }
       const stroke = isA ? '#a29bfe' : isKnown ? '#f0f0ff' : '#7b8db5';
       const sw = isA ? '4' : isKnown ? '3.4' : '2.6';
-      return `<line x1="${x}" y1="${y - 12}" x2="${x}" y2="${y + 12}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>${label}`;
+      const tickHalf = compact ? 13 : 12;
+      return `<line x1="${x}" y1="${y - tickHalf}" x2="${x}" y2="${y + tickHalf}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>${label}`;
     }).join('');
 
     const aX = x0 + q.a * stepX;
+    const badgeW = compact ? 42 : 40;
+    const badgeH = compact ? 36 : 34;
+    const badgeCenterX = compact ? Math.min(vbW - 24, Math.max(24, aX)) : aX;
+    const lineStart = compact ? 16 : 22;
+    const lineEnd = compact ? vbW - 16 : 758;
     const stepCaption = showAll
-      ? `<text x="390" y="170" text-anchor="middle" font-size="15" fill="#2ed573" font-weight="800">${_t('nlSvgOneJump', { step: fmt(c.step) })}</text>`
+      ? `<text x="${vbW / 2}" y="${compact ? 190 : 170}" text-anchor="middle" font-size="${compact ? 15.5 : 15}" fill="#2ed573" font-weight="800">${_t('nlSvgOneJump', { step: fmt(c.step) })}</text>`
       : '';
 
     const titleText = _t('nlSvgTitle', {
@@ -570,15 +593,15 @@ const NumberLine = (() => {
 
     return (
       `<title>${titleText}</title>` +
-      `<line x1="22" y1="${y}" x2="758" y2="${y}" stroke="#8fa3cf" stroke-width="3" stroke-linecap="round"/>` +
-      `<path d="M750 ${y - 6} L760 ${y} L750 ${y + 6}" fill="none" stroke="#8fa3cf" stroke-width="3" stroke-linecap="round"/>` +
+      `<line x1="${lineStart}" y1="${y}" x2="${lineEnd}" y2="${y}" stroke="#8fa3cf" stroke-width="3" stroke-linecap="round"/>` +
+      `<path d="M${lineEnd - 8} ${y - 6} L${lineEnd + 2} ${y} L${lineEnd - 8} ${y + 6}" fill="none" stroke="#8fa3cf" stroke-width="3" stroke-linecap="round"/>` +
       hintArcsSvg +
       targetArcsSvg +
       interactiveGapsSvg +
       ticksSvg +
-      `<line x1="${aX}" y1="45" x2="${aX}" y2="${y - 16}" stroke="#a29bfe" stroke-width="2" stroke-dasharray="4 4"/>` +
-      `<rect x="${aX - 20}" y="8" width="40" height="34" rx="11" fill="#7c63e6"/>` +
-      `<text x="${aX}" y="31" text-anchor="middle" font-size="20" fill="#ffffff" font-weight="900">A</text>` +
+      `<line x1="${aX}" y1="${badgeH + 10}" x2="${aX}" y2="${y - 16}" stroke="#a29bfe" stroke-width="2" stroke-dasharray="4 4"/>` +
+      `<rect x="${badgeCenterX - badgeW / 2}" y="8" width="${badgeW}" height="${badgeH}" rx="11" fill="#7c63e6"/>` +
+      `<text x="${badgeCenterX}" y="${compact ? 33 : 31}" text-anchor="middle" font-size="${compact ? 21 : 20}" fill="#ffffff" font-weight="900">A</text>` +
       stepCaption
     );
   }
@@ -668,6 +691,11 @@ const NumberLine = (() => {
     const countEl = _$('nl-gap-count');
     const clearBtn = _$('nl-gap-clear');
     if (!bar || !countEl || !clearBtn) return;
+    if (state.phase === 'done') {
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
     const n = state.clickedGaps.size;
     if (n > 0) {
       countEl.textContent = _t('nlGapsCounted', { n });
@@ -678,16 +706,23 @@ const NumberLine = (() => {
     }
   }
 
+  function _isCompactViewport() {
+    return typeof window !== 'undefined' && typeof window.innerWidth === 'number' && window.innerWidth <= 640;
+  }
+
   function _renderSvg() {
     const svg = _$('nl-svg');
     const q = _current();
     if (!svg || !q) return;
+    const compact = _isCompactViewport();
+    svg.setAttribute('viewBox', compact ? '0 0 460 198' : '0 0 780 184');
     svg.innerHTML = buildLineSvg(q, {
       showAll: state.phase === 'done',
       showIntervalArcs: state.showIntervalArcs,
       showTargetArcs: state.phase === 'done',
       clickedGaps: state.clickedGaps,
       interactive: state.phase !== 'done',
+      compact,
     });
     _updateGapCounterBar();
   }
@@ -1226,6 +1261,29 @@ const NumberLine = (() => {
         startPractice(state.practiceTier, Number(btn.dataset.nlRange));
       });
     });
+
+    // Mobile collapsible Strategy Box (Trickkiste) toggle
+    const trickToggle = _$('nl-trick-toggle');
+    const sidebar = _$('nl-sidebar');
+    if (trickToggle && sidebar) {
+      trickToggle.addEventListener('click', () => {
+        const isOpen = sidebar.classList.toggle('nl-sidebar-open');
+        trickToggle.classList.toggle('active', isOpen);
+        trickToggle.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+
+    // Adapt SVG viewBox cleanly when rotating phone or resizing across 640px
+    let lastCompact = _isCompactViewport();
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', () => {
+        const nowCompact = _isCompactViewport();
+        if (nowCompact !== lastCompact) {
+          lastCompact = nowCompact;
+          _renderSvg();
+        }
+      });
+    }
   }
 
   return {

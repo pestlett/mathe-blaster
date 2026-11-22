@@ -217,6 +217,13 @@ describe('NumberLine SVG & worked steps', () => {
     expect(solvedSvg).toContain('nl-solution-arcs');
     expect(solvedSvg).toContain('473 000');
     expect(solvedSvg).toContain('3 000');
+
+    const compactSvg = ctx.NumberLine.buildLineSvg(q, { compact: true, showAll: true, showTargetArcs: true, interactive: false });
+    expect(compactSvg).toContain('458 000');
+    expect(compactSvg).toContain('482 000');
+    expect(compactSvg).toContain('473 000');
+    expect(compactSvg).toContain('text-anchor="start"');
+    expect(compactSvg).toContain('text-anchor="end"');
   });
 });
 

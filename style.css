@@ -3289,6 +3289,7 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
               radial-gradient(ellipse at 90% 10%, #102a3c 0%, transparent 55%),
               var(--bg-dark);
   overflow-y: auto;
+  overflow-x: hidden;
   align-items: flex-start;
   justify-content: center;
   padding: 22px 18px 48px;
@@ -3297,6 +3298,8 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
 
 .nl-shell {
   width: min(1040px, 100%);
+  min-width: 0;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -3436,6 +3439,27 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
   color: #fff;
 }
 
+.nl-trick-toggle {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  border-color: rgba(247, 201, 72, 0.45);
+  color: #f7c948;
+  background: rgba(247, 201, 72, 0.08);
+}
+.nl-trick-toggle.active {
+  background: rgba(247, 201, 72, 0.2);
+  border-color: #f7c948;
+  color: #fff;
+}
+.nl-trick-toggle .nl-chevron {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+.nl-trick-toggle[aria-expanded="true"] .nl-chevron {
+  transform: rotate(180deg);
+}
+
 .nl-practice-controls {
   display: flex;
   flex-wrap: wrap;
@@ -3501,12 +3525,14 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
 
 .nl-main {
   padding: 24px;
+  min-width: 0;
 }
 
 .nl-sidebar {
   padding: 18px;
   position: sticky;
   top: 16px;
+  min-width: 0;
 }
 .nl-sidebar[hidden] {
   display: none;
@@ -3706,6 +3732,12 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
   color: #7bffb0;
   font-size: 0.78rem;
   font-weight: 800;
+}
+.nl-step-badge[hidden],
+.nl-gap-bar[hidden],
+.nl-gap-clear[hidden],
+.nl-saved-badge[hidden] {
+  display: none;
 }
 
 /* Action buttons */
@@ -4006,21 +4038,35 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
 }
 
 @media (max-width: 820px) {
+  #screen-numberline {
+    padding: 12px 10px 36px;
+  }
   .nl-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .nl-trick-toggle {
+    display: inline-flex;
   }
   .nl-sidebar {
     position: static;
     order: -1;
+    display: none;
+    padding: 14px;
+  }
+  .nl-sidebar.nl-sidebar-open {
+    display: block;
   }
   .nl-sidebar-details {
     display: none;
   }
   .nl-fieldset {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
   .nl-main {
-    padding: 18px 15px;
+    padding: 16px 13px;
+    border-radius: 18px;
   }
   .nl-summary-grid {
     gap: 8px;
@@ -4030,6 +4076,145 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
   }
   .nl-summary-stat span {
     font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .nl-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .nl-header-left {
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .nl-back-btn {
+    padding: 6px 10px;
+    font-size: 0.82rem;
+  }
+  .nl-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+  .nl-eyebrow,
+  .nl-intro {
+    display: none;
+  }
+  .nl-title {
+    font-size: 1.15rem;
+    line-height: 1.15;
+  }
+  .nl-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .nl-saved-badge {
+    font-size: 0.74rem;
+    padding: 4px 9px;
+  }
+  .nl-menu-bar {
+    padding: 9px 10px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+    gap: 8px;
+  }
+  .nl-mode-group {
+    gap: 6px;
+  }
+  .nl-pill-btn {
+    padding: 7px 11px;
+    font-size: 0.8rem;
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+  .nl-chip-btn {
+    padding: 5px 9px;
+    font-size: 0.76rem;
+  }
+  .nl-kicker {
+    margin: 12px 0 6px;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+  .nl-q-title {
+    font-size: 1.2rem;
+  }
+  .nl-q-subtitle {
+    font-size: 0.86rem;
+  }
+  .nl-chart {
+    padding: 10px 6px 8px;
+    margin: 12px 0;
+    border-radius: 14px;
+  }
+  .nl-line-scroll {
+    overflow-x: visible;
+  }
+  .nl-line-scroll svg {
+    min-width: 0;
+    width: 100%;
+  }
+  .nl-gap-bar {
+    font-size: 0.76rem;
+  }
+  .nl-chart-caption {
+    font-size: 0.76rem;
+  }
+  .nl-field {
+    padding: 11px;
+  }
+  .nl-field input {
+    font-size: 1.08rem;
+    padding: 11px 12px;
+  }
+  /* Collapse locked Step 2 to a sleek 1-line teaser on mobile so Step 1 + CTA fit above keyboard */
+  .nl-field.nl-field-locked {
+    padding: 9px 11px;
+  }
+  .nl-field.nl-field-locked label {
+    margin-bottom: 0;
+    font-size: 0.82rem;
+  }
+  .nl-field.nl-field-locked input,
+  .nl-field.nl-field-locked .nl-field-note {
+    display: none;
+  }
+  /* Collapse already-solved Step 1 to a compact confirmed chip on mobile while working on Step 2 */
+  .nl-field.nl-field-done input,
+  .nl-field.nl-field-done .nl-field-note {
+    display: none;
+  }
+  .nl-field.nl-field-done label {
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+  .nl-field.nl-field-done .nl-step-badge {
+    margin-top: 2px;
+  }
+  .nl-actions {
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .nl-actions .nl-btn-primary {
+    flex: 1 1 100%;
+    min-height: 46px;
+    font-size: 0.98rem;
+  }
+  .nl-actions .nl-btn-secondary,
+  .nl-actions .nl-btn-quiet {
+    flex: 1 1 calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 0.84rem;
+  }
+  .nl-feedback,
+  .nl-tipbox {
+    padding: 12px 13px;
+    font-size: 0.88rem;
   }
 }
 
