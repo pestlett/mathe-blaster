@@ -46,10 +46,17 @@ Operations are extended to larger number ranges:
 | ×/÷ by multiples of 10 | Zehnerrechnen | 10–900 |
 | Single × multi-digit | Halbschriftliches Rechnen | single × 2–3 digit |
 
-### Klasse 4 — Written Algorithms
-- Full written multiplication (schriftliche Multiplikation)
-- Long division (schriftliche Division)
-- Not yet in Mathe Blaster scope
+### Klasse 4 — Orientierung im Zahlenraum bis 1.000.000 (Zahlenstrahl-Labor only)
+- **In scope (exclusively inside the untimed `Zahlenstrahl-Labor` / Number Line Lab):**
+  - Reading and locating numbers on strictly proportional number lines (*Orientierung am Zahlenstrahl*) in discrete number ranges: `10 000`, `100 000`, `1 000 000`
+  - Finding equal step sizes (*Schrittgröße*) by counting **gaps/jumps** (*Lücken/Sprünge*) between two labelled ticks and dividing span by interval count (`Unterschied ÷ Anzahl Schritte`), reinforced by the inverse check (`Umkehraufgabe`)
+  - Progressive 3-tier structure: (1) equal steps within one major block, (2) crossing major place-value boundaries & counting backwards from the right anchor, (3) interior labelled anchors
+  - Isolated completely from Klasse 2–3 arcade pools, `wrongQueue`, and `masteredLevel`
+- **Out of scope (not yet in Mathe Blaster):**
+  - Full written multiplication (*schriftliche Multiplikation*)
+  - Long division (*schriftliche Division*)
+  - Fractions and decimals
+  - Klasse 4 numbers inside the timed arcade game
 
 ---
 
@@ -140,8 +147,9 @@ and adding {100,...,900} on hard. Do not include non-round numbers (e.g. 15,
 | Feature | In scope | Out of scope |
 |---------|----------|-------------|
 | Tables | 1–10 (Klasse 2), extension to 12 or 20 optional | Beyond ×20 |
-| Addition/subtraction | ≤ 100 (Kl.3), ≤ 1000 (Kl.3) | ≥ 10,000 |
+| Addition/subtraction | ≤ 100 (Kl.3), ≤ 1000 (Kl.3) | ≥ 10,000 in arcade mode |
 | Halbschriftlich | single × 2-digit (easy), × 3-digit (hard) | single × 4-digit |
+| Orientierung am Zahlenstrahl | Untimed Number Line Lab: discrete ranges `10 000` / `100 000` / `1 000 000` (Kl.4) | Timed arcade drills ≥ 10,000 |
 | Written algorithm | Not in game | Klasse 4 scope |
 | Fractions | Not in game | Klasse 4 scope |
 | Decimals | Not in game | Klasse 4 scope |
@@ -155,6 +163,6 @@ Before adding any new question type, operation modifier, or number range, ask:
 2. What mental strategy does PIKAS expect children to use?
 3. Does this fit within the existing `difficulty` axis (easy/medium/hard)?
 4. Does it require a new setting flag, or can it be expressed with existing ones?
-5. Would a German Klasse 3 teacher recognise this as appropriate content?
+5. Would a German Klasse 3 teacher recognise this as appropriate for the arcade game — or a Klasse 4 teacher recognise it as appropriate for the untimed Zahlenstrahl-Labor?
 
 If the answer to #5 is no, do not add it.

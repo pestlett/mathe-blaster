@@ -14,6 +14,7 @@ const ASSETS = [
   './js/objects.js',
   './js/targeting.js',
   './js/themes.js',
+  './js/numberline.js',
   './js/ui.js',
   './js/engine.js',
   './js/version.js',

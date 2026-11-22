@@ -4,14 +4,14 @@
 
 ```
 index.html
-  └── loads (in order): version.js, engine.js, audio.js, themes.js,
-                         questions.js, objects.js, targeting.js, progress.js,
-                         upgrades.js, i18n.js, voice.js, ui.js, main.js
+  └── loads (in order): version.js, upgrades.js, i18n.js, voice.js, progress.js,
+                         runmode.js, audio.js, questions.js, objects.js, targeting.js,
+                         themes.js, numberline.js, ui.js, engine.js, main.js
 ```
 
 All modules are IIFE-based globals (no bundler). They expose a single
 capitalized object: `Engine`, `Audio`, `Themes`, `Questions`, `Objects`,
-`Targeting`, `Progress`, `Voice`, `UI`, `I18n`.
+`Targeting`, `Progress`, `NumberLine`, `Voice`, `UI`, `I18n`.
 
 ## Data Flow
 
@@ -65,7 +65,8 @@ Game ends
 | `audio.js` | Web Audio synthesis, SFX, adaptive layered music | Triggering (main.js calls play(), setMusicState(), notifyStreak(), notifyLevel(), setRunMode()) |
 | `progress.js` | localStorage read/write, mastery, achievements | In-memory state |
 | `upgrades.js` | Upgrade definitions, synergies, adjacency | Applying during play (main.js reads state flags) |
-| `ui.js` | DOM screen management, HUD, overlays, onboarding | Canvas |
+| `numberline.js` | Klasse 4 Number Line Lab (`screen-numberline`): curated course, PIKAS-clean generator, SVG rendering, 2-step verification, diagnostic feedback, learning report | Arcade game loop, main.js state |
+| `ui.js` | DOM screen management (`screen-onboarding`, `screen-game`, `screen-gameover`, `screen-leaderboard`, `screen-dashboard`, `screen-achievements`, `screen-numberline`), HUD, overlays, onboarding | Canvas |
 | `i18n.js` | String translations EN/DE/ES | UI rendering |
 | `voice.js` | Speech recognition, echo suppression, word parsing | Game logic |
 

@@ -89,6 +89,14 @@ to the player-specific key automatically.
     [dateKey]: sessionResult    // dateKey = "YYYY-M-D"
   },
 
+  numberline: {
+    roundsCompleted:    number,        // total Number Line Lab rounds completed
+    bestFirstTryScore:  number,        // highest first-try count (out of 8)
+    weakStep:           boolean,       // true if step errors > A errors in last round
+    weakA:              boolean,       // true if A errors > step errors in last round
+    lastPlayed:         timestamp|null // unix ms of last completed lab round
+  },
+
   playerSettings: {
     age:          number,
     mode:         'normal'|'practice',

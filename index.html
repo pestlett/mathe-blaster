@@ -142,6 +142,10 @@
       <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
       <button id="btn-run-demo" class="btn-run-demo" data-i18n="runDemoBtnLabel">▶ Watch Run Mode Demo</button>
       <p class="run-mode-mobile-hint">💡 Run Mode works best on a laptop or desktop — voice input and fast typing are much harder on phones.</p>
+      <button id="btn-numberline-lab" class="btn-numberline-lab">
+        <span data-i18n="nlMenuBtn">📐 Number Line Lab</span>
+        <span class="nl-menu-subtitle" data-i18n="nlMenuSubtitle">Grade 4 · Steps &amp; Big Numbers</span>
+      </button>
       <div class="home-btns">
         <button id="btn-leaderboard-home" class="btn-secondary" data-i18n="leaderboard">🏅 Leaderboard</button>
         <button id="btn-achievements-home" class="btn-secondary" data-i18n="achievementsBtn">🏆 Achievements</button>
@@ -320,6 +324,158 @@
     </div>
   </div>
 
+  <!-- Number Line Lab Screen (Klasse 4 — Zahlenstrahl-Labor) -->
+  <div id="screen-numberline" class="screen">
+    <div class="nl-shell">
+      <header class="nl-header">
+        <div class="nl-header-left">
+          <button id="nl-back-btn" class="nl-back-btn" type="button" data-i18n="nlBackMenu">← Menu</button>
+          <div class="nl-brand">
+            <div class="nl-logo" aria-hidden="true">📐</div>
+            <div>
+              <p class="nl-eyebrow" data-i18n="nlEyebrow">Maths · Grade 4</p>
+              <h2 class="nl-title" data-i18n="nlTitle">Number Line Lab</h2>
+            </div>
+          </div>
+        </div>
+        <div class="nl-header-right">
+          <span class="nl-saved-badge" id="nl-saved-stats" hidden></span>
+          <div class="lang-switcher nl-lang-switcher">
+            <button class="lang-btn active" data-lang="de" type="button">DE</button>
+            <button class="lang-btn" data-lang="en" type="button">EN</button>
+            <button class="lang-btn" data-lang="es" type="button">ES</button>
+          </div>
+        </div>
+      </header>
+
+      <p class="nl-intro" data-i18n-html="nlIntro">Find out how big one step is and which number stands at <b>A</b>. No timer — if you make a mistake, you'll get a helpful hint and can try again.</p>
+
+      <!-- Lab Mode & Range Menu Bar -->
+      <nav class="nl-menu-bar" aria-label="Number Line Lab modes">
+        <div class="nl-mode-group">
+          <button class="nl-pill-btn nl-mode-btn active" type="button" data-nl-mode="course" data-i18n="nlModeCourse">🎯 Guided Course (8)</button>
+          <button class="nl-pill-btn nl-mode-btn" type="button" data-nl-mode="practice" data-i18n="nlModePractice">✨ Fresh Number Lines</button>
+        </div>
+        <div class="nl-practice-controls" id="nl-practice-controls" hidden>
+          <div class="nl-sub-group">
+            <span class="nl-sub-label" data-i18n="nlFilterLevel">Level:</span>
+            <button class="nl-chip-btn nl-tier-btn active" type="button" data-nl-tier="mixed" data-i18n="nlTierMixed">All</button>
+            <button class="nl-chip-btn nl-tier-btn" type="button" data-nl-tier="0" data-i18n="nlTier0">1 · Steps</button>
+            <button class="nl-chip-btn nl-tier-btn" type="button" data-nl-tier="1" data-i18n="nlTier1">2 · Cross &amp; Back</button>
+            <button class="nl-chip-btn nl-tier-btn" type="button" data-nl-tier="2" data-i18n="nlTier2">3 · Inside</button>
+          </div>
+          <div class="nl-sub-group">
+            <span class="nl-sub-label" data-i18n="nlFilterRange">Range:</span>
+            <button class="nl-chip-btn nl-range-btn" type="button" data-nl-range="10000" data-i18n="nlRange10k">up to 10 000</button>
+            <button class="nl-chip-btn nl-range-btn" type="button" data-nl-range="100000" data-i18n="nlRange100k">up to 100 000</button>
+            <button class="nl-chip-btn nl-range-btn active" type="button" data-nl-range="1000000" data-i18n="nlRange1m">up to 1 000 000</button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="nl-layout">
+        <main class="nl-panel nl-main">
+          <!-- Exercise view -->
+          <div id="nl-exercise-view">
+            <div class="nl-progress-top">
+              <span id="nl-progress-text">Task 1 of 8</span>
+              <span id="nl-star-count">⭐ 0 first try</span>
+            </div>
+            <div class="nl-progress-track" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0" id="nl-progress-bar">
+              <div class="nl-progress-fill" id="nl-progress-fill"></div>
+            </div>
+
+            <div class="nl-kicker" id="nl-level-label">LEVEL 1 · SPOT THE STEPS</div>
+            <h3 class="nl-q-title" id="nl-q-title">Which number is at A?</h3>
+            <p class="nl-q-subtitle" id="nl-q-subtitle"></p>
+
+            <div class="nl-chart">
+              <div class="nl-line-scroll">
+                <svg id="nl-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 184" role="img" aria-label="Number line with marked position A"></svg>
+              </div>
+              <div class="nl-gap-bar" id="nl-gap-bar">
+                <span id="nl-gap-count" data-i18n="nlGapsPrompt">Tap the gaps between ticks to count jumps!</span>
+                <button type="button" class="nl-gap-clear" id="nl-gap-clear" hidden data-i18n="nlGapsClear">↺ Clear counter</button>
+              </div>
+              <p class="nl-chart-caption" data-i18n-html="nlChartCaption">Remember: <strong>Ticks are not the same as steps!</strong></p>
+            </div>
+
+            <form id="nl-answer-form" novalidate>
+              <div class="nl-fieldset">
+                <div class="nl-field" id="nl-field-step">
+                  <label for="nl-step-input" data-i18n-html="nlStepLabel">1. How big is <u>one</u> step?</label>
+                  <input id="nl-step-input" type="text" inputmode="numeric" autocomplete="off" data-i18n-ph="nlStepPlaceholder" placeholder="e.g. 3 000">
+                  <p class="nl-field-note" id="nl-step-note" data-i18n="nlStepNote">First work out the distance between the two labelled numbers.</p>
+                  <span class="nl-step-badge" id="nl-step-badge" hidden></span>
+                </div>
+                <div class="nl-field nl-field-locked" id="nl-field-value">
+                  <label for="nl-value-input" data-i18n="nlValueLabel">2. Which number is A?</label>
+                  <input id="nl-value-input" type="text" inputmode="numeric" autocomplete="off" disabled data-i18n-ph="nlValuePlaceholder" placeholder="e.g. 473 000">
+                  <p class="nl-field-note" data-i18n="nlValueNote">Unlocks once Step 1 is solved — then count jumps to A.</p>
+                </div>
+              </div>
+              <div class="nl-actions">
+                <button class="nl-btn nl-btn-primary" type="submit" id="nl-check-btn">Check Step 1 ✓</button>
+                <button class="nl-btn nl-btn-secondary" type="button" id="nl-hint-btn" data-i18n="nlHintBtn">💡 Small Hint</button>
+                <button class="nl-btn nl-btn-quiet" type="button" id="nl-reveal-step-btn" hidden data-i18n="nlRevealStepBtn">Show step size</button>
+                <button class="nl-btn nl-btn-quiet" type="button" id="nl-reveal-solution-btn" hidden data-i18n="nlRevealSolutionBtn">Show step-by-step solution</button>
+              </div>
+            </form>
+
+            <div class="nl-tipbox" id="nl-tip-box" hidden aria-live="polite"></div>
+            <div class="nl-feedback" id="nl-feedback" hidden role="status" aria-live="polite"></div>
+
+            <div class="nl-actions" id="nl-follow-actions" hidden>
+              <button class="nl-btn nl-btn-primary" type="button" id="nl-next-btn" data-i18n="nlNextBtn">Next Task →</button>
+            </div>
+          </div>
+
+          <!-- End-of-round Summary view -->
+          <div id="nl-summary-view" hidden></div>
+        </main>
+
+        <!-- Strategy / Merkhilfe Sidebar -->
+        <aside class="nl-panel nl-sidebar" id="nl-sidebar">
+          <h3 class="nl-side-title" data-i18n="nlSideTitle">🧠 Strategy Box</h3>
+          <div class="nl-rule">
+            <strong data-i18n="nlRuleHeading">How to find one step:</strong>
+            <div class="nl-formula" data-i18n-html="nlRuleFormula">(bigger number − smaller number)<br>÷ number of jumps</div>
+            <p data-i18n-html="nlRuleDesc">Important: Count the <b class="nl-key">gaps (jumps)</b> between the two numbers, not the ticks!</p>
+            <svg class="nl-mini-svg" viewBox="0 0 218 72" role="img" aria-label="Three ticks with two jump arcs">
+              <line x1="21" y1="46" x2="196" y2="46" stroke="#8fa3cf" stroke-width="3" stroke-linecap="round"/>
+              <path d="M 24 38 Q 66.5 8 109 38" fill="none" stroke="#38ef7d" stroke-width="2.8" stroke-linecap="round"/>
+              <path d="M 109 38 Q 151.5 8 194 38" fill="none" stroke="#38ef7d" stroke-width="2.8" stroke-linecap="round"/>
+              <g stroke="#f0f0ff" stroke-width="3" stroke-linecap="round">
+                <line x1="24" x2="24" y1="36" y2="56"/>
+                <line x1="109" x2="109" y1="36" y2="56"/>
+                <line x1="194" x2="194" y1="36" y2="56"/>
+              </g>
+              <g fill="#38ef7d" font-size="14" font-weight="900" text-anchor="middle">
+                <text x="66.5" y="18">1</text>
+                <text x="151.5" y="18">2</text>
+              </g>
+            </svg>
+            <div class="nl-mini-desc" data-i18n="nlMiniDesc">3 ticks → 2 jumps ✅</div>
+          </div>
+
+          <div class="nl-sidebar-details">
+            <div class="nl-sep"></div>
+            <strong class="nl-levels-heading" data-i18n="nlLevelsHeading">What we practise:</strong>
+            <div class="nl-levels">
+              <div class="nl-level"><span class="nl-dot" id="nl-level-dot-0"></span><span data-i18n="nlLevelItem0">Equal steps</span></div>
+              <div class="nl-level"><span class="nl-dot" id="nl-level-dot-1"></span><span data-i18n="nlLevelItem1">Forward &amp; backward</span></div>
+              <div class="nl-level"><span class="nl-dot" id="nl-level-dot-2"></span><span data-i18n="nlLevelItem2">Numbers inside the line</span></div>
+            </div>
+            <p class="nl-aside-note" data-i18n-html="nlAsideTip">Tip: Count your jumps aloud: <b>start number, first jump, second jump…</b></p>
+          </div>
+
+          <div class="nl-reassure" data-i18n="nlReassure">🌼 A mistake is a clue for what to practise next.</div>
+        </aside>
+      </div>
+      <p class="nl-foot" data-i18n="nlFooter">No timer · Works offline · Practice at your own pace</p>
+    </div>
+  </div>
+
   <!-- Help Modal -->
   <div id="help-modal" class="settings-overlay">
     <div class="settings-card">
@@ -465,6 +621,7 @@
   <script src="js/objects.js"></script>
   <script src="js/targeting.js"></script>
   <script src="js/themes.js"></script>
+  <script src="js/numberline.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/main.js"></script>

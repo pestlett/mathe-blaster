@@ -456,6 +456,37 @@ const Progress = (() => {
     return newlyUnlocked;
   }
 
+  // ---- Number Line Lab persistence (isolated from Klasse 2–3 arcade mastery) ----
+  function getNumberLineStats() {
+    const d = load();
+    return d.numberline || {
+      roundsCompleted: 0,
+      bestFirstTryScore: 0,
+      weakStep: false,
+      weakA: false,
+      lastPlayed: null,
+    };
+  }
+
+  function saveNumberLineRound({ firstTry = 0, badStep = 0, badA = 0 } = {}) {
+    const d = load();
+    const nl = d.numberline || {
+      roundsCompleted: 0,
+      bestFirstTryScore: 0,
+      weakStep: false,
+      weakA: false,
+      lastPlayed: null,
+    };
+    nl.roundsCompleted = (nl.roundsCompleted || 0) + 1;
+    nl.bestFirstTryScore = Math.max(nl.bestFirstTryScore || 0, firstTry || 0);
+    nl.weakStep = badStep > badA;
+    nl.weakA = badA > badStep;
+    nl.lastPlayed = Date.now();
+    d.numberline = nl;
+    save(d);
+    return nl;
+  }
+
   // ---- Profile management ----
   // Saves per-player settings (age, mode, diff, hint, voice) into the player data blob.
   function savePlayerSettings(s) {
@@ -490,5 +521,5 @@ const Progress = (() => {
     try { localStorage.removeItem(key); return true; } catch { return false; }
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, markTutorialCompleted, isTutorialCompleted, getRunProgress, saveRunResult, checkRunUnlocks, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, markTutorialCompleted, isTutorialCompleted, getRunProgress, saveRunResult, checkRunUnlocks, getNumberLineStats, saveNumberLineRound, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
 })();

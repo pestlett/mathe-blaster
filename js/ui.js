@@ -7,7 +7,8 @@ const UI = (() => {
     gameover: document.getElementById('screen-gameover'),
     leaderboard: document.getElementById('screen-leaderboard'),
     achievements: document.getElementById('screen-achievements'),
-    dashboard: document.getElementById('screen-dashboard')
+    dashboard: document.getElementById('screen-dashboard'),
+    numberline: document.getElementById('screen-numberline')
   };
 
   let _refreshTutorialEntryPoints = () => {};
@@ -159,6 +160,9 @@ const UI = (() => {
         // Re-apply dynamic strings that data-i18n doesn't cover
         _refreshDynamicOnboarding(selectedMode);
         _refreshDailyBtn();
+        if (typeof NumberLine !== 'undefined' && NumberLine.refreshLanguage) {
+          NumberLine.refreshLanguage();
+        }
       });
     });
 
@@ -729,6 +733,16 @@ const UI = (() => {
     document.getElementById('btn-dashboard').addEventListener('click', () => {
       showDashboard(() => showScreen('onboarding'));
     });
+
+    const btnNumberLineLab = document.getElementById('btn-numberline-lab');
+    if (btnNumberLineLab) {
+      btnNumberLineLab.addEventListener('click', () => {
+        if (typeof NumberLine !== 'undefined' && NumberLine.open) {
+          NumberLine.open(() => showScreen('onboarding'));
+        }
+        showScreen('numberline');
+      });
+    }
 
     btnDaily.addEventListener('click', () => {
       const name = nameInput.value.trim();

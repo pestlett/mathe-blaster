@@ -179,6 +179,29 @@ A new run-mode upgrade requires changes in:
 
 ---
 
+## New Standalone Lab / Tool Screen
+
+Standalone untimed learning labs (such as `screen-numberline` / `js/numberline.js`)
+do **not** require guided tutorial integration and must stay isolated from Klasse 2–3
+arcade mastery (`stats`, `wrongQueue`, `masteredLevel`).
+
+1. **`js/<lab>.js`**
+   - Implement as an IIFE module exposing pure calculation/diagnostic/generator functions for unit testing plus `init()`, `open(onBack)`, and `refreshLanguage()`
+2. **`index.html` + `sw.js`**
+   - Add entry button on onboarding and `<div id="screen-<lab>" class="screen">`
+   - Load `js/<lab>.js` before `js/ui.js` and add `./js/<lab>.js` to `ASSETS` in `sw.js`
+3. **`js/ui.js` + `style.css`**
+   - Register the screen in `screens`, wire navigation, and call `<Lab>.refreshLanguage()` in the `.lang-btn` handler
+   - Use the existing dark glassmorphic palette and include `@media print` if the lab has a printable report
+4. **`js/progress.js` + `js/i18n.js`**
+   - Persist lightweight lab stats in an isolated sub-object (never touch arcade `stats`/`sessions`)
+   - Translate all UI/feedback strings across EN / DE / ES using `i18n-translator`
+5. **`tests/<lab>.test.js` + `docs/`**
+   - Add unit tests for math invariants, diagnostics, generator constraints, and isolated persistence
+   - Update `docs/pikas.md`, `docs/architecture.md`, and `docs/storage-schema.md`
+
+---
+
 ## Guided Tutorial / Scripted Demo
 
 1. **`js/main.js`**
