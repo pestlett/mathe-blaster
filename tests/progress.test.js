@@ -500,3 +500,38 @@ describe('Challenge win achievement', () => {
     expect(d.lifetime.challengeWins || 0).toBe(0);
   });
 });
+
+describe('Progress.getLabStats / saveLabRound (Klasse 4 Labs isolation)', () => {
+  let ctx;
+  beforeEach(() => { ctx = makeProgressCtx(); });
+
+  test('returns clean defaults for an unplayed lab', () => {
+    const st = ctx.Progress.getLabStats('placevalue');
+    expect(st.rounds).toBe(0);
+    expect(st.bestFirstTry).toBe(0);
+    expect(st.errorsByCategory).toEqual({});
+  });
+
+  test('persists round counts, bestFirstTry, and merged error categories without touching arcade stats', () => {
+    ctx.Progress.saveLabRound('rounding', { firstTry: 6, errorsByCategory: { chained_rounding: 2 } });
+    ctx.Progress.saveLabRound('rounding', { firstTry: 8, errorsByCategory: { chained_rounding: 1, dropped_zeros: 1 } });
+    const st = ctx.Progress.getLabStats('rounding');
+    expect(st.rounds).toBe(2);
+    expect(st.firstTryTotal).toBe(14);
+    expect(st.bestFirstTry).toBe(8);
+    expect(st.errorsByCategory).toEqual({ chained_rounding: 3, dropped_zeros: 1 });
+    // Arcade stats must remain untouched
+    expect(ctx.Progress.getStats()).toEqual({});
+    expect(ctx.Progress.getSessions()).toEqual([]);
+  });
+
+  test('mirrors saveNumberLineRound into d.labs.numberline for hub display', () => {
+    ctx.Progress.saveNumberLineRound({ firstTry: 7, badStep: 2, badA: 0 });
+    const nl = ctx.Progress.getNumberLineStats();
+    const lab = ctx.Progress.getLabStats('numberline');
+    expect(nl.roundsCompleted).toBe(1);
+    expect(lab.rounds).toBe(1);
+    expect(lab.bestFirstTry).toBe(7);
+    expect(lab.errorsByCategory.step).toBe(2);
+  });
+});

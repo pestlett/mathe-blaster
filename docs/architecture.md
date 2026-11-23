@@ -66,7 +66,10 @@ Game ends
 | `progress.js` | localStorage read/write, mastery, achievements | In-memory state |
 | `upgrades.js` | Upgrade definitions, synergies, adjacency | Applying during play (main.js reads state flags) |
 | `numberline.js` | Klasse 4 Number Line Lab (`screen-numberline`): curated course, PIKAS-clean generator, SVG rendering, 2-step verification, diagnostic feedback, learning report | Arcade game loop, main.js state |
-| `ui.js` | DOM screen management (`screen-onboarding`, `screen-game`, `screen-gameover`, `screen-leaderboard`, `screen-dashboard`, `screen-achievements`, `screen-numberline`), HUD, overlays, onboarding | Canvas |
+| `labs/lab-host.js` | Shared Grade 4 Lab Host (`screen-lab-host`) & registry: mode/level/range controls, interactive visual mount, 1/2-step input handling, diagnostic feedback, collapsible Trickkiste, printable learning report | Arcade game loop, main.js state |
+| `labs/lab-hub.js` | Grade 4 Lab Hub (`screen-lab-hub`): 3-chapter curriculum catalog launching `numberline` and all 10 `LabHost` modules with live `Progress.getLabStats()` badges | Individual lab logic |
+| `labs/*.js` (10 modules) | Individual Grade 4 diagnostic labs (`placevalue`, `neighbors`, `rounding`, `area`, `written-addsub`, `written-mul`, `written-div`, `units`, `geometry`, `charts`) registering with `LabHost` | Arcade game loop, direct DOM screen switching |
+| `ui.js` | DOM screen management (`screen-onboarding`, `screen-game`, `screen-gameover`, `screen-leaderboard`, `screen-dashboard`, `screen-achievements`, `screen-numberline`, `screen-lab-hub`, `screen-lab-host`), HUD, overlays, onboarding | Canvas |
 | `i18n.js` | String translations EN/DE/ES | UI rendering |
 | `voice.js` | Speech recognition, echo suppression, word parsing | Game logic |
 

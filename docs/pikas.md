@@ -46,17 +46,27 @@ Operations are extended to larger number ranges:
 | ×/÷ by multiples of 10 | Zehnerrechnen | 10–900 |
 | Single × multi-digit | Halbschriftliches Rechnen | single × 2–3 digit |
 
-### Klasse 4 — Orientierung im Zahlenraum bis 1.000.000 (Zahlenstrahl-Labor only)
-- **In scope (exclusively inside the untimed `Zahlenstrahl-Labor` / Number Line Lab):**
-  - Reading and locating numbers on strictly proportional number lines (*Orientierung am Zahlenstrahl*) in discrete number ranges: `10 000`, `100 000`, `1 000 000`
-  - Finding equal step sizes (*Schrittgröße*) by counting **gaps/jumps** (*Lücken/Sprünge*) between two labelled ticks and dividing span by interval count (`Unterschied ÷ Anzahl Schritte`), reinforced by the inverse check (`Umkehraufgabe`)
-  - Progressive 3-tier structure: (1) equal steps within one major block, (2) crossing major place-value boundaries & counting backwards from the right anchor, (3) interior labelled anchors
+### Klasse 4 — Untimed Diagnostic Labs (`Klasse 4 Labor` Hub)
+- **In scope (exclusively inside the untimed Grade 4 Labs Hub `#screen-lab-hub` / `#screen-lab-host` / `#screen-numberline`):**
+  - **Chapter 1 — Zahlen bis 1 Million & Flächeninhalt**:
+    - `Zahlenstrahl-Labor` (`js/numberline.js`): reading/locating numbers on strictly proportional number lines in discrete ranges (`10 000` / `100 000` / `1 000 000`), finding step sizes via gaps/jumps (`Unterschied ÷ Anzahl Schritte`) + `Umkehraufgabe`
+    - `Stellenwert-Labor` (`js/labs/placevalue.js`): 7-column *Stellenwerttafel* (`M–E`), *Bündeln/Entbündeln*, *Zahlwort ↔ Ziffer ↔ Zerlegungsaufgabe*, *Plättchen*-shifting puzzles
+    - `Nachbar- & Ordnungs-Labor` (`js/labs/neighbors.js`): comparing (`<`, `=`, `>`), ordering up to `1 000 000`, place-value neighbors (`V/N`, `VZ/NZ`, `VH/NH`, `VT/NT`, `VZT/NZT`, `VHT/NHT`), and boundary-crossing sequences
+    - `Rundungs-Labor` (`js/labs/rounding.js`): rounding to `Z/H/T/ZT/HT` with zoomed interval line + *Rundungsstelle*/*Entscheidungsziffer*, inverse rounding, and *Kettenrundung* diagnosis
+    - `Flächen- & Umfangs-Labor` (`js/labs/area.js`): interactive *Karogitter* area (incl. paired half-squares), outer fence perimeter tracing, and same-area/different-perimeter puzzles
+  - **Chapter 2 — Schriftliche Rechenverfahren**:
+    - `Schriftlich +/− Labor` (`js/labs/written-addsub.js`): *Aufgabenblick* (mental vs. written), place-value column grid with *Abziehverfahren* (default) / *Ergänzungsverfahren* toggle, *Nullen im Minuenden*, *Probe*
+    - `Schriftliche Multiplikation Labor` (`js/labs/written-mul.js`): *Malkreuz* bridge into German horizontal notation (1-digit, `×10er`, 2-digit incl. interior zeros) + *Überschlag*
+    - `Schriftliche Division Labor` (`js/labs/written-div.js`): German notation with 1-digit and clean tens-multiple divisors (`: 20..: 50`), *Null im Quotienten*, *Rest* + *Probe*
+  - **Chapter 3 — Größen, Geometrie II & Diagramme**:
+    - `Größen-Labor` (`js/labs/units.js`): *Größen-Stellenwerttafel* (`km/m/cm/mm`, `t/kg/g`, `l/ml`, commas strictly as unit separators; everyday fractions `½ l`, `¼ kg`, `¾ h`) + base-60 *Zeitstrahl* (`h/min/s`)
+    - `Geometrie-Labor II` (`js/labs/geometry.js`): *Achsensymmetrie* reflection grid, *Maßstab* (`1:2`, `2:1`, `1:10`), *Würfelgebäude ↔ Bauplan* & *Würfelnetze*
+    - `Diagramm- & Überschlags-Labor` (`js/labs/charts.js`): scaled *Säulendiagramme* (exact & halfway ticks), bar builder, and *Überschlag* plausibility checks
   - Isolated completely from Klasse 2–3 arcade pools, `wrongQueue`, and `masteredLevel`
-- **Out of scope (not yet in Mathe Blaster):**
-  - Full written multiplication (*schriftliche Multiplikation*)
-  - Long division (*schriftliche Division*)
-  - Fractions and decimals
-  - Klasse 4 numbers inside the timed arcade game
+- **Out of scope (Klasse 5+ — never add):**
+  - Abstract fraction arithmetic (`3/4 + 2/5`) or abstract decimals outside *Größen*
+  - Arbitrary 2-digit divisors (`÷ 37`)
+  - Klasse 4 numbers or written algorithms inside the timed arcade game
 
 ---
 
@@ -149,10 +159,9 @@ and adding {100,...,900} on hard. Do not include non-round numbers (e.g. 15,
 | Tables | 1–10 (Klasse 2), extension to 12 or 20 optional | Beyond ×20 |
 | Addition/subtraction | ≤ 100 (Kl.3), ≤ 1000 (Kl.3) | ≥ 10,000 in arcade mode |
 | Halbschriftlich | single × 2-digit (easy), × 3-digit (hard) | single × 4-digit |
-| Orientierung am Zahlenstrahl | Untimed Number Line Lab: discrete ranges `10 000` / `100 000` / `1 000 000` (Kl.4) | Timed arcade drills ≥ 10,000 |
-| Written algorithm | Not in game | Klasse 4 scope |
-| Fractions | Not in game | Klasse 4 scope |
-| Decimals | Not in game | Klasse 4 scope |
+| Orientierung im ZR 1 Mio & Fläche/Umfang | Untimed Grade 4 Labs (Ch. 1): discrete ranges `10 000` / `100 000` / `1 000 000` | Timed arcade drills ≥ 10,000 |
+| Written algorithms (`+/−`, `×`, `÷`) | Untimed Grade 4 Labs (Ch. 2): Abzieh/Ergänz toggle, 1–2 digit ×, 1-digit & tens-multiple ÷ | Arbitrary 2-digit divisors (`÷ 37`) |
+| Größen, Geometrie II & Diagramme | Untimed Grade 4 Labs (Ch. 3): comma only as unit separator, everyday fractions (`½ l`, `¼ kg`, `¾ h`), base-60 time | Abstract fraction arithmetic & abstract decimals (Klasse 5+) |
 
 ---
 
@@ -163,6 +172,6 @@ Before adding any new question type, operation modifier, or number range, ask:
 2. What mental strategy does PIKAS expect children to use?
 3. Does this fit within the existing `difficulty` axis (easy/medium/hard)?
 4. Does it require a new setting flag, or can it be expressed with existing ones?
-5. Would a German Klasse 3 teacher recognise this as appropriate for the arcade game — or a Klasse 4 teacher recognise it as appropriate for the untimed Zahlenstrahl-Labor?
+5. Would a German Klasse 3 teacher recognise this as appropriate for the arcade game — or a Klasse 4 teacher recognise it as appropriate for the untimed Klasse 4 Labs?
 
 If the answer to #5 is no, do not add it.

@@ -8,7 +8,9 @@ const UI = (() => {
     leaderboard: document.getElementById('screen-leaderboard'),
     achievements: document.getElementById('screen-achievements'),
     dashboard: document.getElementById('screen-dashboard'),
-    numberline: document.getElementById('screen-numberline')
+    numberline: document.getElementById('screen-numberline'),
+    labHub: document.getElementById('screen-lab-hub'),
+    labHost: document.getElementById('screen-lab-host')
   };
 
   let _refreshTutorialEntryPoints = () => {};
@@ -162,6 +164,12 @@ const UI = (() => {
         _refreshDailyBtn();
         if (typeof NumberLine !== 'undefined' && NumberLine.refreshLanguage) {
           NumberLine.refreshLanguage();
+        }
+        if (typeof LabHub !== 'undefined' && LabHub.refreshLanguage) {
+          LabHub.refreshLanguage();
+        }
+        if (typeof LabHost !== 'undefined' && LabHost.refreshLanguage) {
+          LabHost.refreshLanguage();
         }
       });
     });
@@ -734,13 +742,13 @@ const UI = (() => {
       showDashboard(() => showScreen('onboarding'));
     });
 
-    const btnNumberLineLab = document.getElementById('btn-numberline-lab');
-    if (btnNumberLineLab) {
-      btnNumberLineLab.addEventListener('click', () => {
-        if (typeof NumberLine !== 'undefined' && NumberLine.open) {
-          NumberLine.open(() => showScreen('onboarding'));
+    const btnLabHub = document.getElementById('btn-lab-hub');
+    if (btnLabHub) {
+      btnLabHub.addEventListener('click', () => {
+        if (typeof LabHub !== 'undefined' && LabHub.open) {
+          LabHub.open(() => showScreen('onboarding'));
         }
-        showScreen('numberline');
+        showScreen('labHub');
       });
     }
 

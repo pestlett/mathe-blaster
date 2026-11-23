@@ -456,10 +456,84 @@ const Progress = (() => {
     return newlyUnlocked;
   }
 
-  // ---- Number Line Lab persistence (isolated from Klasse 2–3 arcade mastery) ----
+  // ---- Klasse 4 Labs persistence (isolated from Klasse 2–3 arcade mastery) ----
+  function getLabStats(labId) {
+    const d = load();
+    const labs = d.labs || {};
+    if (labs[labId]) return labs[labId];
+    if (labId === 'numberline' && d.numberline) {
+      return {
+        rounds: d.numberline.roundsCompleted || 0,
+        firstTryTotal: d.numberline.bestFirstTryScore || 0,
+        bestFirstTry: d.numberline.bestFirstTryScore || 0,
+        errorsByCategory: {
+          ...(d.numberline.weakStep ? { step: 1 } : {}),
+          ...(d.numberline.weakA ? { value: 1 } : {}),
+        },
+        lastPlayed: d.numberline.lastPlayed || null,
+      };
+    }
+    return {
+      rounds: 0,
+      firstTryTotal: 0,
+      bestFirstTry: 0,
+      errorsByCategory: {},
+      lastPlayed: null,
+    };
+  }
+
+  function saveLabRound(labId, { firstTry = 0, errorsByCategory = {} } = {}) {
+    const d = load();
+    if (!d.labs) d.labs = {};
+    const prev = d.labs[labId] || {
+      rounds: 0,
+      firstTryTotal: 0,
+      bestFirstTry: 0,
+      errorsByCategory: {},
+      lastPlayed: null,
+    };
+    const mergedErrors = { ...(prev.errorsByCategory || {}) };
+    for (const [k, v] of Object.entries(errorsByCategory || {})) {
+      if (v > 0) mergedErrors[k] = (mergedErrors[k] || 0) + v;
+    }
+    const next = {
+      rounds: (prev.rounds || 0) + 1,
+      firstTryTotal: (prev.firstTryTotal || 0) + (firstTry || 0),
+      bestFirstTry: Math.max(prev.bestFirstTry || 0, firstTry || 0),
+      errorsByCategory: mergedErrors,
+      lastPlayed: Date.now(),
+    };
+    d.labs[labId] = next;
+    if (labId === 'numberline') {
+      const badStep = errorsByCategory.step || 0;
+      const badA = errorsByCategory.value || 0;
+      d.numberline = {
+        roundsCompleted: next.rounds,
+        bestFirstTryScore: next.bestFirstTry,
+        weakStep: badStep > badA,
+        weakA: badA > badStep,
+        lastPlayed: next.lastPlayed,
+      };
+    }
+    save(d);
+    return next;
+  }
+
+  // ---- Number Line Lab persistence (write-through alias to d.labs.numberline) ----
   function getNumberLineStats() {
     const d = load();
-    return d.numberline || {
+    if (d.numberline) return d.numberline;
+    const lab = d.labs?.numberline;
+    if (lab) {
+      return {
+        roundsCompleted: lab.rounds || 0,
+        bestFirstTryScore: lab.bestFirstTry || 0,
+        weakStep: (lab.errorsByCategory?.step || 0) > (lab.errorsByCategory?.value || 0),
+        weakA: (lab.errorsByCategory?.value || 0) > (lab.errorsByCategory?.step || 0),
+        lastPlayed: lab.lastPlayed || null,
+      };
+    }
+    return {
       roundsCompleted: 0,
       bestFirstTryScore: 0,
       weakStep: false,
@@ -483,6 +557,24 @@ const Progress = (() => {
     nl.weakA = badA > badStep;
     nl.lastPlayed = Date.now();
     d.numberline = nl;
+    if (!d.labs) d.labs = {};
+    const prevLab = d.labs.numberline || {
+      rounds: 0,
+      firstTryTotal: 0,
+      bestFirstTry: 0,
+      errorsByCategory: {},
+      lastPlayed: null,
+    };
+    const errs = { ...(prevLab.errorsByCategory || {}) };
+    if (badStep > 0) errs.step = (errs.step || 0) + badStep;
+    if (badA > 0) errs.value = (errs.value || 0) + badA;
+    d.labs.numberline = {
+      rounds: nl.roundsCompleted,
+      firstTryTotal: (prevLab.firstTryTotal || 0) + (firstTry || 0),
+      bestFirstTry: nl.bestFirstTryScore,
+      errorsByCategory: errs,
+      lastPlayed: nl.lastPlayed,
+    };
     save(d);
     return nl;
   }
@@ -521,5 +613,5 @@ const Progress = (() => {
     try { localStorage.removeItem(key); return true; } catch { return false; }
   }
 
-  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, markTutorialCompleted, isTutorialCompleted, getRunProgress, saveRunResult, checkRunUnlocks, getNumberLineStats, saveNumberLineRound, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
+  return { setPlayer, getAll, saveName, recordAttempt, recordWrong, getStats, getMastery, getTableBadges, saveSession, getSessions, isMostImproved, getAchievements, ACHIEVEMENTS, getDailyParams, getDailyResult, saveDailyResult, saveSettings, loadSettings, unlockExtendedTables, isExtendedTablesUnlocked, markTutorialCompleted, isTutorialCompleted, getRunProgress, saveRunResult, checkRunUnlocks, getLabStats, saveLabRound, getNumberLineStats, saveNumberLineRound, listProfiles, deleteProfile, savePlayerSettings, getPlayStreak };
 })();

@@ -89,7 +89,17 @@ to the player-specific key automatically.
     [dateKey]: sessionResult    // dateKey = "YYYY-M-D"
   },
 
-  numberline: {
+  labs: {
+    [labId]: {                         // 'numberline', 'placevalue', 'neighbors', 'rounding', 'area', 'written-addsub', 'written-mul', 'written-div', 'units', 'geometry', 'charts'
+      rounds:           number,        // total rounds completed in this lab
+      firstTryTotal:    number,        // cumulative first-try stars across rounds
+      bestFirstTry:     number,        // highest first-try count in a single round
+      errorsByCategory: { [cat]: number }, // cumulative diagnostic error category counts
+      lastPlayed:       timestamp|null // unix ms of last completed lab round
+    }
+  },
+
+  numberline: {                        // write-through mirror of labs.numberline for backward compatibility
     roundsCompleted:    number,        // total Number Line Lab rounds completed
     bestFirstTryScore:  number,        // highest first-try count (out of 8)
     weakStep:           boolean,       // true if step errors > A errors in last round
