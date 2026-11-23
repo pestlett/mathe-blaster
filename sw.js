@@ -1,5 +1,5 @@
 // Service Worker — cache-first strategy for offline play
-const CACHE = 'multiblaster-v0.10.2';
+const CACHE = 'multiblaster-v0.11.1';
 
 const ASSETS = [
   './',
