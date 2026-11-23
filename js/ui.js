@@ -171,6 +171,9 @@ const UI = (() => {
         if (typeof LabHost !== 'undefined' && LabHost.refreshLanguage) {
           LabHost.refreshLanguage();
         }
+        if (typeof LabWalkthrough !== 'undefined' && LabWalkthrough.refreshLanguage) {
+          LabWalkthrough.refreshLanguage();
+        }
       });
     });
 

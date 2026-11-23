@@ -355,6 +355,7 @@
         <div class="nl-mode-group">
           <button class="nl-pill-btn nl-mode-btn active" type="button" data-nl-mode="course" data-i18n="nlModeCourse">🎯 Guided Course (8)</button>
           <button class="nl-pill-btn nl-mode-btn" type="button" data-nl-mode="practice" data-i18n="nlModePractice">✨ Fresh Number Lines</button>
+          <button class="nl-pill-btn wt-trigger-btn" type="button" id="nl-walkthrough-btn" data-i18n="wtOpenBtn">🎓 Show me how!</button>
           <button class="nl-pill-btn nl-trick-toggle" type="button" id="nl-trick-toggle" aria-expanded="false" aria-controls="nl-sidebar">
             <span data-i18n="nlSideTitle">🧠 Strategy Box</span><span class="nl-chevron" aria-hidden="true">▾</span>
           </button>
@@ -388,7 +389,10 @@
               <div class="nl-progress-fill" id="nl-progress-fill"></div>
             </div>
 
-            <div class="nl-kicker" id="nl-level-label">LEVEL 1 · SPOT THE STEPS</div>
+            <div class="nl-kicker-row">
+              <div class="nl-kicker" id="nl-level-label">LEVEL 1 · SPOT THE STEPS</div>
+              <button type="button" class="wt-inline-btn" id="nl-tier-walkthrough-btn" data-i18n="wtInlineBtn">📖 See example</button>
+            </div>
             <h3 class="nl-q-title" id="nl-q-title">Which number is at A?</h3>
             <p class="nl-q-subtitle" id="nl-q-subtitle"></p>
 
@@ -525,6 +529,7 @@
         <div class="nl-mode-group">
           <button class="nl-pill-btn lh-mode-btn active" type="button" data-lh-mode="course">🎯 Guided Course</button>
           <button class="nl-pill-btn lh-mode-btn" type="button" data-lh-mode="practice">✨ Fresh Practice</button>
+          <button class="nl-pill-btn wt-trigger-btn" type="button" id="lh-walkthrough-btn" data-i18n="wtOpenBtn">🎓 Show me how!</button>
           <button class="nl-pill-btn nl-trick-toggle" type="button" id="lh-trick-toggle" aria-expanded="false" aria-controls="lh-sidebar">
             <span data-i18n="nlSideTitle">🧠 Strategy Box</span><span class="nl-chevron" aria-hidden="true">▾</span>
           </button>
@@ -547,7 +552,10 @@
               <div class="nl-progress-fill" id="lh-progress-fill"></div>
             </div>
 
-            <div class="nl-kicker" id="lh-level-label">LEVEL 1</div>
+            <div class="nl-kicker-row">
+              <div class="nl-kicker" id="lh-level-label">LEVEL 1</div>
+              <button type="button" class="wt-inline-btn" id="lh-tier-walkthrough-btn" data-i18n="wtInlineBtn">📖 See example</button>
+            </div>
             <h3 class="nl-q-title" id="lh-q-title"></h3>
             <p class="nl-q-subtitle" id="lh-q-subtitle" hidden></p>
 
@@ -594,6 +602,34 @@
         </aside>
       </div>
       <p class="nl-foot" data-i18n="nlFooter">No timer · Works offline · Practice at your own pace</p>
+    </div>
+  </div>
+
+  <!-- Grade 4 Lab Walkthrough Modal -->
+  <div id="lab-walkthrough-modal" class="settings-overlay wt-overlay" role="dialog" aria-modal="true" aria-labelledby="wt-modal-title">
+    <div class="settings-card wt-card">
+      <div class="settings-header wt-header">
+        <h2 id="wt-modal-title" data-i18n="wtModalTitle">🎓 Step-by-Step Walkthrough</h2>
+        <button id="wt-close-btn" type="button" class="settings-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="wt-tier-tabs" id="wt-tier-tabs"></div>
+      <div class="wt-example-tabs" id="wt-example-tabs"></div>
+      <p class="wt-goal" id="wt-goal"></p>
+      <div class="wt-stage">
+        <div class="wt-visual" id="wt-visual"></div>
+        <div class="wt-narration">
+          <div class="wt-beat-title" id="wt-beat-title"></div>
+          <p class="wt-beat-text" id="wt-beat-text"></p>
+          <div class="wt-formula" id="wt-formula"></div>
+        </div>
+      </div>
+      <div class="wt-dots" id="wt-dots"></div>
+      <div class="wt-controls">
+        <button type="button" class="nl-btn nl-btn-quiet" id="wt-prev-btn">← Back</button>
+        <button type="button" class="nl-btn nl-btn-secondary" id="wt-play-btn">▶ Play</button>
+        <button type="button" class="nl-btn nl-btn-quiet" id="wt-replay-btn" title="Replay" aria-label="Replay">↺</button>
+        <button type="button" class="nl-btn nl-btn-primary" id="wt-next-btn">Next Step →</button>
+      </div>
     </div>
   </div>
 
@@ -755,6 +791,9 @@
   <script src="js/labs/geometry.js"></script>
   <script src="js/labs/charts.js"></script>
   <script src="js/labs/lab-hub.js"></script>
+  <script src="js/labs/walkthrough-data.js"></script>
+  <script src="js/labs/walkthrough-data-2.js"></script>
+  <script src="js/labs/walkthrough.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/main.js"></script>

@@ -193,6 +193,19 @@ const LabHost = (() => {
       nextBtn.addEventListener('click', () => advanceTask());
     }
 
+    const openWt = () => {
+      if (!activeLab || typeof LabWalkthrough === 'undefined') return;
+      const curTask = currentTask();
+      const tier = curTask && typeof curTask.tier === 'number'
+        ? curTask.tier
+        : (typeof state.tier === 'number' ? state.tier : 0);
+      LabWalkthrough.open(activeLab.id, tier, state.options);
+    };
+    const wtBtn = el('lh-walkthrough-btn');
+    if (wtBtn) wtBtn.addEventListener('click', openWt);
+    const wtInlineBtn = el('lh-tier-walkthrough-btn');
+    if (wtInlineBtn) wtInlineBtn.addEventListener('click', openWt);
+
     if (typeof window !== 'undefined' && window.addEventListener) {
       window.addEventListener('resize', () => {
         if (activeLab && !state.roundFinished && el('screen-lab-host')?.classList.contains('active')) {

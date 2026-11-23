@@ -176,3 +176,11 @@ The canvas fills the viewport. Key vertical zones (as fraction of height):
 | Hot zone top | 38% | 27.5% |
 | Hot zone bottom | 62% | 72.5% |
 | Crash line | ~88% | ~88% |
+
+## Grade 4 Worked-Example Walkthroughs (`LabWalkthrough`)
+
+Every Grade 4 lab (`#screen-numberline` and all 10 `LabHost` labs) exposes an interactive, untimed step-by-step worked-example modal (`#lab-walkthrough-modal`):
+
+- `js/labs/walkthrough-data.js` & `js/labs/walkthrough-data-2.js`: `LabWalkthroughData` registry holding 11 labs × 3 difficulty tiers × 2 contrasting examples (clean archetype + classic PIKAS trap) with synchronized DE/EN/ES beats and visual descriptors (`written-addsub` dynamically selects *Abziehverfahren* vs. *Ergänzungsverfahren* from `state.options.method`).
+- `js/labs/walkthrough.js`: `LabWalkthrough` modal player with tier switcher, Example 1/2 toggle, step-forward/back/replay/4.5 s auto-play, keyboard arrows, and 11 EIS SVG/DOM visual renderers.
+- Entry points: `🎓 So geht's!` pill in each lab's mode bar + `📖 Beispiel ansehen` inline button beside the active level label (opens pre-selected to the current task's tier).

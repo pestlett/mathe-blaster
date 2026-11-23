@@ -523,6 +523,17 @@ const I18n = (() => {
       labPracticeWeakest:   '🎯 Practise: {level}',
       labNewRound:          '✨ Fresh Round',
 
+      // Grade 4 Worked-Example Walkthroughs
+      wtOpenBtn:            '🎓 Show me how!',
+      wtInlineBtn:          '📖 See example',
+      wtModalTitle:         '🎓 Step-by-Step Walkthrough',
+      wtPrevBtn:            '← Back',
+      wtNextBtn:            'Next Step →',
+      wtNextExBtn:          'Example 2 →',
+      wtPlayBtn:            '▶ Play',
+      wtPauseBtn:           '⏸ Pause',
+      wtDoneBtn:            'Got it — Let\'s Practise! ✓',
+
       // Place Value Lab (Klasse 4 — Stellenwert-Labor)
       pvTitle:              'Place Value Lab',
       pvIntro:              'Explore numbers up to 1 000 000 in the place-value table: read big numbers, bundle 10 counters into 1, and move counters between columns.',
@@ -1490,6 +1501,17 @@ const I18n = (() => {
       labPracticeWeakest:   '🎯 Üben: {level}',
       labNewRound:          '✨ Neue Runde',
 
+      // Rechenbeispiele Schritt für Schritt (Klasse 4)
+      wtOpenBtn:            '🎓 So geht\'s!',
+      wtInlineBtn:          '📖 Beispiel ansehen',
+      wtModalTitle:         '🎓 Schritt-für-Schritt-Beispiel',
+      wtPrevBtn:            '← Zurück',
+      wtNextBtn:            'Nächster Schritt →',
+      wtNextExBtn:          'Beispiel 2 →',
+      wtPlayBtn:            '▶ Abspielen',
+      wtPauseBtn:           '⏸ Pause',
+      wtDoneBtn:            'Verstanden — los geht\'s! ✓',
+
       // Stellenwert-Labor (Klasse 4)
       pvTitle:              'Stellenwert-Labor',
       pvIntro:              'Entdecke Zahlen bis 1 000 000 in der Stellenwerttafel: lies große Zahlen, bündle 10 Plättchen zu 1 und verschiebe Plättchen zwischen den Spalten.',
@@ -2456,6 +2478,17 @@ const I18n = (() => {
       labSummaryFocusTitle: 'Tu consejo de aprendizaje',
       labPracticeWeakest:   '🎯 Practicar: {level}',
       labNewRound:          '✨ Nueva ronda',
+
+      // Ejemplos guiados paso a paso (4.° grado)
+      wtOpenBtn:            '🎓 ¡Muéstrame cómo!',
+      wtInlineBtn:          '📖 Ver ejemplo',
+      wtModalTitle:         '🎓 Ejemplo paso a paso',
+      wtPrevBtn:            '← Volver',
+      wtNextBtn:            'Siguiente paso →',
+      wtNextExBtn:          'Ejemplo 2 →',
+      wtPlayBtn:            '▶ Reproducir',
+      wtPauseBtn:           '⏸ Pausa',
+      wtDoneBtn:            '¡Entendido — a practicar! ✓',
 
       // Laboratorio de valor posicional (4.° grado)
       pvTitle:              'Laboratorio de valor posicional',

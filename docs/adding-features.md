@@ -194,7 +194,8 @@ Untimed Grade 4 diagnostic labs register with `LabHost` (`js/labs/lab-host.js`) 
    - Persistence is automatic via `Progress.saveLabRound(labId, stats)` / `Progress.getLabStats(labId)` under `d.labs[labId]`
    - Add all `{prefix}*` strings across EN / DE / ES using `i18n-translator`
 4. **`tests/` + `docs/`**
-   - Add unit tests for generator invariants, PIKAS bounds, and every diagnostic rule
+   - Add worked-example walkthrough entries (3 tiers × 2 contrasting examples, ≥2 beats each, DE/EN/ES) in `js/labs/walkthrough-data.js` / `walkthrough-data-2.js` and add any new visual renderer in `js/labs/walkthrough.js`
+   - Add unit tests for generator invariants, PIKAS bounds, diagnostic rules, and walkthrough registration
    - Update `docs/pikas.md`, `docs/architecture.md`, and `docs/storage-schema.md`
 
 ---

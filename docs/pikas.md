@@ -162,6 +162,7 @@ and adding {100,...,900} on hard. Do not include non-round numbers (e.g. 15,
 | Orientierung im ZR 1 Mio & Fläche/Umfang | Untimed Grade 4 Labs (Ch. 1): discrete ranges `10 000` / `100 000` / `1 000 000` | Timed arcade drills ≥ 10,000 |
 | Written algorithms (`+/−`, `×`, `÷`) | Untimed Grade 4 Labs (Ch. 2): Abzieh/Ergänz toggle, 1–2 digit ×, 1-digit & tens-multiple ÷ | Arbitrary 2-digit divisors (`÷ 37`) |
 | Größen, Geometrie II & Diagramme | Untimed Grade 4 Labs (Ch. 3): comma only as unit separator, everyday fractions (`½ l`, `¼ kg`, `¾ h`), base-60 time | Abstract fraction arithmetic & abstract decimals (Klasse 5+) |
+| Worked-Example Walkthroughs | Interactive step-by-step EIS walkthroughs (`🎓 So geht's!`) for all 11 Grade 4 labs × 3 tiers × 2 contrasting examples (clean archetype + PIKAS misconception trap), strictly separating *Abziehverfahren* and *Ergänzungsverfahren* | Rote shortcuts (*"Null anhängen"*, *"Komma verschieben"*, blind zero-crossing with remainders) |
 
 ---
 

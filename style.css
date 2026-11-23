@@ -4825,3 +4825,221 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
     font-size: 1rem;
   }
 }
+
+/* =========================================================================
+   GRADE 4 WORKED-EXAMPLE WALKTHROUGH MODAL
+   ========================================================================= */
+.nl-kicker-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.wt-trigger-btn {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(108, 99, 255, 0.28));
+  border-color: rgba(255, 209, 102, 0.55);
+  color: #ffe394;
+}
+
+.wt-trigger-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.3), rgba(108, 99, 255, 0.38));
+  border-color: #ffd166;
+}
+
+.wt-inline-btn {
+  background: rgba(255, 209, 102, 0.14);
+  border: 1px solid rgba(255, 209, 102, 0.45);
+  color: #ffe394;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.wt-inline-btn:hover {
+  background: rgba(255, 209, 102, 0.25);
+  transform: translateY(-1px);
+}
+
+.wt-card {
+  width: min(680px, 95vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.wt-header {
+  margin-bottom: 0;
+}
+
+.wt-tier-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wt-example-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wt-ex-btn {
+  flex: 1 1 200px;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: #cfd8f3;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.wt-ex-btn.active {
+  background: rgba(56, 239, 125, 0.16);
+  border-color: #38ef7d;
+  color: #ffffff;
+}
+
+.wt-goal {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(108, 99, 255, 0.16);
+  border-left: 3px solid #6c63ff;
+  color: #e4e9ff;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.wt-stage {
+  background: rgba(10, 14, 30, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wt-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 112px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.wt-visual svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.wt-narration {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wt-beat-title {
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: #7ef9ae;
+}
+
+.wt-beat-text {
+  margin: 0;
+  color: #eef2ff;
+  font-size: 0.97rem;
+  line-height: 1.5;
+}
+
+.wt-formula {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 209, 102, 0.16);
+  border: 1px solid rgba(255, 209, 102, 0.45);
+  color: #ffe394;
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+
+.wt-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.wt-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.wt-dot.done {
+  background: rgba(56, 239, 125, 0.55);
+}
+
+.wt-dot.active {
+  background: #38ef7d;
+  transform: scale(1.25);
+}
+
+.wt-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wt-controls .nl-btn {
+  flex: 1 1 auto;
+  justify-content: center;
+  text-align: center;
+}
+
+#wt-replay-btn {
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+
+@media (max-width: 600px) {
+  .wt-card {
+    padding: 14px;
+    gap: 10px;
+  }
+  .wt-ex-btn {
+    flex: 1 1 100%;
+    font-size: 0.84rem;
+  }
+  .wt-stage {
+    padding: 12px;
+  }
+  .wt-controls .nl-btn {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+}

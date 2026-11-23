@@ -1213,6 +1213,17 @@ const NumberLine = (() => {
     _$('nl-reveal-solution-btn')?.addEventListener('click', _handleRevealSolution);
     _$('nl-next-btn')?.addEventListener('click', _handleNext);
 
+    const openNlWalkthrough = () => {
+      if (typeof LabWalkthrough === 'undefined') return;
+      const q = _current();
+      const tier = q && typeof q.tier === 'number'
+        ? q.tier
+        : (state.practiceTier !== 'mixed' ? Number(state.practiceTier) || 0 : 0);
+      LabWalkthrough.open('numberline', tier);
+    };
+    _$('nl-walkthrough-btn')?.addEventListener('click', openNlWalkthrough);
+    _$('nl-tier-walkthrough-btn')?.addEventListener('click', openNlWalkthrough);
+
     _$('nl-gap-clear')?.addEventListener('click', () => {
       state.clickedGaps.clear();
       _renderSvg();
