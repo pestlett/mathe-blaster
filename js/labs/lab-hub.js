@@ -30,6 +30,7 @@ const LabHub = (() => {
   let bound = false;
   let onBackCb = null;
   let onLaunchCb = null;
+  let inlineReturnCb = null;
 
   function t(key, vars, fallback) {
     if (typeof LabHost !== 'undefined' && LabHost.t) return LabHost.t(key, vars, fallback);
@@ -60,10 +61,22 @@ const LabHub = (() => {
     }
   }
 
-  function render() {
-    if (typeof document === 'undefined') return;
-    const container = document.getElementById('hub-chapters');
-    const summaryEl = document.getElementById('hub-progress-summary');
+  function getLastChapter() {
+    if (typeof Progress !== 'undefined' && Progress.loadSettings) {
+      const s = Progress.loadSettings();
+      if (s && typeof s.lastLabChapter === 'number') return s.lastLabChapter;
+    }
+    return null;
+  }
+
+  function saveLastChapter(chId) {
+    if (typeof Progress !== 'undefined' && Progress.loadSettings && Progress.saveSettings) {
+      const existing = Progress.loadSettings() || {};
+      Progress.saveSettings({ ...existing, lastLabChapter: chId });
+    }
+  }
+
+  function renderInto(container, summaryEl, onSelectLab) {
     if (!container) return;
 
     let practisedLabs = 0;
@@ -82,13 +95,21 @@ const LabHub = (() => {
       );
     }
 
+    const lastCh = getLastChapter();
     let html = '';
     CHAPTERS.forEach(ch => {
       const items = CATALOG.filter(c => c.chapter === ch.id);
+      const isRecent = lastCh === ch.id;
+      const recentPill = isRecent
+        ? `<span class="hub-chapter-recent">${esc(t('hubLastPractised', null, '⭐ Last practised'))}</span>`
+        : '';
       html += `
-        <section class="hub-chapter" data-chapter="${ch.id}">
+        <section class="hub-chapter ${isRecent ? 'hub-chapter--recent' : ''}" data-chapter="${ch.id}">
           <div class="hub-chapter-head">
-            <h3 class="hub-chapter-title">${esc(t(ch.titleKey, null, `Chapter ${ch.id}`))}</h3>
+            <div class="hub-chapter-title-row">
+              <h3 class="hub-chapter-title">${esc(t(ch.titleKey, null, `Chapter ${ch.id}`))}</h3>
+              ${recentPill}
+            </div>
             <p class="hub-chapter-sub">${esc(t(ch.subKey, null, ''))}</p>
           </div>
           <div class="hub-card-grid">
@@ -102,7 +123,31 @@ const LabHub = (() => {
     container.querySelectorAll('.hub-lab-card').forEach(card => {
       card.addEventListener('click', () => {
         const id = card.dataset.labId;
-        launchLab(id);
+        if (typeof onSelectLab === 'function') onSelectLab(id);
+        else launchLab(id);
+      });
+    });
+  }
+
+  function render() {
+    if (typeof document === 'undefined') return;
+    renderInto(
+      document.getElementById('hub-chapters'),
+      document.getElementById('hub-progress-summary')
+    );
+  }
+
+  function renderInline(onReturnToMenu) {
+    if (typeof onReturnToMenu === 'function') inlineReturnCb = onReturnToMenu;
+    if (typeof document === 'undefined') return;
+    const container = document.getElementById('home-pikas-chapters');
+    const summaryEl = document.getElementById('home-pikas-summary');
+    if (!container) return;
+    renderInto(container, summaryEl, id => {
+      launchLab(id, () => {
+        renderInline();
+        if (typeof inlineReturnCb === 'function') inlineReturnCb();
+        else if (typeof UI !== 'undefined' && UI.showScreen) UI.showScreen('onboarding');
       });
     });
   }
@@ -130,26 +175,27 @@ const LabHub = (() => {
     `;
   }
 
-  function launchLab(id) {
-    if (typeof onLaunchCb === 'function') {
+  function launchLab(id, customReturn) {
+    if (typeof onLaunchCb === 'function' && !customReturn) {
       onLaunchCb(id);
       return;
     }
     const item = CATALOG.find(c => c.id === id);
     if (!item) return;
-    if (item.isLegacyNumberLine) {
-      if (typeof NumberLine !== 'undefined' && NumberLine.open) {
-        NumberLine.open(() => {
+    saveLastChapter(item.chapter);
+    const goBack = typeof customReturn === 'function'
+      ? customReturn
+      : () => {
           render();
           if (typeof UI !== 'undefined' && UI.showScreen) UI.showScreen('labHub');
-        });
+        };
+    if (item.isLegacyNumberLine) {
+      if (typeof NumberLine !== 'undefined' && NumberLine.open) {
+        NumberLine.open(goBack);
       }
       if (typeof UI !== 'undefined' && UI.showScreen) UI.showScreen('numberline');
     } else if (typeof LabHost !== 'undefined' && LabHost.open) {
-      const ok = LabHost.open(id, () => {
-        render();
-        if (typeof UI !== 'undefined' && UI.showScreen) UI.showScreen('labHub');
-      });
+      const ok = LabHost.open(id, goBack);
       if (ok && typeof UI !== 'undefined' && UI.showScreen) UI.showScreen('labHost');
     }
   }
@@ -163,6 +209,7 @@ const LabHub = (() => {
 
   function refreshLanguage() {
     render();
+    renderInline();
   }
 
   return {
@@ -170,6 +217,8 @@ const LabHub = (() => {
     CHAPTERS,
     open,
     render,
+    renderInto,
+    renderInline,
     launchLab,
     refreshLanguage,
   };

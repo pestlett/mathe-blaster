@@ -6,6 +6,7 @@
 |-------------|---------|
 | `multiblaster_v1` | Legacy single-player data |
 | `multiblaster_v1_${name}_${age}` | Per-player profile (multi-profile) |
+| `multiblaster_settings` | Device-level UI preferences (`lastPlayer`, `lastAge`, `theme`, `diff`, `mode`, `operation`, `homeTab: 'arcade' \| 'pikas'`, `lastLabChapter: 1 \| 2 \| 3`, etc.) |
 
 On first game with a named player, legacy data at `multiblaster_v1` is migrated
 to the player-specific key automatically.

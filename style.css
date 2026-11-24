@@ -5043,3 +5043,213 @@ body[data-theme="sky"]  .btn-tutorial-exit:hover {
     font-size: 0.9rem;
   }
 }
+
+/* =========================================================================
+   HOME MENU RESTRUCTURE — 2-TAB SWITCHER (ARCADE SHOOTING VS. GRADE 4 PIKAS)
+   ========================================================================= */
+.onboarding-card {
+  transition: width 0.2s ease;
+}
+
+.onboarding-card.onboarding-card--wide {
+  width: min(820px, 100%);
+}
+
+.game-footer.game-footer--wide {
+  width: min(820px, 100%);
+}
+
+.home-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.home-mode-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(240, 244, 255, 0.72);
+  text-align: left;
+  cursor: pointer;
+  min-height: 60px;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+}
+
+.home-mode-tab:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.home-mode-tab-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.home-mode-tab-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.home-mode-tab-title {
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.home-mode-tab-sub {
+  font-size: 0.74rem;
+  font-weight: 600;
+  opacity: 0.78;
+  line-height: 1.2;
+}
+
+#home-tab-arcade.active {
+  border-color: #f7c948;
+  background: linear-gradient(135deg, rgba(247, 201, 72, 0.22), rgba(247, 160, 40, 0.12));
+  color: #fff8df;
+  box-shadow: 0 0 0 1px rgba(247, 201, 72, 0.25), 0 8px 20px rgba(247, 201, 72, 0.14);
+}
+
+#home-tab-arcade.active .home-mode-tab-title {
+  color: #f7c948;
+}
+
+#home-tab-pikas.active {
+  border-color: #38ef7d;
+  background: linear-gradient(135deg, rgba(56, 239, 125, 0.18), rgba(108, 99, 255, 0.2));
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(56, 239, 125, 0.24), 0 8px 20px rgba(56, 239, 125, 0.14);
+}
+
+#home-tab-pikas.active .home-mode-tab-title {
+  color: #7ef9ae;
+}
+
+.home-section-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  margin-bottom: 18px;
+}
+
+.home-section-card .form-group-last {
+  margin-bottom: 0;
+}
+
+.home-arcade-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.home-arcade-modes .btn-daily,
+.home-arcade-modes .btn-run-mode {
+  margin-top: 0;
+  width: 100%;
+}
+
+.home-pikas-intro {
+  margin: 0 0 14px;
+  color: #d6defa;
+  font-size: 0.93rem;
+  line-height: 1.48;
+  text-align: center;
+}
+
+.home-pikas-summary {
+  margin-bottom: 16px;
+}
+
+.home-pikas-chapters .hub-chapter {
+  margin-bottom: 16px;
+}
+
+.hub-chapter-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hub-chapter--recent {
+  border-color: rgba(56, 239, 125, 0.42);
+  box-shadow: 0 0 0 1px rgba(56, 239, 125, 0.16);
+}
+
+.hub-chapter-recent {
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(56, 239, 125, 0.16);
+  border: 1px solid rgba(56, 239, 125, 0.45);
+  color: #7ef9ae;
+}
+
+.home-pikas-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.home-pikas-full-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #b8c4e6;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.home-pikas-full-btn:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 600px) {
+  .onboarding-card {
+    padding: 24px 16px;
+  }
+  .home-mode-tabs {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .home-mode-tab {
+    padding: 10px 10px;
+    gap: 8px;
+    min-height: 56px;
+  }
+  .home-mode-tab-icon {
+    font-size: 1.35rem;
+  }
+  .home-mode-tab-title {
+    font-size: 0.88rem;
+  }
+  .home-mode-tab-sub {
+    font-size: 0.68rem;
+  }
+  .home-section-card {
+    padding: 14px 12px 12px;
+  }
+  .home-arcade-modes {
+    grid-template-columns: 1fr;
+  }
+}

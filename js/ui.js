@@ -745,11 +745,50 @@ const UI = (() => {
       showDashboard(() => showScreen('onboarding'));
     });
 
+    const homeTabs = document.querySelectorAll('.home-mode-tab');
+    const homePanelArcade = document.getElementById('home-panel-arcade');
+    const homePanelPikas = document.getElementById('home-panel-pikas');
+    const onboardingCard = document.querySelector('#screen-onboarding .onboarding-card');
+    const gameFooter = document.querySelector('#screen-onboarding .game-footer');
+    let activeHomeTab = 'arcade';
+
+    function setHomeTab(tab, persist = true) {
+      const next = tab === 'pikas' ? 'pikas' : 'arcade';
+      activeHomeTab = next;
+      homeTabs.forEach(btn => {
+        const isActive = btn.dataset.homeTab === next;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      if (homePanelArcade) homePanelArcade.hidden = next !== 'arcade';
+      if (homePanelPikas) homePanelPikas.hidden = next !== 'pikas';
+      if (onboardingCard) onboardingCard.classList.toggle('onboarding-card--wide', next === 'pikas');
+      if (gameFooter) gameFooter.classList.toggle('game-footer--wide', next === 'pikas');
+
+      if (next === 'pikas' && typeof LabHub !== 'undefined' && LabHub.renderInline) {
+        LabHub.renderInline(() => {
+          showScreen('onboarding');
+          setHomeTab('pikas', false);
+        });
+      }
+      if (persist) {
+        const existing = Progress.loadSettings() || {};
+        Progress.saveSettings({ ...existing, homeTab: next });
+      }
+    }
+
+    homeTabs.forEach(btn => {
+      btn.addEventListener('click', () => setHomeTab(btn.dataset.homeTab, true));
+    });
+
     const btnLabHub = document.getElementById('btn-lab-hub');
     if (btnLabHub) {
       btnLabHub.addEventListener('click', () => {
         if (typeof LabHub !== 'undefined' && LabHub.open) {
-          LabHub.open(() => showScreen('onboarding'));
+          LabHub.open(() => {
+            showScreen('onboarding');
+            setHomeTab('pikas', false);
+          });
         }
         showScreen('labHub');
       });
@@ -790,11 +829,21 @@ const UI = (() => {
     }
     _updateTablesRange();
 
+    // Restore saved home tab (override to arcade if a ?challenge= link is active)
+    const initialHomeTab = window._challengeConfig ? 'arcade' : (saved?.homeTab || 'arcade');
+    setHomeTab(initialHomeTab, false);
+
     // Re-activate player data + refresh extended-tables when name or age changes
     function _onIdentityChange() {
       Progress.setPlayer(nameInput.value.trim(), ageInput.value);
       _updateTablesRange();
       _refreshTutorialEntryPoints();
+      if (activeHomeTab === 'pikas' && typeof LabHub !== 'undefined' && LabHub.renderInline) {
+        LabHub.renderInline(() => {
+          showScreen('onboarding');
+          setHomeTab('pikas', false);
+        });
+      }
     }
     nameInput.addEventListener('change', _onIdentityChange);
     ageInput.addEventListener('change', _onIdentityChange);

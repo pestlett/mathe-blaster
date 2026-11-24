@@ -176,6 +176,7 @@ A new run-mode upgrade requires changes in:
 
 5. **`docs/architecture.md`**
    - Add to the Screen IDs table in the UI section
+   - If returning to `#screen-onboarding`, preserve the active home tab (`arcade` vs. `pikas`) via `setHomeTab` / `LabHub.renderInline`
 
 ---
 

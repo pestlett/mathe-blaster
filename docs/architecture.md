@@ -184,3 +184,11 @@ Every Grade 4 lab (`#screen-numberline` and all 10 `LabHost` labs) exposes an in
 - `js/labs/walkthrough-data.js` & `js/labs/walkthrough-data-2.js`: `LabWalkthroughData` registry holding 11 labs × 3 difficulty tiers × 2 contrasting examples (clean archetype + classic PIKAS trap) with synchronized DE/EN/ES beats and visual descriptors (`written-addsub` dynamically selects *Abziehverfahren* vs. *Ergänzungsverfahren* from `state.options.method`).
 - `js/labs/walkthrough.js`: `LabWalkthrough` modal player with tier switcher, Example 1/2 toggle, step-forward/back/replay/4.5 s auto-play, keyboard arrows, and 11 EIS SVG/DOM visual renderers.
 - Entry points: `🎓 So geht's!` pill in each lab's mode bar + `📖 Beispiel ansehen` inline button beside the active level label (opens pre-selected to the current task's tier).
+
+## Home Menu Structure & Offline Caching
+
+- `#screen-onboarding` uses a top-level 2-tab mode switcher (`#home-tab-arcade` vs. `#home-tab-pikas`):
+  - **Math Shooter (`arcade`, default)**: grouped setup card (Theme, Operation, Mixed, Tables/Range), action & mode buttons, and Arcade progress screens. Active by default on fresh loads and forced when a `?challenge=` link is present.
+  - **Grade 4 · PIKAS (`pikas`)**: widens `.onboarding-card` (`.onboarding-card--wide`) and renders all 3 PIKAS chapters + 11 direct lab launch cards inline via `LabHub.renderInline()`, highlighting `lastLabChapter` and keeping `#btn-lab-hub` as a full-screen hub toggle.
+  - Persists `homeTab` and `lastLabChapter` in `multiblaster_settings`.
+- `sw.js` uses a **network-first with offline cache fallback** strategy for same-origin GET requests so deployed updates load immediately on a single reload while preserving full offline play.

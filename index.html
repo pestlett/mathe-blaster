@@ -33,123 +33,156 @@
         <span class="title-accent" data-i18n="gameTitleAccent">Blaster!</span>
       </h1>
 
-      <div class="form-group">
-        <label data-i18n="chooseTheme">Choose Your Theme</label>
-        <div class="theme-cards">
-          <div class="theme-card active" data-theme="space">
-            <div class="theme-preview space-preview"></div>
-            <span data-i18n="themeSpace">Space</span>
-          </div>
-          <div class="theme-card" data-theme="ocean">
-            <div class="theme-preview ocean-preview"></div>
-            <span data-i18n="themeOcean">Ocean</span>
-          </div>
-          <div class="theme-card" data-theme="sky">
-            <div class="theme-preview sky-preview"></div>
-            <span data-i18n="themeSky">Sky</span>
-          </div>
-          <div class="theme-card" data-theme="cats">
-            <div class="theme-preview cats-preview"></div>
-            <span data-i18n="themeCats">Cats</span>
-          </div>
-        </div>
+      <!-- Top-level Mode Switcher: Arcade Shooting vs. Year 4 PIKAS -->
+      <div class="home-mode-tabs" id="home-mode-tabs" role="tablist" aria-label="Game Mode">
+        <button type="button" class="home-mode-tab active" id="home-tab-arcade" data-home-tab="arcade" role="tab" aria-selected="true" aria-controls="home-panel-arcade">
+          <span class="home-mode-tab-icon" aria-hidden="true">🚀</span>
+          <span class="home-mode-tab-copy">
+            <span class="home-mode-tab-title" data-i18n="homeTabArcade">Math Shooter</span>
+            <span class="home-mode-tab-sub" data-i18n="homeTabArcadeSub">Arcade · Grades 2–3</span>
+          </span>
+        </button>
+        <button type="button" class="home-mode-tab" id="home-tab-pikas" data-home-tab="pikas" role="tab" aria-selected="false" aria-controls="home-panel-pikas">
+          <span class="home-mode-tab-icon" aria-hidden="true">🎓</span>
+          <span class="home-mode-tab-copy">
+            <span class="home-mode-tab-title" data-i18n="homeTabPikas">Grade 4 · PIKAS</span>
+            <span class="home-mode-tab-sub" data-i18n="homeTabPikasSub">11 Labs · Untimed</span>
+          </span>
+        </button>
       </div>
-      <div class="form-group">
-        <label data-i18n="operation">Operation</label>
-        <div class="operation-btns">
-          <button class="op-btn active" data-op="multiply" data-i18n="opMultiply">× Multiply</button>
-          <button class="op-btn" data-op="divide" data-i18n="opDivide">÷ Divide</button>
-          <button class="op-btn" data-op="add" data-i18n="opAdd">+ Add</button>
-          <button class="op-btn" data-op="subtract" data-i18n="opSubtract">− Subtract</button>
-        </div>
-        <span class="setting-note" id="op-note"></span>
-      </div>
-      <div class="form-group" id="mixed-group">
-        <label data-i18n="mixedLabel">Mixed Practice</label>
-        <div class="numrange-btns">
-          <button class="numrange-btn" id="mixed-muldiv" data-i18n="mixedMulDiv">× + ÷</button>
-          <button class="numrange-btn" id="mixed-addsub" data-i18n="mixedAddSub">+ + −</button>
-          <button class="numrange-btn" id="mixed-all"    data-i18n="mixedAll">All 4 ⚡</button>
-        </div>
-        <span class="setting-note" id="mixed-note"></span>
-      </div>
-      <div class="form-group" id="numrange-group" hidden>
-        <label data-i18n="numRange">Number Range</label>
-        <div class="numrange-btns">
-          <button class="numrange-btn active" data-max="100" data-i18n="numRange100">bis 100</button>
-          <button class="numrange-btn" data-max="1000" data-i18n="numRange1000">bis 1.000</button>
-        </div>
-        <span class="setting-note" id="numrange-note"></span>
-      </div>
-      <div class="form-group" id="zehner-group" hidden>
-        <label data-i18n="mulDivModeLabel">Tens Facts</label>
-        <div class="numrange-btns">
-          <button class="numrange-btn active" data-zehner="false" data-i18n="zehnerOff">Standard</button>
-          <button class="numrange-btn" data-zehner="true" data-i18n="zehnerOn">×10 / ×100</button>
-          <button class="numrange-btn" data-zehner="halbschriftlich" data-i18n="zehnerHalbschriftlich">Halbschriftlich</button>
-        </div>
-        <span class="setting-note" id="zehner-note"></span>
-      </div>
-      <div class="form-group" id="tables-section">
-        <label id="tables-label" data-i18n="tables">Tables</label>
-        <div class="tables-tabs">
-          <button class="tables-tab active" data-tab="range" data-i18n="tabRange">Range</button>
-          <button class="tables-tab" data-tab="single" data-i18n="tabSingle">One Table</button>
-        </div>
-        <div id="tables-range-panel">
-          <div class="range-values">
-            <span><span data-i18n="rangeFrom">From</span> <strong id="range-min-val">1</strong></span>
-            <span><span data-i18n="rangeTo">To</span> <strong id="range-max-val">10</strong></span>
-          </div>
-          <div class="range-container">
-            <input type="range" id="range-min" min="1" max="10" value="1" class="range-slider">
-            <input type="range" id="range-max" min="1" max="10" value="10" class="range-slider">
-          </div>
-          <div class="range-ticks">
-            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
-            <span>7</span><span>8</span><span>9</span><span>10</span>
-          </div>
-        </div>
-        <div id="tables-single-panel" hidden>
-          <div class="table-grid" id="table-grid">
-            <button class="table-num-btn" data-val="1"  data-youtube="https://www.youtube.com/watch?v=F9o2QeuyMiU">1</button>
-            <button class="table-num-btn" data-val="2"  data-youtube="https://www.youtube.com/watch?v=AUL_4lzT06I">2</button>
-            <button class="table-num-btn" data-val="3"  data-youtube="https://www.youtube.com/watch?v=uFmbB2vileA">3</button>
-            <button class="table-num-btn" data-val="4"  data-youtube="https://www.youtube.com/watch?v=TXoKhcB9a1o">4</button>
-            <button class="table-num-btn" data-val="5"  data-youtube="https://www.youtube.com/watch?v=KPffpuHYIhc">5</button>
-            <button class="table-num-btn" data-val="6"  data-youtube="https://www.youtube.com/watch?v=VIehBt_8T5U">6</button>
-            <button class="table-num-btn" data-val="7"  data-youtube="https://www.youtube.com/watch?v=mkyI5Aww1GQ">7</button>
-            <button class="table-num-btn" data-val="8"  data-youtube="https://www.youtube.com/watch?v=rPocVxqp6j0">8</button>
-            <button class="table-num-btn" data-val="9"  data-youtube="https://www.youtube.com/shorts/Oz0zY74ZK1g">9</button>
-            <button class="table-num-btn active" data-val="10" data-youtube="https://www.youtube.com/watch?v=zGxsCk2ppcI">10</button>
-          </div>
-          <div class="setting-note" id="single-table-note" style="margin-top:8px"></div>
-          <a id="numberblocks-link" href="#" target="_blank" rel="noopener" class="numberblocks-link hidden">
-            ▶ Watch the Numberblocks <span id="numberblocks-link-table"></span>× song on YouTube
-          </a>
-        </div>
-        <div id="extended-tables-badge" hidden data-i18n="extendedTablesUnlocked"></div>
-        <input type="hidden" id="focus-mode-toggle" value="0">
-        <input type="hidden" id="focus-table" value="10">
-      </div>
+
       <div id="challenge-banner" class="challenge-banner" hidden></div>
-      <div id="tutorial-home-row" class="tutorial-home-row">
-        <button id="btn-tutorial-main" class="btn-secondary tutorial-home-btn" data-i18n="tutorialStartMain">🎓 Guided Tutorial</button>
-        <span id="tutorial-home-note" class="setting-note" data-i18n="tutorialMainNote">Play the guided demo first to learn the controls, voice, and power-ups.</span>
+
+      <!-- Panel 1: Original Arcade Shooting Game -->
+      <div id="home-panel-arcade" class="home-tab-panel" role="tabpanel" aria-labelledby="home-tab-arcade">
+        <div class="home-section-card">
+          <div class="form-group">
+            <label data-i18n="chooseTheme">Choose Your Theme</label>
+            <div class="theme-cards">
+              <div class="theme-card active" data-theme="space">
+                <div class="theme-preview space-preview"></div>
+                <span data-i18n="themeSpace">Space</span>
+              </div>
+              <div class="theme-card" data-theme="ocean">
+                <div class="theme-preview ocean-preview"></div>
+                <span data-i18n="themeOcean">Ocean</span>
+              </div>
+              <div class="theme-card" data-theme="sky">
+                <div class="theme-preview sky-preview"></div>
+                <span data-i18n="themeSky">Sky</span>
+              </div>
+              <div class="theme-card" data-theme="cats">
+                <div class="theme-preview cats-preview"></div>
+                <span data-i18n="themeCats">Cats</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="operation">Operation</label>
+            <div class="operation-btns">
+              <button class="op-btn active" data-op="multiply" data-i18n="opMultiply">× Multiply</button>
+              <button class="op-btn" data-op="divide" data-i18n="opDivide">÷ Divide</button>
+              <button class="op-btn" data-op="add" data-i18n="opAdd">+ Add</button>
+              <button class="op-btn" data-op="subtract" data-i18n="opSubtract">− Subtract</button>
+            </div>
+            <span class="setting-note" id="op-note"></span>
+          </div>
+          <div class="form-group" id="mixed-group">
+            <label data-i18n="mixedLabel">Mixed Practice</label>
+            <div class="numrange-btns">
+              <button class="numrange-btn" id="mixed-muldiv" data-i18n="mixedMulDiv">× + ÷</button>
+              <button class="numrange-btn" id="mixed-addsub" data-i18n="mixedAddSub">+ + −</button>
+              <button class="numrange-btn" id="mixed-all"    data-i18n="mixedAll">All 4 ⚡</button>
+            </div>
+            <span class="setting-note" id="mixed-note"></span>
+          </div>
+          <div class="form-group" id="numrange-group" hidden>
+            <label data-i18n="numRange">Number Range</label>
+            <div class="numrange-btns">
+              <button class="numrange-btn active" data-max="100" data-i18n="numRange100">bis 100</button>
+              <button class="numrange-btn" data-max="1000" data-i18n="numRange1000">bis 1.000</button>
+            </div>
+            <span class="setting-note" id="numrange-note"></span>
+          </div>
+          <div class="form-group" id="zehner-group" hidden>
+            <label data-i18n="mulDivModeLabel">Tens Facts</label>
+            <div class="numrange-btns">
+              <button class="numrange-btn active" data-zehner="false" data-i18n="zehnerOff">Standard</button>
+              <button class="numrange-btn" data-zehner="true" data-i18n="zehnerOn">×10 / ×100</button>
+              <button class="numrange-btn" data-zehner="halbschriftlich" data-i18n="zehnerHalbschriftlich">Halbschriftlich</button>
+            </div>
+            <span class="setting-note" id="zehner-note"></span>
+          </div>
+          <div class="form-group form-group-last" id="tables-section">
+            <label id="tables-label" data-i18n="tables">Tables</label>
+            <div class="tables-tabs">
+              <button class="tables-tab active" data-tab="range" data-i18n="tabRange">Range</button>
+              <button class="tables-tab" data-tab="single" data-i18n="tabSingle">One Table</button>
+            </div>
+            <div id="tables-range-panel">
+              <div class="range-values">
+                <span><span data-i18n="rangeFrom">From</span> <strong id="range-min-val">1</strong></span>
+                <span><span data-i18n="rangeTo">To</span> <strong id="range-max-val">10</strong></span>
+              </div>
+              <div class="range-container">
+                <input type="range" id="range-min" min="1" max="10" value="1" class="range-slider">
+                <input type="range" id="range-max" min="1" max="10" value="10" class="range-slider">
+              </div>
+              <div class="range-ticks">
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+                <span>7</span><span>8</span><span>9</span><span>10</span>
+              </div>
+            </div>
+            <div id="tables-single-panel" hidden>
+              <div class="table-grid" id="table-grid">
+                <button class="table-num-btn" data-val="1"  data-youtube="https://www.youtube.com/watch?v=F9o2QeuyMiU">1</button>
+                <button class="table-num-btn" data-val="2"  data-youtube="https://www.youtube.com/watch?v=AUL_4lzT06I">2</button>
+                <button class="table-num-btn" data-val="3"  data-youtube="https://www.youtube.com/watch?v=uFmbB2vileA">3</button>
+                <button class="table-num-btn" data-val="4"  data-youtube="https://www.youtube.com/watch?v=TXoKhcB9a1o">4</button>
+                <button class="table-num-btn" data-val="5"  data-youtube="https://www.youtube.com/watch?v=KPffpuHYIhc">5</button>
+                <button class="table-num-btn" data-val="6"  data-youtube="https://www.youtube.com/watch?v=VIehBt_8T5U">6</button>
+                <button class="table-num-btn" data-val="7"  data-youtube="https://www.youtube.com/watch?v=mkyI5Aww1GQ">7</button>
+                <button class="table-num-btn" data-val="8"  data-youtube="https://www.youtube.com/watch?v=rPocVxqp6j0">8</button>
+                <button class="table-num-btn" data-val="9"  data-youtube="https://www.youtube.com/shorts/Oz0zY74ZK1g">9</button>
+                <button class="table-num-btn active" data-val="10" data-youtube="https://www.youtube.com/watch?v=zGxsCk2ppcI">10</button>
+              </div>
+              <div class="setting-note" id="single-table-note" style="margin-top:8px"></div>
+              <a id="numberblocks-link" href="#" target="_blank" rel="noopener" class="numberblocks-link hidden">
+                ▶ Watch the Numberblocks <span id="numberblocks-link-table"></span>× song on YouTube
+              </a>
+            </div>
+            <div id="extended-tables-badge" hidden data-i18n="extendedTablesUnlocked"></div>
+            <input type="hidden" id="focus-mode-toggle" value="0">
+            <input type="hidden" id="focus-table" value="10">
+          </div>
+        </div>
+
+        <div id="tutorial-home-row" class="tutorial-home-row">
+          <button id="btn-tutorial-main" class="btn-secondary tutorial-home-btn" data-i18n="tutorialStartMain">🎓 Guided Tutorial</button>
+          <span id="tutorial-home-note" class="setting-note" data-i18n="tutorialMainNote">Play the guided demo first to learn the controls, voice, and power-ups.</span>
+        </div>
+        <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
+        <div class="home-arcade-modes">
+          <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
+          <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
+        </div>
+        <button id="btn-run-demo" class="btn-run-demo" data-i18n="runDemoBtnLabel">▶ Watch Run Mode Demo</button>
+        <p class="run-mode-mobile-hint">💡 Run Mode works best on a laptop or desktop — voice input and fast typing are much harder on phones.</p>
+        <div class="home-btns">
+          <button id="btn-leaderboard-home" class="btn-secondary" data-i18n="leaderboard">🏅 Leaderboard</button>
+          <button id="btn-achievements-home" class="btn-secondary" data-i18n="achievementsBtn">🏆 Achievements</button>
+          <button id="btn-dashboard" class="btn-secondary" data-i18n="parentDashboard">📊 Dashboard</button>
+        </div>
       </div>
-      <button id="btn-start" class="btn-primary" data-i18n="letsGo">Let's Go!</button>
-      <button id="btn-daily" class="btn-daily">⚡ Daily Challenge</button>
-      <button id="btn-run-mode" class="btn-run-mode">⚔ Run Mode<span id="run-mode-subtitle" class="run-mode-subtitle"></span></button>
-      <button id="btn-run-demo" class="btn-run-demo" data-i18n="runDemoBtnLabel">▶ Watch Run Mode Demo</button>
-      <p class="run-mode-mobile-hint">💡 Run Mode works best on a laptop or desktop — voice input and fast typing are much harder on phones.</p>
-      <button id="btn-lab-hub" class="btn-numberline-lab">
-        <span data-i18n="hubMenuBtn">🎓 Grade 4 Maths Labs</span>
-        <span class="nl-menu-subtitle" data-i18n="hubMenuSubtitle">11 Interactive Labs · Full Year Curriculum</span>
-      </button>
-      <div class="home-btns">
-        <button id="btn-leaderboard-home" class="btn-secondary" data-i18n="leaderboard">🏅 Leaderboard</button>
-        <button id="btn-achievements-home" class="btn-secondary" data-i18n="achievementsBtn">🏆 Achievements</button>
-        <button id="btn-dashboard" class="btn-secondary" data-i18n="parentDashboard">📊 Dashboard</button>
+
+      <!-- Panel 2: Year 4 PIKAS Curriculum Labs -->
+      <div id="home-panel-pikas" class="home-tab-panel" role="tabpanel" aria-labelledby="home-tab-pikas" hidden>
+        <p class="home-pikas-intro" data-i18n="hubIntro">Choose any Grade 4 topic to practise at your own pace — no timer, with interactive visuals, step-by-step hints, and helpful error clues.</p>
+        <div class="hub-progress-banner home-pikas-summary" id="home-pikas-summary"></div>
+        <div id="home-pikas-chapters" class="home-pikas-chapters"></div>
+        <div class="home-pikas-footer">
+          <button id="btn-lab-hub" type="button" class="home-pikas-full-btn" data-i18n="hubFullViewBtn">↗ Open Full-Screen Lab Overview</button>
+        </div>
       </div>
     </div>
     <footer class="game-footer">

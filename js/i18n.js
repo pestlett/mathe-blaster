@@ -66,6 +66,12 @@ const I18n = (() => {
       tutorialStartMain: '🎓 Guided Tutorial',
       tutorialMainNote:  'Play the guided demo first to learn the controls, voice, and power-ups.',
 
+      // Home 2-tab menu
+      homeTabArcade:     'Math Shooter',
+      homeTabArcadeSub:  'Arcade · Grades 2–3',
+      homeTabPikas:      'Grade 4 · PIKAS',
+      homeTabPikasSub:   '11 Labs · Untimed',
+
       // Run Mode demo
       runDemoBtnLabel:     '▶ Watch Run Mode Demo',
       runDemoOverlayTitle: '⚔ Run Mode Demo',
@@ -498,6 +504,8 @@ const I18n = (() => {
       hubNlSub:             'Find step sizes & positions up to 1 000 000',
       hubRoundsCount:       '{n}×',
       hubBadgeNew:          'New',
+      hubFullViewBtn:       '↗ Open Full-Screen Lab Overview',
+      hubLastPractised:     '⭐ Last practised',
 
       // Shared Grade 4 Lab Host
       labBackToHub:         '← Grade 4 Hub',
@@ -1051,6 +1059,12 @@ const I18n = (() => {
       tutorialStartMain: '🎓 Geführtes Tutorial',
       tutorialMainNote:  'Spiele zuerst das geführte Tutorial, um die Steuerung, Spracheingabe und Power-ups kennenzulernen.',
 
+      // Startseiten-Tabs
+      homeTabArcade:     'Mathe-Shooter',
+      homeTabArcadeSub:  'Arcade · Klasse 2–3',
+      homeTabPikas:      'Klasse 4 · PIKAS',
+      homeTabPikasSub:   '11 Labore · ohne Timer',
+
       // Run Mode Demo
       runDemoBtnLabel:     '▶ Run-Modus-Demo ansehen',
       runDemoOverlayTitle: '⚔ Run-Modus-Demo',
@@ -1476,6 +1490,8 @@ const I18n = (() => {
       hubNlSub:             'Schrittgrößen & Zahlen am Zahlenstrahl bis 1 Mio bestimmen',
       hubRoundsCount:       '{n}×',
       hubBadgeNew:          'Neu',
+      hubFullViewBtn:       '↗ Alle Labore im Vollbild',
+      hubLastPractised:     '⭐ Zuletzt geübt',
 
       // Gemeinsame Labor-Oberfläche (Klasse 4)
       labBackToHub:         '← Klasse 4 Übersicht',
@@ -2029,6 +2045,12 @@ const I18n = (() => {
       tutorialStartMain: '🎓 Tutorial guiado',
       tutorialMainNote:  'Juega primero el tutorial guiado para aprender los controles, la voz y los poderes.',
 
+      // Pestañas de inicio
+      homeTabArcade:     'Mathe-Shooter',
+      homeTabArcadeSub:  'Arcade · 2.°–3.°',
+      homeTabPikas:      '4.° · PIKAS',
+      homeTabPikasSub:   '11 labs · sin reloj',
+
       // Run Mode Demo
       runDemoBtnLabel:     '▶ Ver Demo del Modo Carrera',
       runDemoOverlayTitle: '⚔ Demo del Modo Carrera',
@@ -2454,6 +2476,8 @@ const I18n = (() => {
       hubNlSub:             'Calcula pasos y posiciones en la recta hasta 1 000 000',
       hubRoundsCount:       '{n}×',
       hubBadgeNew:          'Nuevo',
+      hubFullViewBtn:       '↗ Ver todos en pantalla completa',
+      hubLastPractised:     '⭐ Último practicado',
 
       // Contenedor compartido de laboratorios (4.° grado)
       labBackToHub:         '← Menú 4.° grado',

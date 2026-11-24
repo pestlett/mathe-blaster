@@ -93,4 +93,30 @@ test.describe('Onboarding screen', () => {
     // Multiply is default, so zehner group should be visible
     await expect(page.locator('#zehner-group')).toBeVisible();
   });
+
+  test('home menu switches cleanly between Math Shooter and Grade 4 PIKAS tabs', async ({ page }) => {
+    await expect(page.locator('#home-tab-arcade')).toHaveClass(/active/);
+    await expect(page.locator('#home-panel-arcade')).toBeVisible();
+    await expect(page.locator('#home-panel-pikas')).toBeHidden();
+
+    // Switch to Grade 4 PIKAS tab
+    await page.click('#home-tab-pikas');
+    await expect(page.locator('#home-tab-pikas')).toHaveClass(/active/);
+    await expect(page.locator('#home-panel-pikas')).toBeVisible();
+    await expect(page.locator('#home-panel-arcade')).toBeHidden();
+    await expect(page.locator('#home-pikas-chapters .hub-lab-card')).toHaveCount(11);
+
+    // Launch a Grade 4 lab directly from the PIKAS tab and return back to the PIKAS tab
+    await page.click('#home-pikas-chapters [data-lab-id="placevalue"]');
+    await page.waitForSelector('#screen-lab-host.active');
+    await page.click('#lh-back-btn');
+    await page.waitForSelector('#screen-onboarding.active');
+    await expect(page.locator('#home-tab-pikas')).toHaveClass(/active/);
+    await expect(page.locator('#home-panel-pikas')).toBeVisible();
+
+    // Switch back to Arcade Shooter tab
+    await page.click('#home-tab-arcade');
+    await expect(page.locator('#home-panel-arcade')).toBeVisible();
+    await expect(page.locator('#btn-start')).toBeVisible();
+  });
 });
